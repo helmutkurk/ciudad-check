@@ -5,16 +5,24 @@ import { useDeps } from "../deps.js";
 import { describeError } from "../lib/messages.js";
 import { Button, Field, Select } from "../ui/index.js";
 
-/** Brand access code is outside the catalog-only form; all secrets stay in tab memory. */
+/**
+ * Catalog-only order form. The brand access code is outside it: with `onBrandToken` the form shows
+ * the access code field (standalone use); without it the form sends the `brandToken` it is given
+ * (the brand app, where sign-in supplies the token). Secrets stay in tab memory.
+ */
 export function RequestForm(props: {
   catalog: CatalogResponse | undefined;
   brandToken: string;
-  onBrandToken: (token: string) => void;
+  onBrandToken?: ((token: string) => void) | undefined;
   onCreated: (order: Pick<OrderView, "orderId">) => void;
   enabled: boolean;
   maxStores: number;
   fake: boolean;
   maxCreditsPerTask: number | undefined;
+  /** Price Sokosumi recorded for this brand's latest store check (credits), when known. */
+  lastPriceCredits?: number | undefined;
+  /** Heading; the brand app says "New shelf request". */
+  title?: string | undefined;
 }) {
   const deps = useDeps();
   const [ean, setEan] = useState("");
@@ -64,16 +72,18 @@ export function RequestForm(props: {
     }
   };
   return (
-    <section className="dcard dform" aria-label="New order">
-      <h2 className="dh2">New order</h2>
-      <Field
-        label="Brand access code"
-        type="password"
-        value={props.brandToken}
-        onChange={props.onBrandToken}
-        autoComplete="off"
-        help="Stays in this tab's memory only."
-      />
+    <section className="dcard dform" aria-label={props.title ?? "New order"}>
+      <h2 className="dh2">{props.title ?? "New order"}</h2>
+      {props.onBrandToken ? (
+        <Field
+          label="Brand access code"
+          type="password"
+          value={props.brandToken}
+          onChange={props.onBrandToken}
+          autoComplete="off"
+          help="Stays in this tab's memory only."
+        />
+      ) : null}
       <form
         className="request-form"
         onSubmit={(event) => {
@@ -128,15 +138,15 @@ export function RequestForm(props: {
             ))}
           </ul>
         ) : null}
-        <p className="footnote">
-          Price not yet quoted.{" "}
-          {props.maxCreditsPerTask !== undefined
-            ? `Credit ceiling: ${props.maxCreditsPerTask} per store; ${storeIds.length * props.maxCreditsPerTask} for this order. This is a spending limit, not a price.`
-            : "The Sokosumi quote determines the price."}
-        </p>
+        <PriceNote
+          stores={storeIds.length}
+          ceiling={props.maxCreditsPerTask}
+          last={props.lastPriceCredits}
+          fake={props.fake}
+        />
         <p className="footnote">
           One shelf check per store. Shelfie places the order on your behalf. Payment uses Masumi
-          escrow; a withheld result follows the refund path.
+          escrow: a check that fails, or whose result is withheld, is refunded through the escrow.
         </p>
         {props.fake ? (
           <p className="form-error">
@@ -144,8 +154,10 @@ export function RequestForm(props: {
           </p>
         ) : null}
         {!props.enabled ? (
-          <p className="footnote">
-            Orders are unavailable on this engine. Real ordering is not available yet.
+          <p className="footnote" role="status">
+            {props.fake
+              ? "Orders are not available: fake orders need fake payments and verifier, outside evidence runs."
+              : "Orders are not available: the real Sokosumi settings (API token, coworker, organization) or the real payment and verifier settings are missing on this engine."}
           </p>
         ) : null}
         <Button type="submit" disabled={!ready || busy}>
@@ -158,5 +170,42 @@ export function RequestForm(props: {
         </p>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * Cost of an order before it is placed. The Sokosumi price is only known once the Task exists, so
+ * the form shows the ceiling (an order above it is not placed) and, when one is recorded, the price
+ * of this brand's latest check. Credits are Sokosumi preprod test credits, not money.
+ */
+function PriceNote(props: {
+  stores: number;
+  ceiling: number | undefined;
+  last: number | undefined;
+  fake: boolean;
+}) {
+  if (props.ceiling === undefined)
+    return (
+      <p className="footnote">Price not yet quoted. The Sokosumi quote determines the price.</p>
+    );
+  const total = props.stores * props.ceiling;
+  return (
+    <div className="footnote" aria-label="Order price">
+      <p>
+        Price not yet quoted: up to {props.ceiling} credits per store
+        {props.stores > 0
+          ? `, so at most ${total} credits for ${props.stores} ${props.stores === 1 ? "store" : "stores"}`
+          : ""}
+        . The ceiling is a limit: an order whose Sokosumi price is higher is not placed.
+      </p>
+      {props.last !== undefined ? (
+        <p>Latest recorded price: {props.last} credits per store.</p>
+      ) : null}
+      <p>
+        {props.fake
+          ? "Fake order: no credits are charged."
+          : "These are Sokosumi preprod test credits, not money."}
+      </p>
+    </div>
   );
 }

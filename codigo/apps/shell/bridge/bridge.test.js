@@ -187,3 +187,31 @@ describe("answer", () => {
     await assert.rejects(bridge.answer(INPUT, { sokosumiTaskId: "t1" }), (e) => e instanceof BridgeError && e.code === "unauthorized");
   });
 });
+
+describe("timing and escrow (A-25)", () => {
+  it("clamps windowSec so the window closes before the deadline minus the margin", async () => {
+    const t0 = 1_000_000_000_000;
+    const bridge = createBridge(
+      loadBridgeConfig({ ENGINE_URL: baseUrl, SHELL_TOKEN: TOKEN, SHELL_DECISION_POLL_SEC: "0", JOB_WINDOW_SEC: "600" }),
+      { sleep: async () => {}, logger: silent, now: () => t0 },
+    );
+    await bridge.createJob(INPUT, "task-early", t0 + 17.5 * 60_000); // lock seen at +2.5 min of 20
+    assert.equal(calls.at(-1).body.windowSec, 600);
+    await bridge.createJob(INPUT, "task-late", t0 + 14 * 60_000); // lock seen at +6 min of 20
+    assert.equal(calls.at(-1).body.windowSec, 14 * 60 - 300 - 30);
+  });
+
+  it("posts ESCROW_LOCKED with the lock tx once the job is created", async () => {
+    script.decision = decisions({ jobId: "job_01", status: "DELIVER", reportMd: "# r", reportSha256: "x" });
+    await makeBridge().run(INPUT, { sokosumiTaskId: "task-1", escrowTxHash: "a".repeat(64) });
+    const ev = calls.find((c) => c.url.endsWith("/settlement-events"));
+    assert.deepEqual([ev?.body.event, ev?.body.txHash, ev?.body.ref], ["ESCROW_LOCKED", "a".repeat(64), "task-1"]);
+  });
+
+  it("does not repost ESCROW_LOCKED when the create returns an existing job", async () => {
+    script.create = () => [200, { job: { id: "job_01", state: "COLLECTING" }, tasks: [] }];
+    script.decision = decisions({ jobId: "job_01", status: "DELIVER", reportMd: "# r", reportSha256: "x" });
+    await makeBridge().run(INPUT, { sokosumiTaskId: "task-1", escrowTxHash: "a".repeat(64) });
+    assert.equal(calls.filter((c) => c.url.endsWith("/settlement-events")).length, 0);
+  });
+});

@@ -2,14 +2,19 @@ import { useState } from "react";
 import { PayoutAddressSchema } from "@shelfie/core/browser";
 import { S } from "../lib/messages.js";
 import type { Profile } from "../lib/storage.js";
-import { Button, Field, Group, LargeTitle, TextButton, Wordmark } from "../ui/index.js";
+import { Button, Field, Group, LargeTitle, Logo, NavBar, TextButton } from "../ui/index.js";
 
-/** W0: payout address + name + consent-v1. CIP-30 "Connect wallet" is not built (verify Friday). */
+/**
+ * W0: payout address + name + consent-v1. Also the profile edit screen: `onCancel` is passed only
+ * when a profile already exists, so the first run has nowhere to go back to.
+ * CIP-30 "Connect wallet" is not built (verify Friday).
+ */
 export function Onboarding(props: {
   initial: Profile | null;
   consented: boolean;
   onSave: (profile: Profile) => void;
   onDecline: () => void;
+  onCancel?: (() => void) | undefined;
 }) {
   const [address, setAddress] = useState(props.initial?.address ?? "");
   const [name, setName] = useState(props.initial?.name ?? "");
@@ -25,12 +30,19 @@ export function Onboarding(props: {
 
   return (
     <main className="screen">
+      {props.onCancel ? (
+        <NavBar back={{ label: "Back", onClick: props.onCancel }} title="Profile" />
+      ) : null}
       <div className="onboard-brand">
-        <Wordmark />
+        <Logo size="md" />
       </div>
       <LargeTitle
-        title="Get paid for photos that prove the shelf."
-        subtitle="Take a task, photograph one price tag, receive test ADA."
+        title={props.initial ? "Edit your profile" : "Get paid for photos that prove the shelf."}
+        subtitle={
+          props.initial
+            ? "Your name and payout address."
+            : "Take a task, photograph one price tag, receive test ADA."
+        }
       />
       <Group footer={`${S.shelvesOnly} Your address is where payouts go; nothing else is stored.`}>
         <div className="group-pad">
@@ -67,6 +79,9 @@ export function Onboarding(props: {
         >
           Continue
         </Button>
+        {props.onCancel ? (
+          <TextButton onClick={props.onCancel}>Cancel, keep my profile</TextButton>
+        ) : null}
         <TextButton onClick={props.onDecline}>Decline and only look around</TextButton>
       </div>
     </main>

@@ -17,19 +17,17 @@ Shared rules (project, read order, ownership, conventions, never-do list) are in
 - Path-scoped rules load from `.claude/rules/*.md` by the files you touch: typescript, payments-and-wallets, verifier, web, docs, security, evidence.
 
 ## Context gate
-A PreToolUse hook (`context-gate.sh`) blocks edits and write-type Bash until you run `bash scripts/context-ack.sh --session <id> --who <name>` and read what it lists; see `AGENTS.md` > Context gate.
+Off until the hackathon ends (ADR-0007): `context-gate.sh` is unwired and the git pre-commit ack check is removed. Still read the `AGENTS.md` read order before changing anything.
 
 ## Hooks (wired in `.claude/settings.json`)
 | Hook | Script | Effect |
 |---|---|---|
+Removed by ADR-0007 for the hackathon: `context-gate.sh`, `format-file.sh`, `typecheck-on-stop.sh`, `tasks-on-stop.sh` (scripts stay in `.claude/hooks/`). Run `npm run check` yourself before a push.
+
 | SessionStart | `session-context.sh` | Prints branch, time left in the build window, open TODO/Handoff lines from `docs/ai-log.md`, and the reminder to run `scripts/peer-review.sh pending` |
 | UserPromptSubmit | `prompt-guard.sh` | Blocks pasted keys/secret literals; warns on a 24-word mnemonic |
-| PreToolUse Edit/Write/MultiEdit/NotebookEdit/Bash | `context-gate.sh` | Blocks changes until this session ran `scripts/context-ack.sh` (ack expires when purpose docs change) |
 | PreToolUse Bash | `guard-bash.sh` | Blocks `.env` access (also `cat`, globs), push to main, force push (also `--force-with-lease` to dev), mainnet, `curl \| sh`, gh repo changes; asks on new deps and recursive greps |
 | PreToolUse Read/Edit/Write/Grep/Glob | `protect-files.sh` | Blocks `.env*` (not `.env.example`), key files, `invoice/`, lockfile and `.git` edits |
-| PostToolUse Edit/Write | `format-file.sh` | Prettier on the edited file once `codigo/` has dependencies; no-op before |
-| Stop | `typecheck-on-stop.sh` | Typecheck when TS files changed; no-op before `codigo/package.json` |
-| Stop | `tasks-on-stop.sh` | Reminds you (exit 2, once per 15 min) to run `scripts/task.sh` when your role's files changed and `equipo/tasks/` did not |
 
 If a hook blocks you, use the replacement it names (e.g. `.env.example`, `dev` instead of `main`). Do not route around it with an equivalent command. Test the hooks with `.claude/hooks/test-hooks.sh`.
 

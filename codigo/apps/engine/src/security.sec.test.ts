@@ -41,20 +41,35 @@ describe("admin auth (E1, E11)", () => {
     for (const r of routes) {
       const method = Object.keys(r.methods)[0] ?? "post";
       const path = `/api/admin${r.path.replace(":id", "x")}`;
-      const none = await rig.call(method.toUpperCase(), path, {});
+      // GET routes (the operator ping) cannot carry a body; the others get an empty JSON body.
+      const body = method === "get" ? undefined : {};
+      const none = await rig.call(method.toUpperCase(), path, body);
       expect(none.status, path).toBe(401);
-      const wrong = await rig.call(
-        method.toUpperCase(),
-        path,
-        {},
-        { "x-admin-token": "wrong-token-value" },
-      );
+      const wrong = await rig.call(method.toUpperCase(), path, body, {
+        "x-admin-token": "wrong-token-value",
+      });
       expect(wrong.status, path).toBe(401);
     }
     // unknown admin paths do not leak existence either
     expect((await rig.call("POST", "/api/admin/unknown")).status).toBe(401);
     // the shell token is not an admin token
     expect((await rig.shell("POST", "/api/admin/reset")).status).toBe(401);
+  });
+
+  it("GET /api/admin/ping (operator gate) is 401 without or with a wrong token, 200 with the right one", async () => {
+    rig = await makeRig();
+    expect((await rig.call("GET", "/api/admin/ping")).status).toBe(401);
+    expect(
+      (
+        await rig.call("GET", "/api/admin/ping", undefined, {
+          "x-admin-token": "wrong-token-value",
+        })
+      ).status,
+    ).toBe(401);
+    expect((await rig.shell("GET", "/api/admin/ping")).status).toBe(401);
+    const ok = await rig.admin("GET", "/api/admin/ping");
+    expect(ok.status).toBe(200);
+    expect(ok.json).toEqual({ ok: true });
   });
 
   it("job cancel and shell routes need tokens; admin token also works for shell routes", async () => {
@@ -110,6 +125,10 @@ describe("hardening (E7, E8, E9)", () => {
     ]) {
       expect(res.headers.get(h), h).toBeTruthy();
     }
+    // Map tiles only (contracts section 0, team approval 2026-10-30); same value as vercel.json.
+    expect(res.headers.get("content-security-policy")).toBe(
+      "default-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+    );
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(res.headers.get("x-powered-by")).toBeNull();
     expect(res.headers.get("access-control-allow-origin")).toBeNull();

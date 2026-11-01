@@ -49,6 +49,10 @@ export function describeError(err: unknown): string {
       return "Service busy, your task is kept; try again.";
     case "unauthorized":
       return "The operator token was not accepted.";
+    case "brand_token_missing":
+      return "Enter your brand access code.";
+    case "brand_token_invalid":
+      return "That brand access code was not accepted.";
     case "input_schema_violation":
     case "intake_rejected":
       return err.message;
@@ -64,6 +68,30 @@ export const S = {
   feedHint: "New tasks appear here. When someone else takes one, it leaves your list.",
   locationOff: "Allow location to see tasks in your city.",
   tooSlow: "Another worker was faster.",
+  // Task detail steps per challenge mode (ADR-19). Gesture copy never names a count or a side.
+  stepsHandwritten: [
+    "Find the product",
+    "Write the code on paper",
+    "Hold it next to the price tag",
+    "Take one photo with the in-app camera",
+  ],
+  stepsGesture: [
+    "Find the product",
+    "Take the task",
+    "Open the camera. Your hand sign is revealed there.",
+    "Take one photo of the price tag with the in-app camera",
+  ],
+  stepsNeutral: [
+    "Find the product",
+    "Take the task",
+    "Take one photo of the price tag with the in-app camera",
+  ],
+  handSignNote: "Your hand sign is revealed when the camera opens.",
+  walletNote: "Payouts are sent in test ADA (tADA) on the Cardano preprod test network.",
+  walletEarningsNote:
+    "Earnings count the photos taken on this phone. The explorer shows everything this address holds.",
+  walletHistoryNote:
+    "Your photos are the last ones taken on this phone; another phone or a cleared browser starts empty.",
   noSecureContext: "Open the secure link to take the photo.",
   noSecureContextHelp:
     "This page is not on a secure connection, so the camera is off. You can read tasks here, but the photo cannot be taken or uploaded.",

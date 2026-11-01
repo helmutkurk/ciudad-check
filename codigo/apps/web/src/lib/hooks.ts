@@ -1,11 +1,67 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { FeedEventSchema, LedgerEventSchema } from "@shelfie/core/browser";
-import type { ClaimLocation, FeedEvent, LedgerEvent, TaskListItem } from "@shelfie/core/browser";
+import type {
+  CatalogResponse,
+  ClaimLocation,
+  FeedEvent,
+  LedgerEvent,
+  TaskListItem,
+} from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
+import type { ApiClient } from "./api.js";
 import { openStream } from "./sse.js";
 import type { StreamStatus } from "./sse.js";
 
 export const POLL_FALLBACK_MS = 3000;
+
+// One catalog request per client instance, shared by every screen that needs store positions.
+// Failures are not cached, so the next mount retries.
+const catalogCache = new WeakMap<ApiClient, Promise<CatalogResponse>>();
+
+function loadCatalogOnce(api: ApiClient): Promise<CatalogResponse> {
+  const cached = catalogCache.get(api);
+  if (cached) return cached;
+  const request = api.catalog().catch((err: unknown) => {
+    catalogCache.delete(api);
+    throw err;
+  });
+  catalogCache.set(api, request);
+  return request;
+}
+
+/** Public catalog (store positions, names, addresses), cached in memory for the page lifetime. */
+export function useCatalog(): {
+  catalog: CatalogResponse | undefined;
+  loading: boolean;
+  error: unknown;
+} {
+  const { api } = useDeps();
+  const [catalog, setCatalog] = useState<CatalogResponse | undefined>(undefined);
+  const [error, setError] = useState<unknown>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    void loadCatalogOnce(api).then(
+      (c) => {
+        if (!alive) return;
+        setCatalog(c);
+        setError(undefined);
+        setLoading(false);
+      },
+      (err: unknown) => {
+        if (!alive) return;
+        setError(err);
+        setLoading(false);
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [api]);
+
+  return { catalog, loading, error };
+}
 export const RECONCILE_OPEN_MS = 15_000;
 const LEAVE_MS = 220;
 

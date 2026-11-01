@@ -9,6 +9,14 @@ export function formatAda(lovelace: string): string {
   return `${lovelaceToAdaString(lovelace)}${NBSP}tADA`;
 }
 
+/** A health wallet balance; "Unknown" when the engine could not read it (never shown as 0). */
+export function formatWalletBalance(wallet: {
+  balanceLovelace: string;
+  unknown?: boolean | undefined;
+}): string {
+  return wallet.unknown === true ? "Unknown" : formatAda(wallet.balanceLovelace);
+}
+
 /** `1a2b...9f` style: first 6 and last 4 characters. */
 export function shortHash(hash: string): string {
   return hash.length <= 14 ? hash : `${hash.slice(0, 6)}...${hash.slice(-4)}`;

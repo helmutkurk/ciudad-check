@@ -1,6 +1,6 @@
 import { createElement } from "react";
 import type { ReactElement } from "react";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import {
   CatalogResponseSchema,
   ClaimResponseSchema,
@@ -26,12 +26,13 @@ export const PAYOUT_ADDRESS = `addr_test1${"q".repeat(60)}`;
 export const TX_HASH = "ab".repeat(32);
 
 // ------------------------------------------------------------------ fixtures
-export const taskFixture = (id = "tsk_01", product = "Example Pale Ale 0.33 l") =>
+export const taskFixture = (id = "tsk_01", product = "Example Pale Ale 0.33 l", storeId = "s1") =>
   TaskListItemSchema.parse({
     id,
     jobId: "job_01",
-    storeName: "Store A",
-    storeAddress: "Street 1, 80331 Munich",
+    storeId,
+    storeName: storeId === "s2" ? "Store B" : storeId === "s1" ? "Store A" : "Unlisted store",
+    storeAddress: storeId === "s2" ? "Street 2, 80333 Munich" : "Street 1, 80331 Munich",
     productName: product,
     payoutAmount: "3000000",
     windowEndsAt: "2026-10-30T10:12:00Z",
@@ -147,8 +148,22 @@ export const catalogFixture = () =>
         id: "munich",
         name: "Munich",
         stores: [
-          { id: "s1", name: "Store A", chain: "Chain X", address: "Street 1, 80331 Munich" },
-          { id: "s2", name: "Store B", chain: "Chain Y", address: "Street 2, 80333 Munich" },
+          {
+            id: "s1",
+            name: "Store A",
+            chain: "Chain X",
+            address: "Street 1, 80331 Munich",
+            lat: 48.1255,
+            lon: 11.6109,
+          },
+          {
+            id: "s2",
+            name: "Store B",
+            chain: "Chain Y",
+            address: "Street 2, 80333 Munich",
+            lat: 48.14,
+            lon: 11.57,
+          },
         ],
         products: [{ ean: "4000000000000", name: "Example Pale Ale 0.33 l" }],
       },
@@ -341,3 +356,10 @@ export function renderWithDeps(ui: ReactElement, deps: Deps) {
 }
 
 export const h = createElement;
+
+/** Passes the /dashboard operator gate: types the token and waits for the sections to load. */
+export async function unlockDashboard(token = "operator-token"): Promise<void> {
+  fireEvent.change(await screen.findByLabelText("Operator token"), { target: { value: token } });
+  fireEvent.click(screen.getByRole("button", { name: "Unlock" }));
+  await screen.findByRole("button", { name: "Overview" });
+}

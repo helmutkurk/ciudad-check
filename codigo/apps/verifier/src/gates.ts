@@ -192,8 +192,14 @@ function matchProduct(
   minBarcodeConfidence: number,
 ): MatchOutcome {
   const digits = barcode?.digits ?? null;
+  // GS1 restricted-circulation prefixes (020-029, 040-049, 200-299) are store-internal numbers
+  // printed on shelf labels, not product GTINs: they say nothing about the product.
+  const restricted = digits !== null && /^(0[24]|2)/.test(digits);
   const trusted =
-    digits !== null && isValidEan13(digits) && (barcode?.confidence ?? 0) >= minBarcodeConfidence;
+    digits !== null &&
+    !restricted &&
+    isValidEan13(digits) &&
+    (barcode?.confidence ?? 0) >= minBarcodeConfidence;
   if (trusted) {
     if (sameGtin(digits, product.ean)) {
       if (eanOverrides) return { ok: true, reason: null, via: "ean", score: 1 };

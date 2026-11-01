@@ -11,6 +11,7 @@ Claude Code discovers project skills under .claude/skills. Codex does not auto-l
 | [web-ui](../../.claude/skills/web-ui/SKILL.md) | D | /w, /dashboard, camera/location, live feed, or M6 | .claude/skills/web-ui/SKILL.md | [path](../../.claude/skills/web-ui/SKILL.md) |
 | [cardano-preprod](../../.claude/skills/cardano-preprod/SKILL.md) | All | Funding, payments, transactions, explorer links, or evidence | .claude/skills/cardano-preprod/SKILL.md | [path](../../.claude/skills/cardano-preprod/SKILL.md) |
 | [security-baseline](../../.claude/skills/security-baseline/SKILL.md) | All | Every role; especially auth, payments, uploads, env, CI, or tunnel | .claude/skills/security-baseline/SKILL.md | [path](../../.claude/skills/security-baseline/SKILL.md) |
+| [tum-hackathon-agent](../../.claude/skills/tum-hackathon-agent/SKILL.md) | All | Organisers' guide: TUM template, Sokosumi CLI Task, optional preprod payment test, TUM Workspace | .claude/skills/tum-hackathon-agent/SKILL.md | [path](../../.claude/skills/tum-hackathon-agent/SKILL.md) |
 
 ## Start of session per role
 
@@ -26,4 +27,4 @@ Process skills live under .claude/skills: [adr](../../.claude/skills/adr/SKILL.m
 
 ## External skills (optional)
 
-The Masumi hackathon SKILL.md, masumi-skills, Cardano Dev Skills, and Sokosumi MCP may be read as documentation. Installing any of them requires the machine owner's security review first; on Helmut's machine, use SkillSpector. Never auto-install. See [the official prompt's tool rules](../../investigacion/cardano/official-agent-prompt.md#4-rules-when-we-use-this-prompt).
+The Masumi hackathon SKILL.md, masumi-skills, Cardano Dev Skills, and Sokosumi MCP may be read as documentation. Installing any of them requires the machine owner's security review first; on Helmut's machine, use SkillSpector. Never auto-install. The Masumi hackathon SKILL.md is installed as `tum-hackathon-agent` (Fernando, 2026-10-30, after reading it in full: Markdown only, no scripts). See [the official prompt's tool rules](../../investigacion/cardano/official-agent-prompt.md#4-rules-when-we-use-this-prompt).

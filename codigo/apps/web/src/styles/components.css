@@ -992,6 +992,437 @@ code,
   margin-top: var(--s-3);
 }
 
+/* ---- worker shell: header, bottom tabs, tab screens (tokens only) */
+.app-worker {
+  display: flex;
+  flex-direction: column;
+}
+.shell-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: calc(var(--s-3) + env(safe-area-inset-top)) max(var(--s-3), env(safe-area-inset-right))
+    var(--s-2) max(var(--s-3), env(safe-area-inset-left));
+}
+.shell-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.tab-body {
+  flex: 1;
+  padding: var(--s-2) max(var(--s-3), env(safe-area-inset-right)) var(--s-5)
+    max(var(--s-3), env(safe-area-inset-left));
+}
+.tab-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.tab-section .section-title {
+  margin: var(--s-4) 0 var(--s-1);
+}
+.page-head {
+  padding: var(--s-3) 0 0;
+}
+.page-head h1 {
+  font-size: 2rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.page-head .subhead {
+  margin-top: var(--s-1);
+}
+.feed-status {
+  display: flex;
+  align-items: center;
+}
+.card-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.quick-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+}
+.quick-link {
+  min-height: 56px;
+  padding: var(--s-2) var(--s-3);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-group);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.quick-link:active {
+  background: var(--surface-2);
+}
+.active-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-group);
+  box-shadow: var(--shadow-card);
+}
+.active-product {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.active-store {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-2);
+}
+.active-meta {
+  margin: var(--s-1) 0 var(--s-2);
+}
+.address-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-group);
+  box-shadow: var(--shadow-card);
+}
+.address-card .body {
+  margin: 0;
+}
+.address-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+.address-line code {
+  font-size: 1rem;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+}
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  font-size: 1.375rem;
+  font-weight: 700;
+}
+.profile-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.profile-actions {
+  margin: var(--s-3) 0 var(--s-4);
+}
+.wallet-history {
+  margin-top: var(--s-2);
+}
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--s-1);
+  margin-top: auto;
+  padding: var(--s-1) max(var(--s-2), env(safe-area-inset-right))
+    calc(var(--s-1) + env(safe-area-inset-bottom)) max(var(--s-2), env(safe-area-inset-left));
+  background: var(--surface);
+  border-top: 1px solid var(--card-line);
+}
+.tab-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-control);
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+}
+.tab-button[aria-current="page"] {
+  color: var(--accent);
+}
+.tab-button[aria-current="page"] .tab-icon {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+}
+@media (min-width: 600px) {
+  .app-worker .tabbar {
+    border-radius: 0 0 36px 36px;
+  }
+}
+
+/* ---- map: ui/map/StoreMap.tsx (worker map tab and dashboard Locations). Light tokens only.
+   No animation: panning and zoom jump, so prefers-reduced-motion needs no extra rule. */
+.map-tab .map-locate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.map-locate-button {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: var(--s-1) var(--s-3);
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-control);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.map-locate-button:disabled {
+  color: var(--text-2);
+  cursor: default;
+}
+.map-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+.map-frame-empty {
+  padding: var(--s-3);
+  border: 1px dashed var(--separator);
+  border-radius: var(--r-group);
+}
+.map-empty {
+  margin: 0;
+  color: var(--text-2);
+}
+.map-viewport {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-group);
+  background: var(--surface-2);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.map-viewport.is-dragging {
+  cursor: grabbing;
+}
+.map-viewport:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.map-tiles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.map-tile {
+  position: absolute;
+  display: block;
+  width: 256px;
+  height: 256px;
+  max-width: none;
+}
+.map-tile.is-failed {
+  visibility: hidden;
+}
+.map-marker {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+}
+.map-marker:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+.map-marker::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin-top: -3px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--text);
+}
+.map-marker-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--s-1);
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+}
+.map-marker-count:empty {
+  min-width: 14px;
+  height: 14px;
+  padding: 0;
+}
+.map-marker.is-selected .map-marker-count {
+  background: var(--accent-fill);
+}
+.map-marker.is-selected::after {
+  background: var(--accent-fill);
+}
+.map-accuracy {
+  position: absolute;
+  z-index: 1;
+  border: 1px solid var(--accent-fill);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.map-me {
+  position: absolute;
+  z-index: 3;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+  pointer-events: none;
+}
+.map-controls {
+  position: absolute;
+  z-index: 4;
+  top: var(--s-2);
+  right: var(--s-2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--r-control);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.map-control {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  font: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.map-control + .map-control {
+  border-top: 1px solid var(--separator);
+}
+.map-control:disabled {
+  color: var(--text-2);
+  opacity: 0.5;
+  cursor: default;
+}
+.map-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-2);
+}
+.map-attribution {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+.map-attribution a {
+  color: inherit;
+}
+.map-notice {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--warning-text);
+}
+.map-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3);
+  background: var(--surface);
+  border: 1px solid var(--card-line);
+  border-radius: var(--r-group);
+  box-shadow: var(--shadow-card);
+}
+.map-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+.map-card-text {
+  min-width: 0;
+}
+.map-card-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.map-card .task-list {
+  margin: 0;
+}
+.task-unmapped {
+  margin: var(--s-1) 0 0;
+}
+
 /* ---- action bar: primary action at thumb reach */
 .action-bar {
   margin: 0 calc(-1 * max(var(--s-3), env(safe-area-inset-left)));

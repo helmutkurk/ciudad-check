@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SubmissionView } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
 import { formatAda } from "../lib/format.js";
@@ -46,6 +46,12 @@ const PAYOUT_WORDS: Record<string, string> = {
   FAILED_FINAL: "Payment delayed. The operator will fix it.",
 };
 
+/** Plain words for a payout state. Missing or unknown states read as pending, never as paid. */
+export function payoutStatusWords(state: string | null | undefined): string {
+  if (!state) return "Payment pending";
+  return PAYOUT_WORDS[state] ?? state;
+}
+
 /** Pure rendering of a submission (W5, W6, W6b). Fixtures drive the tests. */
 export function VerdictView(props: {
   view: SubmissionView;
@@ -90,15 +96,12 @@ export function VerdictView(props: {
           )}
           {props.payoutAmount ? (
             <Row
-              title="Payout"
+              title="Reward"
               trailing={formatAda(props.payoutAmount)}
               {...(oos ? { secondary: "Same as a price photo" } : {})}
             />
           ) : null}
-          <Row
-            title="Status"
-            trailing={payout ? (PAYOUT_WORDS[payout.state] ?? payout.state) : "Payment pending"}
-          />
+          <Row title="Status" trailing={payoutStatusWords(payout?.state)} />
           {payout?.txHash ? (
             <div className="row tx-row">
               <TxLink hash={payout.txHash} explorerUrl={payout.explorerUrl} label="Tx" />
@@ -129,7 +132,7 @@ export function VerdictView(props: {
       </Group>
       <div className="action-bar">
         {attemptsLeft > 0 && props.onRetry ? (
-          <Button onClick={props.onRetry}>Try again (new code)</Button>
+          <Button onClick={props.onRetry}>Try again</Button>
         ) : null}
         <TextButton onClick={props.onNext}>Back to tasks</TextButton>
       </div>
@@ -144,6 +147,8 @@ export function Result(props: {
   queuePosition: number | undefined;
   onNext: () => void;
   onRetry: () => void;
+  /** Reports each polled view so the Wallet tab can show this session's latest payout. */
+  onView?: ((view: SubmissionView) => void) | undefined;
 }) {
   const { api } = useDeps();
   const [finished, setFinished] = useState(false);
@@ -156,6 +161,10 @@ export function Result(props: {
     2000,
     !finished,
   );
+  const { onView } = props;
+  useEffect(() => {
+    if (data) onView?.(data);
+  }, [data, onView]);
 
   if (!data) {
     return (

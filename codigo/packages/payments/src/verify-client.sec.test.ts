@@ -255,7 +255,10 @@ describe("X402VerifyClient state write failures (B-13)", () => {
       },
     });
 
-  it("write-ahead failure: nothing is sent, state_unwritable, no pending mark left", async () => {
+  // chmod on a directory does not block writes on Windows (NTFS ignores it); these run on Linux/CI.
+  const onPosix = it.skipIf(process.platform === "win32");
+
+  onPosix("write-ahead failure: nothing is sent, state_unwritable, no pending mark left", async () => {
     const dir = freshDir();
     chmodSync(dir, 0o500);
     const calls = { n: 0 };
@@ -269,7 +272,7 @@ describe("X402VerifyClient state write failures (B-13)", () => {
     }
   });
 
-  it("receipt write failure after payment still returns the receipt", async () => {
+  onPosix("receipt write failure after payment still returns the receipt", async () => {
     const dir = freshDir();
     const c = make(join(dir, "state.json"), () => {
       chmodSync(dir, 0o500); // the disk "fails" after the payment

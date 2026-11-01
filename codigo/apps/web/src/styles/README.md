@@ -2,7 +2,7 @@
 
 Source of truth: `diseno/ui-design.md`. Tokens in `tokens.css`, rules in `components.css`, React in `../ui/index.tsx`. Existing class names and exports are unchanged.
 
-## Tokens (CSS variables on `:root`, dark values under `prefers-color-scheme`)
+## Tokens (CSS variables on `:root`; one light theme, no dark mode)
 - Existing: `--bg --surface --surface-2 --text --text-2 --separator --accent --accent-fill --success/warning/error-text/-bg --camera-chrome --scrim --shadow-float --s-1..7 --r-control --r-group --r-sheet --r-thumb --font --mono --base-size --ease`.
 - New: `--accent-soft`, `--accent-soft-text` (tinted chip, AA), `--card-line` (1 px card outline), `--shadow-card`, `--shadow-frame`, `--frame-bg` (page behind the phone column), `--skeleton-a/-b`, `--app-width` (430 px worker column).
 

@@ -425,3 +425,13 @@ export function Skeleton(props: { lines?: number }) {
     </div>
   );
 }
+
+/** Approved Shelfie logo (public/shelfie-logo.png) on a cream tile, on the light page. */
+export function Logo(props: { size?: "sm" | "md" }) {
+  const size = props.size ?? "sm";
+  return (
+    <span className={`logo logo-${size}`}>
+      <img src="/shelfie-logo.png" alt="Shelfie" width={256} height={288} decoding="async" />
+    </span>
+  );
+}

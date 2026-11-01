@@ -14,6 +14,7 @@ import type { Ledger } from "@shelfie/evidence";
 import type * as Payments from "@shelfie/payments";
 import { FakePayoutQueue } from "./fakes/payout-queue.js";
 import { FakeVerifyClient } from "./fakes/verify-client.js";
+import { createAddressBalanceProbe } from "./balance.js";
 import type { HealthProbe, PayoutQueueAdmin } from "./seams.js";
 
 /** Compatibility alias; runtime switches now belong to the shared engine contract. */
@@ -159,8 +160,9 @@ export async function wireAdapters(
   const probe: HealthProbe = {
     // TODO(integration): real balances from the payments adapter (PayoutAdapter.balance()).
     payBalanceLovelace: balance,
-    // TODO(integration): W-VBUY balance needs a read-only balance call from @shelfie/payments.
-    vbuyBalanceLovelace: () => Promise.resolve(useFakePayments ? FAKE_BALANCE : "0"),
+    vbuyBalanceLovelace: useFakePayments
+      ? () => Promise.resolve(FAKE_BALANCE)
+      : createAddressBalanceProbe(env),
     payQueueDepth: () => depthFn(),
     verifierUp: () => (useFakeVerifier ? Promise.resolve(true) : verifierUp(env.VERIFIER_URL)),
   };

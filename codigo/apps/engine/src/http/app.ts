@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { AppError, isAppError, systemClock } from "@shelfie/core";
+import { AppError, brandAccounts, isAppError, systemClock } from "@shelfie/core";
 import type { Clock, EngineEnv, FeedEvent, Logger } from "@shelfie/core";
 import express from "express";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
@@ -89,6 +89,15 @@ export function createApp(opts: AppOptions): express.Express {
   const submitLimit = mk(lim.submit);
   const sseMax = opts.sseMaxPerIp ?? 10;
   const ledgerStreams = new Map<string, number>();
+  // ADR-21: one access code per brand; the list is fixed at boot (env), an empty list fails closed.
+  const brands = brandAccounts(env);
+  const brandLock = new FailLock(clock);
+  const brandIdOf = (res: Response): string => {
+    const id: unknown = res.locals["brandId"];
+    if (typeof id !== "string") throw new AppError("brand_token_invalid", "Brand not identified.");
+    return id;
+  };
+  const brandReadLimit = mk(60);
 
   const hosts = new Set([
     "localhost",
@@ -139,20 +148,21 @@ export function createApp(opts: AppOptions): express.Express {
   app.use((req, res, next) => (isSubmission(req) ? next() : smallJson(req, res, next)));
 
   // Orders have their own header-only auth and budget-spending rate limit, including reads.
+  // Each brand sees only its own orders (ADR-21); `res.locals.brandId` comes from requireBrand.
   const ordersRouter = express.Router();
-  ordersRouter.use(mk(60), requireBrand(env.BRAND_TOKEN));
+  ordersRouter.use(brandReadLimit, requireBrand(brands, brandLock));
   ordersRouter.get(
     "/",
     h((_req, res) => {
       if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
-      res.json(opts.orders.list());
+      res.json(opts.orders.list(brandIdOf(res)));
     }),
   );
   ordersRouter.get(
     "/:orderId",
     h((req, res) => {
       if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
-      res.json(opts.orders.get(param(req, "orderId")));
+      res.json(opts.orders.get(param(req, "orderId"), brandIdOf(res)));
     }),
   );
   ordersRouter.post(
@@ -160,11 +170,41 @@ export function createApp(opts: AppOptions): express.Express {
     mk(6),
     h(async (req, res) => {
       if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
-      const order = await opts.orders.create(req.body, req.get("Idempotency-Key"));
+      const order = await opts.orders.create(req.body, req.get("Idempotency-Key"), brandIdOf(res));
       res.status(201).json(order);
     }),
   );
   app.use("/api/orders", ordersRouter);
+
+  // ADR-21: the brand's own profile (name, preprod wallet, caps). Never the access code.
+  const brandRouter = express.Router();
+  brandRouter.use(brandReadLimit, requireBrand(brands, brandLock));
+  brandRouter.get(
+    "/me",
+    h((_req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      const id = brandIdOf(res);
+      const brand = brands.find((b) => b.id === id);
+      if (!brand) throw new AppError("brand_token_invalid", "Brand access code was not accepted.");
+      res.json(opts.orders.profile(brand));
+    }),
+  );
+  // Spend, check counts and on-chain transactions of the calling brand's own orders only.
+  brandRouter.get(
+    "/summary",
+    h((_req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      res.json(opts.orders.summary(brandIdOf(res)));
+    }),
+  );
+  brandRouter.get(
+    "/transactions",
+    h((_req, res) => {
+      if (!opts.orders) throw new AppError("sokosumi_unavailable", "Orders unavailable.");
+      res.json(opts.orders.transactions(brandIdOf(res)));
+    }),
+  );
+  app.use("/api/brand", brandRouter);
 
   // ---------------------------------------------------------------- public reads
   app.get(
@@ -330,6 +370,11 @@ export function createApp(opts: AppOptions): express.Express {
   // ---------------------------------------------------------------- admin: one router, auth applied once
   const admin = express.Router();
   admin.use(adminOnly);
+  // Operator gate: the dashboard checks the token here before it shows any operator view.
+  admin.get(
+    "/ping",
+    h((_req, res) => res.json({ ok: true })),
+  );
   admin.post(
     "/submissions/:id/override",
     h((req, res) => {

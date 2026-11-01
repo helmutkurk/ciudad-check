@@ -1,5 +1,7 @@
 # ADR-20 implementation and validation (Codex for Helmut, 2026-10-30)
 
+> Historical record (2026-10-30). Superseded: the real Sokosumi adapter is implemented (`RealSokosumiClient`, see [verified.md](verified.md) A-25 and "Real adapter status"), brand orders moved to `/b` (ADR-21) and the demo runs in real mode (ADR-22), see [decisions](../../diseno/decisions.md).
+
 Source: Helmut's ADR-20 implementation request and evening amendment: orders use `/dashboard`, no separate `/brand` app. No git writes, commits, pushes, dependencies or real purchases performed.
 
 ## Delivered and blocked

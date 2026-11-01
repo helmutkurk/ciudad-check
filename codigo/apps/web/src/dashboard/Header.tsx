@@ -1,17 +1,12 @@
-import type { ConfigResponse, HealthResponse } from "@shelfie/core/browser";
+import type { ReactNode } from "react";
+import type { HealthResponse } from "@shelfie/core/browser";
 import type { StreamStatus } from "../lib/sse.js";
-import { Segmented } from "../ui/index.js";
-
-export type Section = "requests" | "ledger";
-
-/** Brand header: wordmark, network pill, connection status and the section switch. */
+/** Top strip: engine status and network, with optional actions (the brand app's account). */
 export function Header(props: {
   health: HealthResponse | undefined;
   healthError: unknown;
-  config: ConfigResponse | undefined;
   stream: StreamStatus;
-  section: Section;
-  onSection: (s: Section) => void;
+  actions?: ReactNode;
 }) {
   const { health } = props;
   const state: "ok" | "warn" | "down" = health
@@ -32,27 +27,15 @@ export function Header(props: {
       : "Connecting";
   return (
     <header className="dhead">
-      <div className="dbrand">
-        <span className="dlogo" aria-hidden="true" />
-        <span className="dword">Shelfie</span>
-        <span className="dnet">Cardano preprod</span>
-      </div>
-      <div className="dhead-end">
+      <div className="dhead-status">
         <span className={`dstatus dstatus-${state}`} role="status">
           <span className="dot" aria-hidden="true" />
           {label}
           {props.stream === "reconnecting" ? " · ledger reconnecting" : ""}
         </span>
-        <Segmented<Section>
-          label="Section"
-          value={props.section}
-          onChange={props.onSection}
-          options={[
-            { value: "requests", label: "Requests" },
-            { value: "ledger", label: "Ledger" },
-          ]}
-        />
+        <span className="dnet">Cardano preprod</span>
       </div>
+      {props.actions ? <div className="dhead-actions">{props.actions}</div> : null}
     </header>
   );
 }

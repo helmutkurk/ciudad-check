@@ -11,8 +11,9 @@ import { BridgeError, WithheldError } from "./errors.js";
  * @typedef {{ productEan: string, stores: { id: string }[] }} JobInput  ids only (ADR-17)
  * @typedef {{ kind: "deliver", jobId: string, resultText: string, reportSha256: string }
  *   | { kind: "withhold", jobId: string | null, reason: string, comment: string }} BridgeResult
- * @typedef {{ sokosumiTaskId: string, deadline?: number | Date }} AnswerContext
- *   `deadline` is the starter's submit deadline (epoch ms or Date). verify Friday: its exact shape.
+ * @typedef {{ sokosumiTaskId: string, deadline?: number | Date, escrowTxHash?: string }} AnswerContext
+ *   `deadline` is the starter's submit deadline (epoch ms, the payment's `submitResultTime`);
+ *   `escrowTxHash` the confirmed FundsLocked tx, posted as ESCROW_LOCKED once the job exists.
  * @typedef {{ info: (msg: string, fields?: object) => void, warn: (msg: string, fields?: object) => void }} Logger
  */
 
@@ -79,8 +80,10 @@ export function createBridge(config, deps = {}) {
   async function engine(method, path, body) {
     /** @type {Record<string, string>} */
     const headers = { Accept: "application/json", "X-Shell-Token": config.shellToken };
+    // A hung tunnel connection must not block the worker: the long poll gets its waitSec plus slack.
+    const timeoutMs = (path.includes("/decision?") ? config.decisionPollSec + 15 : 15) * 1000;
     /** @type {RequestInit} */
-    const init = { method, headers };
+    const init = { method, headers, signal: AbortSignal.timeout(timeoutMs) };
     if (body !== undefined) {
       headers["Content-Type"] = "application/json";
       init.body = JSON.stringify(body);
@@ -157,11 +160,14 @@ export function createBridge(config, deps = {}) {
 
   /**
    * Create the engine job from a Sokosumi task. Idempotent: `externalRef` = Sokosumi task id.
+   * With the submit deadline known, `windowSec` is clamped so the window closes before the bridge
+   * stops waiting (deadline minus margin minus 30 s for the last long poll and the hash).
    * @param {unknown} sokosumiInput
    * @param {string} sokosumiTaskId
+   * @param {number | Date} [deadline] submit deadline (epoch ms or Date)
    * @returns {Promise<{ jobId: string, created: boolean }>}
    */
-  async function createJob(sokosumiInput, sokosumiTaskId) {
+  async function createJob(sokosumiInput, sokosumiTaskId, deadline) {
     if (typeof sokosumiTaskId !== "string" || sokosumiTaskId === "") {
       throw new BridgeError("bridge_input", "The Sokosumi task id is required for an idempotent create.");
     }
@@ -178,12 +184,17 @@ export function createBridge(config, deps = {}) {
       body.orderRef = { orderId: value.orderId, storeId: value.storeId };
     }
     if (config.windowSec !== undefined) body.windowSec = config.windowSec;
+    const deadlineMs = deadline instanceof Date ? deadline.getTime() : deadline;
+    if (typeof deadlineMs === "number" && Number.isFinite(deadlineMs)) {
+      const fits = Math.floor((deadlineMs - config.deadlineMarginSec * 1000 - now()) / 1000) - 30;
+      if (body.windowSec === undefined || fits < Number(body.windowSec)) body.windowSec = Math.max(1, fits);
+    }
     const { status, json } = await withRetry(() => engine("POST", "/api/jobs", body));
     const jobId = json?.job?.id;
     if (typeof jobId !== "string") {
       throw new BridgeError("internal", "The engine answer did not contain a job id.", { status: 502 });
     }
-    log.info("job_ready", { jobId, externalRef: sokosumiTaskId, created: status === 201 });
+    log.info("job_ready", { jobId, externalRef: sokosumiTaskId, created: status === 201, windowSec: body.windowSec });
     return { jobId, created: status === 201 };
   }
 
@@ -247,7 +258,11 @@ export function createBridge(config, deps = {}) {
     /** @type {string} */
     let jobId;
     try {
-      ({ jobId } = await createJob(input, ctx.sokosumiTaskId));
+      let created;
+      ({ jobId, created } = await createJob(input, ctx.sokosumiTaskId, ctx.deadline));
+      if (created && ctx.escrowTxHash) {
+        await postSettlementEvent(jobId, { event: "ESCROW_LOCKED", txHash: ctx.escrowTxHash, ref: ctx.sokosumiTaskId });
+      }
     } catch (err) {
       if (err instanceof BridgeError && (err.code === "intake_rejected" || err.code === "input_schema_violation")) {
         // No job, nothing paid to anyone. No hash; the comment tells the buyer why (contracts 1.1a).

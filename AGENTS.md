@@ -12,7 +12,8 @@ Read this first. Claude Code gets it via `CLAUDE.md` (`@AGENTS.md`); Codex reads
 ## Build window
 The core build happens during the hackathon: Fri 2026-10-30 09:00 to Sat 2026-10-31 15:00 (Devfolio deadline), feature freeze Sat 11:00, last paid escrow cycle started by Sat 13:00, code freeze after the final smoke run. Everything before that is docs and config only. Organisers' starter templates are allowed; note each one used in `codigo/docs/verified.md` with its pinned commit.
 
-## Context gate (mandatory, before any change)
+## Context gate (suspended by ADR-0007 until the hackathon ends)
+The Claude hook and the git pre-commit ack check are off (Isabel and Helmut, 2026-10-31). Steps 2-4 below still apply as practice; the security hooks (`guard-bash`, `protect-files`, `prompt-guard`, gitleaks) stay on.
 Applies to every agent (Claude Code, Codex, others) and to humans using one. Before you create, edit, move or delete any file, run a command that writes, or commit:
 1. Run `bash scripts/context-ack.sh --session <id-or-label> --who <isabel|fernando|lorenz|helmut>` (Claude Code: the id is in the SessionStart text and in the hook's block message; other agents: use a label such as `codex`). It prints the context card and records an ack that expires when `AGENTS.md`, `ideas/decision.md` or `diseno/decisions.md` change.
 2. Read the files it lists: `AGENTS.md`, `ideas/decision.md`, `investigacion/cardano/official-agent-prompt.md`, `diseno/README.md` (+ your area's file), `equipo/README.md`, `equipo/components.md`, last 2 entries of `docs/ai-log.md`.

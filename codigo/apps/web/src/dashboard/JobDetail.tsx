@@ -10,7 +10,7 @@ import {
   describeJob,
   entriesForJob,
   jobSentence,
-  jobStatus,
+  jobViewStatus,
   receiptLabel,
   taskStatus,
 } from "./model.js";
@@ -91,7 +91,7 @@ export function JobDetail(props: {
   }
 
   const { title, subtitle } = describeJob(view, props.catalog);
-  const status = jobStatus(view.job.state);
+  const status = jobViewStatus(view);
   const report = view.job.reportMd;
   const oos = view.tasks.some((t) => t.acceptedOutcome === "OUT_OF_STOCK");
   const showOos = oos && status.tone === "success";
@@ -159,20 +159,40 @@ export function JobDetail(props: {
       </ol>
 
       <h3 className="dh3">Tasks</h3>
-      <ul className="tasks">
-        {view.tasks.map((t) => {
-          const s = taskStatus(t.state);
-          return (
-            <li key={t.id}>
-              <span>
-                {t.acceptedOutcome === "OUT_OF_STOCK" ? "Not on the shelf" : "Price photo"}
-              </span>
-              <span className="dsub">Attempts used: {t.attempts}</span>
-              <Pill tone={s.tone}>{s.label}</Pill>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="table-wrap">
+        <table className="dtable">
+          <caption className="sr-only">Tasks in this request</caption>
+          <thead>
+            <tr>
+              <th scope="col">Check</th>
+              <th scope="col">Attempts</th>
+              <th scope="col">State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {view.tasks.length === 0 ? (
+              <tr>
+                <td colSpan={3}>No tasks yet.</td>
+              </tr>
+            ) : (
+              view.tasks.map((t) => {
+                const s = taskStatus(t.state);
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      {t.acceptedOutcome === "OUT_OF_STOCK" ? "Not on the shelf" : "Price photo"}
+                    </td>
+                    <td className="num">{t.attempts}</td>
+                    <td>
+                      <Pill tone={s.tone}>{s.label}</Pill>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <h3 className="dh3">Report</h3>
       {view.decision === "WITHHOLD" ? (

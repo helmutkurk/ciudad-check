@@ -21,7 +21,9 @@ export function Banners(props: {
   const lowBalance =
     health !== undefined &&
     // verify Friday: /api/health has no MIN_WALLET_LOVELACE; only an empty wallet is flagged here.
-    (health.wallets.pay.balanceLovelace === "0" || health.wallets.vbuy.balanceLovelace === "0");
+    (health.wallets.pay.balanceLovelace === "0" ||
+      // an unknown W-VBUY balance (no address configured) is not an empty wallet
+      (health.wallets.vbuy.unknown !== true && health.wallets.vbuy.balanceLovelace === "0"));
   const any =
     (props.healthError !== undefined && !health) ||
     health?.fakes.payments ||

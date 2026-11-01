@@ -180,6 +180,12 @@ describe("G4 product_match", () => {
       "ean_mismatch",
     );
   });
+  it("ignores store-internal (GS1 restricted-circulation) barcodes and falls back to the name", () => {
+    // 2001490250003: checksum-valid in-store number from a shelf tag, not a product GTIN.
+    const r = gateProductMatch(observed({ barcode: { digits: "2001490250003", confidence: 0.95 } }), p, T);
+    expect(r.pass).toBe(true);
+    expect(r.detail?.["via"]).toBe("name");
+  });
   it("ignores low-confidence or checksum-invalid barcodes", () => {
     expect(gateProductMatch(observed({ barcode: { digits: OTHER_EAN, confidence: 0.2 } }), p, T).pass).toBe(true);
     expect(gateProductMatch(observed({ barcode: { digits: "4008400402223", confidence: 0.9 } }), p, T).pass).toBe(true);

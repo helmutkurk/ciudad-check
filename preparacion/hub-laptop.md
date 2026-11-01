@@ -1,5 +1,7 @@
 # Hub laptop: requirements and setup
 
+> 2026-10-31 (ADR-22): engine and verifier run on Helmut's hub behind the Cloudflare tunnel (setup: `scripts/deploy/`); Isabel's Windows laptop runs only the Masumi Payment Service and the Sokosumi worker with the bridge. Sections below that name Isabel as hub operator or the engine serving `/w` and `/dashboard` are pre-hackathon.
+
 Decision (Helmut, 2026-10-30 evening, replaces the 2026-10-29 decision below): **Helmut's laptop is the definitive hub** for the engine, verifier and the Cloudflare tunnel (systemd --user services with auto-update, real mode on api-dev, see `../docs/deploy.md`). The Sokosumi shell worker and the Masumi Payment Service (Postgres) stay on **Isabel's laptop** and talk to the engine at `https://api-dev.shelfieapp.fyi` (later `https://api.shelfieapp.fyi`) with the `SHELL_TOKEN` from Helmut's hub env (handed over in person, never chat/git). Reason: the engine stack already runs and is verified on Helmut's laptop; MPS + Postgres would not fit in its 14 GB next to OBS. Only one machine may run the tunnel and engine at a time.
 
 Earlier decision (Helmut, 2026-10-29): the hub is **Isabel's laptop**. Operator: Isabel (role A). Backup operator: Fernando (role B). Fallback hub: Helmut's laptop (about 14 GB RAM, so only if Isabel's fails the checks). OBS and screen recording run on a different laptop (Helmut's).

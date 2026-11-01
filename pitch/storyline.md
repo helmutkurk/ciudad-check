@@ -19,10 +19,10 @@ An acquaintance of Isabel's father wants to bring a beverage to Germany. He aske
 | Hook | Isabel: "A friend of my father's wants to bring a drink to Germany. He asked Helmut and me to photograph the competitors in a few shops." | One of their real shelf photos (brands blurred, no people) |
 | Tension | He is abroad and cannot check their photos; they would walk for hours; an agency bills every visit, usable or not. An AI can write him a report; it cannot see the shelf. | A blurry or wrong-shelf photo from their own walk |
 | Reveal | "Shelfie: an agent that hires people to look, and pays them only if the photo is true." | Sokosumi task: "the question he asked us": one comparable drink, one Munich store |
-| Proof | Escrow locks the fee. A person in a store gets a one-time code, writes it on paper (or holds a printed card) and photographs the tag with the code in frame; a verifier agent (paid per check over x402) reads price and product; green = payout tx on preprod; an old photo with the wrong code = red, no payment. | Real screens, real tx hash on preprod.cardanoscan.io |
+| Proof | Escrow locks the fee. A person in a store opens the camera, which only then shows a one-time hand sign (2-5 fingers, left or right of the tag, 90 s); they photograph the tag with that hand beside it; a verifier agent (paid per check over x402) reads price, product and sign; green = payout tx on preprod; an old photo without the sign = red, no payment. (Fallback if ADR-19's kill criteria trigger: a printed code card.) | Real screens, real tx hash on preprod.cardanoscan.io |
 | Result | If the photo passes, the report is delivered and escrow settles. If no photo passes in time, the brand is refunded automatically. | Report table, then (or alternatively) refund tx |
-| Vision | "Anything an AI needs to know about the physical world can be bought this way: proof first, payment second." Next: store-owned QR codes for location, other domain packs (deliveries, outages, accessibility). | One line, one slide |
-| Callback | Isabel: "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Closing slide |
+| Vision | "Anything an AI needs to know about the physical world can be bought this way: proof first, payment second." Next: store-owned QR codes for location, other domain packs (deliveries, outages, accessibility). | One line, homepage section below the close |
+| Callback | Isabel: "Next time he doesn't call us. He posts a job. Cardano escrow makes sure nobody pays for a photo that isn't true." | Homepage close section |
 
 Demo order on stage: the cheat first (red, no money), then the true photo (green, payout tx). Run of show: [live-pitch.md](live-pitch.md).
 
@@ -33,7 +33,7 @@ The real request, told by Isabel (word for word in [live-pitch.md](live-pitch.md
 ## The 3 phrases judges must remember
 
 1. **"Paid only when the photo is true."** The product in one breath; ties payment to result.
-2. **"The code in the photo."** The one-time challenge code is the memorable mechanism (freshness proof, visible in the demo).
+2. **"The sign in the photo."** The one-time hand sign (ADR-19) is the memorable mechanism (freshness proof, visible in the demo). In `card-pool` fallback mode it becomes "The code in the photo."
 3. **"Cardano escrow makes sure nobody pays for a photo that isn't true."** The closing line: payment tied to result, with the explorer receipts as proof (replaced "the blockchain pays the bill" after the jury review, `../review/pitch-jury-2026-10-30.md`).
 
 Rule: these three appear verbatim in the video, in the live pitch and in the Devfolio text. Do not paraphrase them.
@@ -54,13 +54,13 @@ Full benchmarks, Shelfie cost build-up, sources and open items: [market-pricing.
 
 Positioning caveat: agencies also fix the shelf, do resets and write long reports. Shelfie replaces only the "is it there and at what price" check. Say so before a judge does.
 
-Units, kept apart on purpose: the EUR figures above are **illustrative product pricing** for the pitch, not what the demo moves. The preprod test amounts are tADA with no market value: verifier fee 1 tADA per check, worker payout 3 tADA per passed task (`diseno/contracts.md`), and the escrowed job fee is a Masumi/Sokosumi quote (about 1 test USDM, verify Friday). Never put a tADA amount next to a EUR amount as if they were equivalent. The verifier cost "well under EUR 0.10" is an estimate of real model cost, not the 1 tADA x402 floor.
+Units, kept apart on purpose: the EUR figures above are **illustrative product pricing** for the pitch, not what the demo moves. The preprod test amounts are tADA with no market value: verifier fee 1 tADA per check, worker payout 3 tADA per passed task (`diseno/contracts.md`), and the escrowed job fee is 1 test USDM (shown as 100 Sokosumi credits; M4 lock row in `../codigo/docs/evidence/tx-hashes.md`). Never put a tADA amount next to a EUR amount as if they were equivalent. The verifier cost "well under EUR 0.10" is an estimate of real model cost, not the 1 tADA x402 floor.
 
 Terminology: the **three payment gates** (photo gate pays the human, job gate settles the escrow, fallback refunds) are not the verifier's internal checks G1-G7 in `diseno/verifier-rules.md`; the photo gate is made of those checks.
 
 One-sentence version for the video: "A verified check costs about twelve euros, a fraction of an agency visit, and you pay only for checks that pass."
 
-## Market (one slide, one sentence)
+## Market (one homepage section, one sentence)
 
 Pain number, TAM, neighbour market and vision ladder, with sources and the framings not to use: [pitch-plan.md](pitch-plan.md) section 4. Rules: say "loss" or "revenue" with every figure, never add markets up, mark forecasts as forecasts, re-check each figure at its source before it goes on a slide.
 
@@ -81,7 +81,7 @@ Keep **Shelfie**. It is short, visual, pun lands in English and German, and the 
 | ShelfProof | Clearer on "proof", but less memorable. Backup. |
 | Ground Truth | Strong concept name, generic and already used widely. Use only as a phrase in the vision beat. |
 
-Taglines (pick one, use it everywhere; full list by audience, German versions and the recommendation in [slogans.md](slogans.md)):
+Taglines (pick one, use it everywhere; full list by audience, German versions and the recommendation in [archive/slogans.md](archive/slogans.md)):
 
 1. **"Paid only when the photo is true."** (recommended, equals phrase 1)
 2. "Eyes on the shelf, paid on proof."

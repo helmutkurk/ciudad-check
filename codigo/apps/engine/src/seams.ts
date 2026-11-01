@@ -20,7 +20,8 @@ export interface PayoutQueueAdmin extends PayoutQueue {
 /** Read-only probes for GET /api/health. */
 export interface HealthProbe {
   payBalanceLovelace(): Promise<string>;
-  vbuyBalanceLovelace(): Promise<string>;
+  /** null = unknown (not configured or lookup failed). */
+  vbuyBalanceLovelace(): Promise<string | null>;
   payQueueDepth(): number;
   verifierUp(): Promise<boolean>;
 }

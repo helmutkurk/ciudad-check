@@ -151,6 +151,14 @@ export function createLogger(opts: LoggerOptions = {}): Logger {
 export function collectSecretValues(env: Readonly<Record<string, unknown>>): string[] {
   const out: string[] = [];
   for (const [k, v] of Object.entries(env)) {
+    // BRAND_ACCOUNTS holds one access code per brand in its fourth field (ADR-21).
+    if (k === "BRAND_ACCOUNTS" && typeof v === "string") {
+      for (const entry of v.split(";")) {
+        const token = entry.split("|")[3]?.trim() ?? "";
+        if (token.length >= 4) out.push(token);
+      }
+      continue;
+    }
     if (SECRET_KEY_PATTERN.test(k) && typeof v === "string" && v.length >= 4) out.push(v);
   }
   return out;

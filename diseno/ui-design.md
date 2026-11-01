@@ -10,34 +10,35 @@ Apple HIG, applied:
 - **Clarity**: one job per screen, one primary action, legible type at small sizes, no decoration that carries no information.
 - **Deference**: the content (task, photo, verdict) is the interface; chrome is thin, translucent only where it helps (navigation bar over scrolling content), never everywhere.
 - **Depth**: layers show hierarchy (page, grouped surface, sheet), done with surface colour and one shadow level, not with gradients or stacked glows.
-- Also: direct manipulation where natural (swipe back, sheet drag handle), consistent placement (back left, primary action bottom), the system's own controls for pickers (native `<select>`, native date), and respect for the user's theme and text-size settings.
+- Also: direct manipulation where natural (swipe back, sheet drag handle), consistent placement (back left, primary action bottom), the system's own controls for pickers (native `<select>`, native date), and respect for the user's text-size settings.
 
 Structure common to both apps (so they feel like one product): navigation bar with large title, grouped lists on a grey page, one primary button per screen, sheets for focused flows, status pills for state, the same copy voice. Worker app is a single column on a phone. Brand app is the same components in a list-detail layout on wide screens and a single column on a phone.
 
 ## 2. Tokens
 
-Define everything as CSS variables on `:root`; components never use literal colours. Dark values apply under `@media (prefers-color-scheme: dark)` (no manual toggle in the MVP, *decide Friday*). Add `color-scheme: light dark` and a matching `<meta name="theme-color">` per scheme. Contrast ratios below were computed (WCAG): text at least 4.5:1, large text and UI at least 3:1.
+Define everything as CSS variables; components never use literal colours. One theme: light, on `:root` in `src/styles/tokens.css`. No dark mode and no theme selector (decision Fernando, 2026-10-30); the app stores no theme preference. Palette follows the approved board in `docs/design-implementation-2026-10-30/` (forest, green, light green, sage, cream). Contrast ratios below were computed (WCAG): text at least 4.5:1, large text and UI at least 3:1.
 
 ### 2.1 Colour
 
-One accent (blue) used only for the primary button, links, selection and focus rings. Green, amber and red are semantic and appear only as status. Everything else is neutral grey. No gradients anywhere.
+Brand: forest `#0B2E1F`, green `#2E7D32`, light green `#6BAF5B`, sage `#CFE7C1`, cream `#F5EFE3`. Green is the one accent (primary button, links, selection, focus ring). Amber and red are semantic and appear only as status. Cream is the page. No gradients anywhere. The logo sits on a cream tile (`--logo-tile`).
 
-| Token | Light | Dark | Use / contrast |
-|---|---|---|---|
-| `--bg` | `#F5F5F7` | `#000000` | page behind grouped lists |
-| `--surface` | `#FFFFFF` | `#1C1C1E` | grouped list, card, sheet |
-| `--surface-2` | `#F0F0F3` | `#2C2C2E` | fields, segmented track, pressed row |
-| `--text` | `#1D1D1F` | `#F5F5F7` | 16.8:1 on surface; 19.3:1 dark |
-| `--text-2` | `#6E6E73` | `#A1A1A6` | secondary text; 5.1:1 on white, 4.7:1 on `--bg`; 6.6:1 dark |
-| `--separator` | `#D2D2D7` | `#38383A` | hairlines (1 px), no borders around cards |
-| `--accent` | `#0066CC` | `#2997FF` | links and text actions; 5.6:1 on white; 5.6:1 dark on surface |
-| `--accent-fill` | `#0066CC` | `#0071E3` | primary button background; white text 5.6:1 and 4.7:1 |
-| `--success-text` / `--success-bg` | `#1B7A31` / `#E6F4EA` | `#6EE787` / `#1B3A24` | pill; 4.8:1, 8.0:1 |
-| `--warning-text` / `--warning-bg` | `#8A5300` / `#FFF3D6` | `#FFD479` / `#3D2E0A` | pill; 5.7:1, 9.4:1 |
-| `--error-text` / `--error-bg` | `#B3261E` / `#FCE8E6` | `#FF9C96` / `#4A1F1C` | pill and inline errors; 5.6:1, 7.0:1 |
-| `--camera-chrome` | `#000000` | `#000000` | camera sheet is always black, like the system camera |
+| Token | Value | Use / contrast |
+|---|---|---|
+| `--bg` | `#F5EFE3` | page behind grouped lists; text 12.9:1 |
+| `--surface` | `#FFFFFF` | grouped list, card, sheet; text 14.7:1 |
+| `--surface-2` | `#EDE6D4` | fields, segmented track, pressed row; text 11.8:1 |
+| `--text` | `#0B2E1F` | primary text (see the surface ratios above) |
+| `--text-2` | `#4A5C52` | secondary text; 6.2:1 on `--bg`; 5.7:1 on `--surface-2` |
+| `--separator` | `#DCD3BF` | hairlines (1 px), no borders around cards |
+| `--accent` | `#256A2B` | links and text actions; 5.8:1 on `--bg` |
+| `--accent-fill` | `#2E7D32` | primary button background; white label 5.1:1 |
+| `--success-text` / `--success-bg` | `#1E6B2A` / `#E3F1DA` | pill; 5.6:1 |
+| `--warning-text` / `--warning-bg` | `#7A4A00` / `#FBEBC4` | pill; 6.3:1 |
+| `--error-text` / `--error-bg` | `#B3261E` / `#FCE8E6` | pill and inline errors; 5.6:1 |
+| `--accent-soft` / `--accent-soft-text` | `#CFE7C1` / `#0B2E1F` | tinted chips; 11.1:1 |
+| `--camera-chrome` | `#000000` | camera sheet is always black, like the system camera |
 
-State is never colour alone: every pill has a word, and an icon where it helps. Use `rgba` overlays only for the sheet scrim (`rgba(0,0,0,.4)`).
+State is never colour alone: every pill has a word, and an icon where it helps. Use `rgba` overlays only for the sheet scrim (`rgba(11,46,31,.4)`).
 
 ### 2.2 Type
 
@@ -61,7 +62,7 @@ Body text never smaller than 15 px on phones; honour the user's font size (use `
 - **8-pt scale**: 4, 8, 16, 24, 32, 48, 64 (`--s-1` to `--s-7`); 4 only for tight icon gaps. Page gutter 16 px on phones, 24 px on tablets, content max width 640 px on the worker app and 1120 px on the brand app.
 - **Tap targets** at least 44 by 44 px; row height 52 (one line) or 64 (two lines); primary button height 52.
 - **Radii by role** (not one radius for all): controls and buttons 12, grouped lists and cards 16, sheets 24 on the top corners, pills and the shutter fully round, thumbnails 8. Photos in the job detail use 12.
-- **Elevation**: three layers only. Page (no shadow), grouped surface (no shadow in light and dark; separation by colour), floating (sheet and toast): one shadow `0 8px 32px rgba(0,0,0,.16)` in light, none in dark (lighter surface instead). No glow, no coloured shadow.
+- **Elevation**: three layers only. Page (no shadow), grouped surface (no shadow; separation by colour), floating (sheet and toast): one shadow `0 8px 32px rgba(0,0,0,.16)`. No glow, no coloured shadow.
 - **Translucency**: only the sticky navigation bar and the camera controls (`backdrop-filter: blur(20px)` over `--surface` at 80 %), with a solid fallback when unsupported or when `prefers-reduced-transparency` is set. Nowhere else.
 
 ## 3. Components
@@ -80,7 +81,7 @@ A small set, written once, used on both apps. Each is a semantic element first (
 | **Destructive** | Text button in `--error-text`; confirm in a small action sheet, never a silent delete. |
 | **Fields** | Native `<select>` and `<input>` styled with `--surface-2`, radius 12, height 48, a visible `<label>` above (Footnote); helper and error text below; error uses text plus icon, not colour alone; `autocomplete`, correct `type`, never block paste (the wallet address field must accept paste). Dropdowns are native selects so phones show their own pickers. |
 | **Sheet** | Native `<dialog>` as a bottom sheet, radius 24 on top, drag handle, scrim, `overscroll-behavior: contain`, focus moved in and returned on close, Escape and the Cancel button close it. The camera flow is a full-height sheet. |
-| **Status pill** | Footnote text, 8 by 4 padding, fully round, tinted background plus dark/light text from the semantic tokens, with a word: "Open", "Claimed", "Verifying", "Verified", "Not on the shelf", "Rejected", "Paid", "Withheld", "Refunded". |
+| **Status pill** | Footnote text, 8 by 4 padding, fully round, tinted background plus text from the semantic tokens, with a word: "Open", "Claimed", "Verifying", "Verified", "Not on the shelf", "Rejected", "Paid", "Withheld", "Refunded". |
 | **Countdown** | Tabular numerals `04:32`, text colour normal; under 60 s switch to `--warning-text`; the remaining time also in `aria-label`. Not a ring or animation. |
 | **Tx link** | Truncated hash (`1a2b...9f`, mono) plus the words "View on explorer", opens in a new tab, `rel="noopener"`, copy button. The link text says the destination. |
 | **Toast** | Floating pill at the bottom (above the primary button), one line, auto-dismiss after 4 s, `role="status"` / `aria-live="polite"`, same vocabulary as the action ("Task taken", "Task given back"). Errors that need a decision are inline, not toasts. |
@@ -127,7 +128,7 @@ Self-check before showing a screen: cover the logo; if it could be any SaaS land
 
 ## 7. Screens
 
-Wireframes with behaviour are in webapps.md (W0 to W6b, C1 to C4). Here is the visual structure per screen. Worker app: phone portrait, single column, 16 px gutters. All screens support dark mode, 130 % text and VoiceOver/TalkBack order = visual order.
+Wireframes with behaviour are in webapps.md (W0 to W6b, C1 to C4). Here is the visual structure per screen. Worker app: phone portrait, single column, 16 px gutters. All screens use the light theme only, 130 % text and VoiceOver/TalkBack order = visual order.
 
 ### 7.1 Worker app
 
@@ -167,6 +168,6 @@ Layout: on widths from 1024 px a sidebar list-detail (left column job list 360 p
 - About 14 React components: `NavBar`, `LargeTitle`, `Group`, `Row`, `Button`, `TextButton`, `Field`, `Select`, `Segmented`, `Pill`, `Sheet` (on `<dialog>`), `Toast`, `EmptyState`, `Banner`, `TxLink`, `Countdown`. Build them in the first two hours against fixtures, before the data is real.
 - Camera: `navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } })`, draw a frame to a canvas, `toBlob("image/jpeg", 0.85)`, resize to the size limit; read `navigator.geolocation.getCurrentPosition` with `{ enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }` at shutter time and send both. Do not render any `<input type="file">` in the worker app (a component test asserts it).
 - Live feed: `EventSource` on `/api/tasks/stream`, reconnect with backoff, 3 s polling fallback; keep the list keyed by task id.
-- Accessibility floor: visible focus ring (`outline: 2px solid var(--accent); outline-offset: 2px`), `touch-action: manipulation`, `aria-live` for results and countdown text, semantic table, form labels, `env(safe-area-inset-*)` on the bottom bar, test with the system font size at 130 % and in dark mode on a real phone.
-- Check before M6: Lighthouse accessibility, one run on iOS Safari and Android Chrome, one in dark mode, one with reduced motion on.
+- Accessibility floor: visible focus ring (`outline: 2px solid var(--accent); outline-offset: 2px`), `touch-action: manipulation`, `aria-live` for results and countdown text, semantic table, form labels, `env(safe-area-inset-*)` on the bottom bar, test with the system font size at 130 % on a real phone.
+- Check before M6: Lighthouse accessibility, one run on iOS Safari and Android Chrome, one with reduced motion on.
 - Not decided here: app icon and name lockup (text-only "Shelfie" in the nav bar is enough), screenshot style for the pitch, and whether the pitch slides adopt these tokens (they do not have to).

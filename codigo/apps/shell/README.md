@@ -61,7 +61,15 @@ Everything about the starter below comes from `investigacion/cardano/masumi-runb
 9. Against the engine on fakes first: `FAKE_PAYMENTS=1`, `VERIFIER_PAYMENT=off`, `VERIFIER_MODE=stub`, engine on `127.0.0.1:4000`, `SHELL_TOKEN` equal on both sides.
 
 ## Timing
-`JOB_WINDOW_SEC` must close at least 8 minutes before the Masumi submit deadline; the bridge stops waiting at `deadline - SHELL_DEADLINE_MARGIN_SEC` and then withholds (contracts.md section 1.6). The real submit deadline is a Masumi/Sokosumi parameter: verify Friday.
+The starter sets the Masumi submit deadline to payment request + 20 min (`paid-task.mjs`). The bridge stops waiting at `deadline - SHELL_DEADLINE_MARGIN_SEC` (300 s) and then withholds (contracts.md section 1.6). With the deadline known, the bridge clamps the `windowSec` it sends to `min(JOB_WINDOW_SEC, deadline - margin - now - 30 s)`, so a late escrow lock gets a shorter window instead of a window that outlives the bridge. Observed on 2026-10-31: payment request to lock confirmed in MPS 1-2.7 min (the Sokosumi buyer locks Tasks of one order in one tx), so `JOB_WINDOW_SEC=600` normally fits unchanged.
+
+## Worker behaviour (A-25, 2026-10-31)
+- Tasks run in parallel: one in-flight handler per Task id, so a decision long poll no longer blocks other Tasks (before, Tasks queued behind a 10-minute poll).
+- Steps that need no outside wait are chained in one pass (payment request -> purchase event; lock confirmed -> engine job).
+- `model-pending` after a crash or restart is retried for the bridge only (the engine create is idempotent on the Task id); with the deadline passed it becomes `withheld`. The model path keeps the starter's no-retry stop.
+- Terminal local stages: `settled`, `refunded`, `expired` (never locked) and unpaid Tasks with a posted withhold comment are skipped. `withheld` and `awaiting-withdrawal` are observed once a minute.
+- Settlement events to the engine: `ESCROW_LOCKED` (bridge, at job creation), `RESULT_SUBMITTED`, `SETTLED`, `WITHHELD`, `REFUND_OBSERVED` (worker, with the tx hash from MPS).
+- Run exactly one worker per `.local/`: two workers on the same journals race on Sokosumi and MPS writes.
 
 ## Milestones
 M3 hired via marketplace (Fri 13:00, unpaid); M4 paid escrow (Fri 20:00); M5 withheld result and refund. Definition of done: `diseno/repo-layout.md` section 5.

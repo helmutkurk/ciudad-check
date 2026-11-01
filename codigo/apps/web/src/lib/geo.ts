@@ -54,6 +54,21 @@ export async function readCoarseLocation(geo: GeolocationLike | undefined): Prom
   };
 }
 
+/**
+ * Position for the on-device map dot only. The caller keeps it in component state: it is never
+ * sent to the server, never written to storage, and not rounded. Only called after a user gesture.
+ */
+export async function readDevicePosition(
+  geo: GeolocationLike | undefined,
+): Promise<{ lat: number; lon: number; accuracyM: number }> {
+  const p = await read(geo, { enableHighAccuracy: false, maximumAge: 60_000, timeout: 10_000 });
+  return {
+    lat: p.coords.latitude,
+    lon: p.coords.longitude,
+    accuracyM: Math.round(p.coords.accuracy),
+  };
+}
+
 /** Fresh precise fix at the shutter (contracts 1.3: maximumAge 0). */
 export async function readFreshFix(
   geo: GeolocationLike | undefined,

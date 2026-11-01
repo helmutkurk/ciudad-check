@@ -1,10 +1,11 @@
 import { useState } from "react";
 import type { ClaimResponse } from "@shelfie/core/browser";
+import { S } from "../lib/messages.js";
 import { Button, Countdown, Icon, NavBar, TextButton } from "../ui/index.js";
 
 /**
- * W3: the challenge code is the one memorable element; open the camera or report an empty spot.
- * Gesture mode (ADR-19): no code here, the hand sign is revealed only when the camera opens.
+ * W3: the claim screen. Handwritten mode shows the code; gesture mode (ADR-19) shows no sign
+ * until the camera opens, so the server instruction (which could name a count) is not rendered.
  */
 export function Claimed(props: {
   claim: ClaimResponse;
@@ -30,7 +31,7 @@ export function Claimed(props: {
         <section className="code-card" aria-label="Your hand sign">
           <p className="code-label">Hand sign</p>
           <p className="code-instruction" data-testid="gesture-intro">
-            {challenge.instruction}
+            {S.handSignNote}
           </p>
         </section>
       ) : (

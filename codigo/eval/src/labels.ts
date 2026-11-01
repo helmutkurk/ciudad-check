@@ -1,5 +1,12 @@
 import { readFileSync } from "node:fs";
-import { GateNameSchema, GestureChallengeSchema, OutcomeSchema, ReasonCodeSchema } from "@shelfie/core";
+import { isAbsolute } from "node:path";
+import {
+  GateNameSchema,
+  GestureChallengeSchema,
+  GestureSideSchema,
+  OutcomeSchema,
+  ReasonCodeSchema,
+} from "@shelfie/core";
 import { z } from "zod";
 
 // eval/labels.json (verifier-rules.md section 7). Photos live in eval/photos/ (git-ignored).
@@ -25,8 +32,17 @@ export const CaseSchema = z.enum([
 export type EvalCase = z.infer<typeof CaseSchema>;
 
 export const LabelSchema = z.object({
-  /** File name inside the photos folder. */
-  file: z.string().regex(/^[A-Za-z0-9_.-]+$/),
+  /** Photo basename inside photosDir, or an absolute external photo path. */
+  file: z
+    .string()
+    .min(1)
+    .refine(
+      (file) =>
+        !file.includes("\0") &&
+        /\.(jpe?g|png)$/i.test(file) &&
+        (isAbsolute(file) || !/[\\/]/.test(file)),
+      "Expected a JPEG/PNG basename or absolute path",
+    ),
   outcome: OutcomeSchema.default("OBSERVED"),
   case: CaseSchema,
   /** The throwaway challenge code that was written on paper for this photo (code modes). */
@@ -46,7 +62,14 @@ export const LabelSchema = z.object({
   truth: z
     .object({
       code: z.string().nullable().optional(),
-      gesture: GestureChallengeSchema.nullable().optional(),
+      // An observation can show an invalid challenge (e.g. one raised thumb).
+      gesture: z
+        .object({
+          fingers: z.number().int().min(0).max(10),
+          side: GestureSideSchema,
+        })
+        .nullable()
+        .optional(),
       priceValue: z.number().nullable().optional(),
     })
     .default({}),

@@ -78,3 +78,13 @@ describe("createStarterAnswer", () => {
     await assert.rejects(answer("{}", ".local/t-5-session.json"), (e) => e instanceof BridgeError && e.code === "dependency_unavailable");
   });
 });
+
+describe("recovery and escrow pass-through (A-25)", () => {
+  it("is marked idempotent and passes a valid lock tx hash only", async () => {
+    const { answer, runs } = setup(() => ({ kind: "deliver", jobId: "job_1", resultText: "r", reportSha256: "h" }));
+    assert.equal(answer.idempotent, true);
+    await answer("{}", ".local/t1-session.json", 5, { escrowTxHash: "b".repeat(64) });
+    await answer("{}", ".local/t1-session.json", 5, { escrowTxHash: "not-a-hash" });
+    assert.deepEqual(runs.map((r) => r.ctx.escrowTxHash), ["b".repeat(64), undefined]);
+  });
+});

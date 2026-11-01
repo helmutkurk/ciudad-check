@@ -1,6 +1,6 @@
 import type { HealthResponse, LedgerEvent } from "@shelfie/core/browser";
 import type { StreamStatus } from "../lib/sse.js";
-import { formatAda, formatTime } from "../lib/format.js";
+import { formatTime, formatWalletBalance } from "../lib/format.js";
 import { Pill } from "../ui/index.js";
 import type { Tone } from "../ui/index.js";
 import { TxChip } from "./TxChip.js";
@@ -62,15 +62,11 @@ export function LedgerView(props: {
         <div className="tiles" aria-label="Wallets">
           <div className="tile">
             <span className="tile-label">Verification wallet</span>
-            <span className="tile-value">
-              {formatAda(props.health.wallets.vbuy.balanceLovelace)}
-            </span>
+            <span className="tile-value">{formatWalletBalance(props.health.wallets.vbuy)}</span>
           </div>
           <div className="tile">
             <span className="tile-label">Payout wallet</span>
-            <span className="tile-value">
-              {formatAda(props.health.wallets.pay.balanceLovelace)}
-            </span>
+            <span className="tile-value">{formatWalletBalance(props.health.wallets.pay)}</span>
             <span className="dsub">Queue {props.health.wallets.pay.queueDepth ?? 0}</span>
           </div>
         </div>

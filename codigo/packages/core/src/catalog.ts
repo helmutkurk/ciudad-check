@@ -31,7 +31,7 @@ export type CatalogProduct = z.infer<typeof CatalogProductSchema>;
 export const StoresFileSchema = z.array(CatalogStoreSchema);
 export const ProductsFileSchema = z.array(CatalogProductSchema);
 
-/** GET /api/catalog (public): no coordinates, no price ranges. */
+/** GET /api/catalog (public): store positions (public business data), no price ranges. */
 export const CatalogResponseSchema = z.object({
   cities: z.array(
     z.object({
@@ -43,6 +43,8 @@ export const CatalogResponseSchema = z.object({
           name: z.string(),
           chain: z.string(),
           address: z.string(),
+          lat: z.number(),
+          lon: z.number(),
           aliases: z.array(z.string()).optional(),
         }),
       ),

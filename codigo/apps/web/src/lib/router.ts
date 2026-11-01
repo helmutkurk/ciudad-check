@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
-// A tiny router: two apps, no nested routes. Customer routes beyond /dashboard are not in
-// contracts.md, so the dashboard keeps its views in component state.
+// A tiny router: three apps, no nested routes. Customer routes beyond /b are not in
+// contracts.md, so the brand and operator apps keep their views in component state.
 
 function subscribe(listener: () => void): () => void {
   window.addEventListener("popstate", listener);
@@ -22,8 +22,11 @@ export function navigate(to: string): void {
   window.dispatchEvent(new Event("shelfie:navigate"));
 }
 
-export type AppName = "worker" | "dashboard";
+export type AppName = "worker" | "dashboard" | "brand";
 
+/** `/dashboard` is the operator app, `/b` the brand app (ADR-21), everything else the worker app. */
 export function appForPath(path: string): AppName {
-  return path === "/dashboard" || path.startsWith("/dashboard/") ? "dashboard" : "worker";
+  if (path === "/dashboard" || path.startsWith("/dashboard/")) return "dashboard";
+  if (path === "/b" || path.startsWith("/b/")) return "brand";
+  return "worker";
 }

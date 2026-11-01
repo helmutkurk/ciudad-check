@@ -15,12 +15,51 @@ export const ACTIVE_JOB_STATES: readonly JobState[] = [
   "DELIVERABLE",
 ];
 
-export type JobFilter = "all" | "active" | "done";
+/** Counts on the overview cover only this many of the newest requests (GET /api/jobs has no totals). */
+export const JOB_WINDOW = 10;
 
-export function matchesFilter(state: JobState, filter: JobFilter): boolean {
-  if (filter === "all") return true;
-  const active = ACTIVE_JOB_STATES.includes(state);
-  return filter === "active" ? active : !active;
+export type JobFilter = "all" | "active" | "delivered" | "failed" | "timeout";
+
+/**
+ * Active means a decision or settlement is still pending. A test job (`source: "demo"`) has no
+ * escrow, so nobody reports RESULT_SUBMITTED: once DELIVERABLE it is finished, not active.
+ */
+export function isActiveJob(view: Pick<JobView, "job">): boolean {
+  if (view.job.state === "DELIVERABLE" && view.job.source === "demo") return false;
+  return ACTIVE_JOB_STATES.includes(view.job.state);
+}
+
+export type JobOutcome = "active" | "delivered" | "failed" | "timeout";
+
+/**
+ * Finished outcome for the Done filters: delivered (result delivered), failed (photos rejected,
+ * input rejected or cancelled) or timeout (withheld with no rejected photo: nobody delivered one).
+ */
+export function jobOutcome(view: Pick<JobView, "job" | "counts">): JobOutcome {
+  if (isActiveJob(view)) return "active";
+  switch (view.job.state) {
+    case "DELIVERABLE":
+    case "DELIVERED":
+    case "SETTLED":
+      return "delivered";
+    case "WITHHELD":
+    case "REFUNDED":
+      return view.counts.failed > 0 ? "failed" : "timeout";
+    default:
+      return "failed";
+  }
+}
+
+export function matchesFilter(view: Pick<JobView, "job" | "counts">, filter: JobFilter): boolean {
+  return filter === "all" || jobOutcome(view) === filter;
+}
+
+/** Status pill for a job row: a finished test job reads "Delivered (test)". */
+export function jobViewStatus(view: Pick<JobView, "job">): { label: string; tone: Tone } {
+  if (view.job.state === "DELIVERABLE" && view.job.source === "demo") {
+    return { label: "Delivered (test)", tone: "success" };
+  }
+  return jobStatus(view.job.state);
 }
 
 export function jobStatus(state: JobState): { label: string; tone: Tone } {
@@ -81,8 +120,9 @@ export function jobSentence(view: JobView): string {
       return "This request was not accepted.";
     case "CANCELLED":
       return "Cancelled.";
-    case "DECIDING":
     case "DELIVERABLE":
+      return view.job.source === "demo" ? "Delivered (test job, no escrow)." : "Deciding.";
+    case "DECIDING":
       return "Deciding.";
     default:
       if (view.tasks.some((t) => t.state === "SUBMITTED" || t.state === "VERIFYING")) {

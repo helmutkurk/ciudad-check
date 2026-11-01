@@ -52,7 +52,7 @@ describe("verdict rendering", () => {
     expect(screen.getByText("Rejected")).toBeTruthy();
     expect(screen.getByText(/We could not read the code K7Q-4XM/)).toBeTruthy();
     expect(screen.getByText("Attempts left")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Try again (new code)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 
   it("VERIFYING shows the queue position", () => {

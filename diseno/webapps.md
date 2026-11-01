@@ -7,8 +7,9 @@ Both sides live in one app, `apps/web` (Vite + React, owner D), served by the en
 | Side | Route | Audience | Layout | In contracts.md? |
 |---|---|---|---|---|
 | Worker app | `/w` | People in stores and on the street who take shelf photos (or report an empty shelf spot) | Mobile first, one hand, bright light | Yes (architecture.md component 5) |
-| Customer app | `/dashboard` | Whoever needs the data and watches the job | Desktop and stage layout, readable on a phone | Yes (component 6) |
-| Customer app, extra routes | `/dashboard/new`, `/dashboard/jobs/:id`, `/dashboard/jobs/:id/report`, `/dashboard/ledger`, `/dashboard/entry-brief` | Same | Same | **Proposed, not in contracts yet** |
+| Brand app | `/b` | A brand that orders shelf checks: Overview, Orders, Profile; sign in with the brand access code (ADR-21) | Desktop layout, readable on a phone | Yes (orders, `GET /api/brand/me`, `/api/brand/summary` and `/api/brand/transactions` in contracts.md) |
+| Operator dashboard | `/dashboard` | Operators: requests, locations, ledger, tools; behind the operator token gate (ADR-21) | Desktop and stage layout | Yes (component 6; `GET /api/admin/ping` in contracts.md) |
+| Extra routes (proposed) | `/dashboard/jobs/:id`, `/dashboard/jobs/:id/report`, `/dashboard/ledger`, `/dashboard/entry-brief` | Operator | Same | **Proposed, not in contracts yet** |
 
 MVP vs later is summarised in section 6. The market-entry brief (section 4.3) is roadmap; the MVP builds only the shelf-check job.
 
@@ -236,15 +237,15 @@ Out-of-stock failure uses W5 with the O-gate messages (verifier-rules.md section
 
 ### 3.2 Journey
 
-1. Open `/dashboard`, enter the brand access code (tab memory only), select a product and several stores from the Munich catalog, optionally filtering stores by chain. No free-text order fields and no file inputs.
+1. Open `/b`, sign in with the brand access code (tab memory only), select a product and several stores from the Munich catalog, optionally filtering stores by chain. No free-text order fields and no file inputs.
 2. Place `POST /api/orders`. Intake runs for every store before any Sokosumi call. Shelfie buys one Task per store with its own account and bounded credits (ADR-20, amended Helmut 2026-10-30).
-3. Watch the order's per-store statuses through authenticated `GET /api/orders` and `GET /api/orders/{id}` (3 s polling). A pending Task has no engine job until the shell picks it up; the fake client creates it immediately through the same `Engine.createJob` path.
+3. Watch the order's per-store statuses through authenticated `GET /api/orders` and `GET /api/orders/{id}` (3 s polling). The order form shows the credit ceiling per store and for the order, the latest recorded price and the escrow refund rule (B-17); each store row shows its outcome (passed with the photo price, failed with reason, timed out, refunded) and links to the timeline and report; Overview and Profile show credits paid/refunded and check counts (`GET /api/brand/summary`), Orders lists the brand's own on-chain transactions (`GET /api/brand/transactions`), all hashes linked to the preprod explorer. The brand wallet balance is not shown (informational address, ADR-21). A pending Task has no engine job until the shell picks it up; the fake client creates it immediately through the same `Engine.createJob` path.
 4. Open a linked job for its existing timeline, payouts, receipts and report. Deliver means a passing price or out-of-stock observation; withhold means no passing observation. Settlement/refund is shown only when observed.
 5. Operator-only demo job and override stay in a collapsed **Operator** section, gated by the operator token. Stage mode hides that section.
 
 ### 3.3 Screens
 
-**C1 New order**: a product dropdown, chain filter and native multi-select of stores from `GET /api/catalog` (including the demo shelf and REWE). Read-only price information when available; unknown price is explicit. The brand access code sits outside the catalog-only form and is never stored in browser storage. Submit sends `{productEan, storeIds}`. After success, the order list shows each store's status and a link to the existing job timeline/report. Fake orders are labelled as rehearsals with no real escrow. The separate `/brand` route is dropped.
+**C1 New order**: a product dropdown, chain filter and native multi-select of stores from `GET /api/catalog` (including the demo shelf and REWE). Read-only price information when available; unknown price is explicit. The brand access code sits outside the catalog-only form and is never stored in browser storage. Submit sends `{productEan, storeIds}`. After success, the order list shows each store's status and a link to the existing job timeline/report. Fake orders are labelled as rehearsals with no real escrow. Brand ordering lives in the brand app at `/b` (ADR-21); the operator dashboard has no order form.
 
 **C2 Job progress with live per-store status**
 ```
@@ -358,7 +359,8 @@ None exist for this flow. Proposed (not in contracts yet): `POST /api/briefs` (c
 
 | Proposed | Purpose | Needs |
 |---|---|---|
-| `/dashboard` | Customer places and follows orders | `X-Brand-Token`; POST/GET `/api/orders`, GET `/api/orders/{id}`; contracts Orders |
+| `/b` | Brand places and follows shelf requests (Overview, Orders, Profile) | `X-Brand-Token` from sign-in; POST/GET `/api/orders`, GET `/api/orders/{id}`, GET `/api/brand/me`, `/api/brand/summary`, `/api/brand/transactions`; contracts Orders |
+| `/dashboard` | Operator views behind the operator token gate | `X-Admin-Token`; `GET /api/admin/ping` as the gate; `/api/jobs`, ledger (no brand order form) |
 | `/dashboard/jobs/:id` | Deep link to one job | none beyond existing GETs |
 | `/dashboard/jobs/:id/report` | Printable report | `reportMd` rendering |
 | `/dashboard/ledger` | Full-screen ledger | existing ledger endpoints |

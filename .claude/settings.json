@@ -52,7 +52,6 @@
       "WebFetch(domain:www.x402.org)"
     ],
     "ask": [
-      
       "Bash(git commit *)",
       "Bash(git pull *)",
       "Bash(git merge *)",
@@ -105,9 +104,6 @@
       "Bash(git push * main)",
       "Bash(git push * main:*)",
       "Bash(git push * HEAD:main)",
-     
-    
-      
       "Bash(git push * master)",
       "Bash(git reset --hard *)",
       "Bash(git config *)",
@@ -152,16 +148,6 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/context-gate.sh",
-            "timeout": 10
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -178,34 +164,6 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh",
             "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-file.sh",
-            "timeout": 60
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/typecheck-on-stop.sh",
-            "timeout": 300
-          },
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tasks-on-stop.sh",
-            "timeout": 15
           }
         ]
       }

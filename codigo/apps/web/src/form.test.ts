@@ -47,6 +47,43 @@ function pickStores(...ids: string[]) {
 const pickProduct = () =>
   fireEvent.change(screen.getByLabelText("Product"), { target: { value: "4000000000000" } });
 
+describe("new order availability", () => {
+  const renderForm = (extra: Record<string, unknown>) => {
+    const { deps } = makeDeps({ routes: {} });
+    renderWithDeps(
+      h(RequestForm, {
+        catalog: catalogFixture(),
+        brandToken: "brand-code",
+        onCreated: () => undefined,
+        enabled: true,
+        maxStores: 5,
+        fake: false,
+        maxCreditsPerTask: 100,
+        ...extra,
+      }),
+      deps,
+    );
+  };
+  it("real mode: no fake notice, order button enabled with product and stores", () => {
+    renderForm({});
+    expect(screen.queryByText(/Fake orders/)).toBeNull();
+    pickProduct();
+    pickStores("s1");
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Place order" }).disabled).toBe(
+      false,
+    );
+  });
+  it("disabled real mode explains the missing settings and blocks the button", () => {
+    renderForm({ enabled: false });
+    expect(screen.getByText(/real Sokosumi settings/)).toBeTruthy();
+    pickProduct();
+    pickStores("s1");
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Place order" }).disabled).toBe(
+      true,
+    );
+  });
+});
+
 describe("new order", () => {
   it("uses catalog dropdowns only; access code is outside the order form; no file inputs", () => {
     setup();
@@ -55,6 +92,32 @@ describe("new order", () => {
     expect(form.querySelectorAll("input,textarea")).toHaveLength(0);
     expect(screen.getByLabelText<HTMLInputElement>("Brand access code").type).toBe("password");
     expect(document.querySelector('input[type="file"]')).toBeNull();
+  });
+  it("brand app: no access code field, and the signed-in token is sent", async () => {
+    const created: string[] = [];
+    const { deps, calls } = makeDeps({ routes: { "POST /api/orders": order() } });
+    renderWithDeps(
+      h(RequestForm, {
+        catalog: catalogFixture(),
+        brandToken: "signed-in-code",
+        title: "New shelf request",
+        onCreated: (o: { orderId: string }) => {
+          created.push(o.orderId);
+        },
+        enabled: true,
+        maxStores: 5,
+        fake: true,
+        maxCreditsPerTask: 100,
+      }),
+      deps,
+    );
+    expect(screen.queryByLabelText("Brand access code")).toBeNull();
+    expect(screen.getByRole("heading", { name: "New shelf request" })).toBeTruthy();
+    pickProduct();
+    pickStores("s1");
+    fireEvent.click(screen.getByRole("button", { name: "Place order" }));
+    await waitFor(() => expect(created).toEqual(["ord_01"]));
+    expect(calls[0]?.headers["X-Brand-Token"]).toBe("signed-in-code");
   });
   it("filters stores by chain, preserves selected stores and requires code/product/store", () => {
     setup({}, "");
@@ -117,7 +180,7 @@ describe("order status", () => {
     );
     expect(screen.getByText("Store A")).toBeTruthy();
     expect(screen.getByText("Store B")).toBeTruthy();
-    expect(screen.getByText("Waiting for Shelfie")).toBeTruthy();
+    expect(screen.getByText("Locking payment in escrow (2-3 min)")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Timeline and report/ }));
     expect(opened).toEqual(["job_01"]);
     expect(screen.getByText(/Fake order/)).toBeTruthy();

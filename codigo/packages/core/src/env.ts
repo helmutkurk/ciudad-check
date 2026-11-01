@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LovelaceSchema, NetworkSchema } from "./common.js";
+import { BrandWalletAddressSchema, LovelaceSchema, NetworkSchema } from "./common.js";
 export { loadEnv } from "./load-env.js";
 export { WebEnvSchema } from "./web-env.js";
 export type { WebEnv } from "./web-env.js";
@@ -87,6 +87,84 @@ export const SharedEnvSchema = withDevTokens(
 );
 export type SharedEnv = z.output<typeof SharedEnvSchema>;
 
+// ---------------------------------------------------------------- Brands (ADR-21)
+/** One brand with its own access code (`X-Brand-Token`). Tokens are secrets. */
+export interface BrandAccount {
+  id: string;
+  name: string;
+  walletAddress: string | null;
+  token: string;
+}
+
+/** Id of the brand that `BRAND_TOKEN` maps to, and of orders written before brandId existed. */
+export const DEMO_BRAND_ID = "demo";
+const DEMO_BRAND_NAME = "Demo brand";
+const BRAND_ID_RE = /^[a-z0-9-]{2,40}$/;
+const BRAND_TOKEN_MIN = 32;
+
+/**
+ * `BRAND_ACCOUNTS`: `id|name|addr_test1...|token` entries separated by `;`. Problems are reported
+ * by entry number and field name only; values are never echoed. Preprod wallets only.
+ */
+export const BrandAccountsSchema = z
+  .string()
+  .max(4096)
+  .transform((raw, ctx) => {
+    const problems: string[] = [];
+    const accounts: BrandAccount[] = [];
+    const entries = raw
+      .split(";")
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0);
+    if (entries.length === 0) problems.push("lists no brand");
+    const ids = new Set<string>();
+    const tokens = new Set<string>();
+    entries.forEach((entry, index) => {
+      const n = index + 1;
+      const fields = entry.split("|").map((f) => f.trim());
+      if (fields.length !== 4) {
+        problems.push(`entry ${n} must have exactly 4 fields separated by |`);
+        return;
+      }
+      const [id = "", name = "", walletAddress = "", token = ""] = fields;
+      if (!BRAND_ID_RE.test(id)) problems.push(`entry ${n}: id must match ${BRAND_ID_RE.source}`);
+      if (id === DEMO_BRAND_ID) problems.push(`entry ${n}: id "${DEMO_BRAND_ID}" is reserved`);
+      if (name.length < 1 || name.length > 60)
+        problems.push(`entry ${n}: name must be 1-60 characters`);
+      const wallet = BrandWalletAddressSchema.safeParse(walletAddress);
+      if (!wallet.success)
+        problems.push(`entry ${n}: walletAddress must be a preprod address (addr_test1...)`);
+      if (token.length < BRAND_TOKEN_MIN || token === "CHANGE_ME")
+        problems.push(`entry ${n}: token must be at least ${BRAND_TOKEN_MIN} characters`);
+      if (ids.has(id)) problems.push(`entry ${n}: duplicate brand id`);
+      if (tokens.has(token)) problems.push(`entry ${n}: duplicate token`);
+      ids.add(id);
+      tokens.add(token);
+      accounts.push({ id, name, walletAddress: wallet.success ? walletAddress : null, token });
+    });
+    if (problems.length > 0) {
+      for (const message of problems) ctx.addIssue({ code: "custom", message });
+      return z.NEVER;
+    }
+    return accounts;
+  });
+
+/**
+ * Brands the engine accepts: `BRAND_ACCOUNTS`, plus the `BRAND_TOKEN` demo brand (no wallet) when
+ * no account already uses that token. Empty list = orders disabled (fails closed).
+ */
+export function brandAccounts(env: {
+  BRAND_TOKEN?: string | undefined;
+  BRAND_ACCOUNTS?: readonly BrandAccount[] | undefined;
+}): BrandAccount[] {
+  const list: BrandAccount[] = [...(env.BRAND_ACCOUNTS ?? [])];
+  const demoToken = env.BRAND_TOKEN;
+  if (demoToken !== undefined && !list.some((b) => b.token === demoToken)) {
+    list.push({ id: DEMO_BRAND_ID, name: DEMO_BRAND_NAME, walletAddress: null, token: demoToken });
+  }
+  return list;
+}
+
 // ---------------------------------------------------------------- Engine (5.2)
 const engineBase = z.object({
   ...sharedEnvShape,
@@ -96,6 +174,7 @@ const engineBase = z.object({
     .min(32)
     .refine((v) => v !== "CHANGE_ME", "placeholder refused")
     .optional(),
+  BRAND_ACCOUNTS: BrandAccountsSchema.optional(),
   SOKOSUMI_CLIENT: z.enum(["fake", "real"]).default("fake"),
   SOKOSUMI_API_URL: z
     .literal("https://api.preprod.sokosumi.com")
@@ -110,6 +189,15 @@ const engineBase = z.object({
     .min(1)
     .max(200)
     .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
+  // Real Task create (A-25, B-16): the coworker the starter polls and the organization slug.
+  SOKOSUMI_COWORKER_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9-]{1,100}$/)
+    .optional(),
+  SOKOSUMI_ORGANIZATION_SLUG: z
+    .string()
+    .regex(/^[a-z0-9-]{1,100}$/)
     .optional(),
   SOKOSUMI_MAX_CREDITS_PER_TASK: z.coerce
     .number()
@@ -162,6 +250,8 @@ const engineBase = z.object({
   STORE_PATH: z.string().default("./data/engine-events.jsonl"),
   LEDGER_PATH: z.string().default("./data/evidence-ledger.jsonl"),
   BLOCKFROST_PROJECT_ID: optStr(),
+  /** Public W-VBUY address for the read-only health balance (never a key). */
+  WALLET_ADDRESS_VBUY: optStr(),
   PAY_MNEMONIC_1: optStr(),
   PAY_MNEMONIC_2: optStr(),
   VBUY_MNEMONIC_1: optStr(),
@@ -176,9 +266,12 @@ export const EngineEnvSchema = withDevTokens(
   refineWith(engineBase, (v, add) => {
     guardPreprod(v, add);
     if (v.SOKOSUMI_CLIENT === "real") {
-      if (!v.BRAND_TOKEN) add("BRAND_TOKEN", "required for real orders");
+      if (!v.BRAND_TOKEN && !v.BRAND_ACCOUNTS)
+        add("BRAND_TOKEN", "BRAND_TOKEN or BRAND_ACCOUNTS required for real orders");
       if (!v.SOKOSUMI_API_TOKEN) add("SOKOSUMI_API_TOKEN", "required for real orders");
-      if (!v.SOKOSUMI_AGENT_ID) add("SOKOSUMI_AGENT_ID", "required for real orders");
+      if (!v.SOKOSUMI_COWORKER_ID) add("SOKOSUMI_COWORKER_ID", "required for real orders");
+      if (!v.SOKOSUMI_ORGANIZATION_SLUG)
+        add("SOKOSUMI_ORGANIZATION_SLUG", "required for real orders");
     }
     if (v.CLAIM_TTL_SEC + v.VERIFY_BUDGET_SEC >= v.JOB_WINDOW_SEC) {
       add("JOB_WINDOW_SEC", "must exceed CLAIM_TTL_SEC + VERIFY_BUDGET_SEC (claim cutoff)");

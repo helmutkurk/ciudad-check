@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { addSeconds, systemClock } from "@shelfie/core";
 import type {
   Clock,
@@ -18,7 +18,7 @@ import { syntheticPhoto } from "./synthetic.js";
 // Runs `evaluate` over labelled photos with whatever Evaluator it is given (stub, replay or a
 // live provider) and compares every verdict with the label. Photos are processed in order, so a
 // `duplicateOf` label sees the earlier photo (and the evaluator's perceptual-hash memory).
-// The runner never uploads anywhere: it calls the evaluator in-process, like the dry endpoint.
+// The evaluator is in-process by default, or an explicitly selected dry HTTP adapter.
 
 export interface EntryResult {
   file: string;
@@ -66,7 +66,7 @@ export interface RunResults {
 export interface RunOptions {
   labels: readonly Label[];
   photosDir: string;
-  evaluator: Evaluator;
+  evaluator: Pick<Evaluator, "evaluate">;
   clock?: Clock;
   synthetic?: boolean;
   /** Replay: stored extraction per file, no model call (offline threshold tuning). */
@@ -90,6 +90,7 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
   const nowMs = opts.nowMs ?? (() => performance.now());
   const shaByFile = new Map<string, string>();
   const results: EntryResult[] = [];
+  const runId = sha256(Buffer.from((opts.clock ?? systemClock).nowIso())).slice(0, 16);
 
   for (const label of opts.labels) {
     const base: Omit<
@@ -109,7 +110,7 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
       priceExact: null,
     };
 
-    const path = join(opts.photosDir, label.file);
+    const path = isAbsolute(label.file) ? label.file : join(opts.photosDir, label.file);
     let bytes: Buffer | null = null;
     if (existsSync(path)) bytes = readFileSync(path);
     else if (opts.synthetic) bytes = await syntheticPhoto(label.file, label.stubScenario);
@@ -127,8 +128,11 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
       if (earlier) previous.push(earlier);
     }
     const claimIssuedAt = BASE_TIME;
+    // Full path hash avoids collisions between long WhatsApp names and directories.
+    // Run namespace prevents the HTTP idempotency cache reusing an earlier eval's verdict.
+    const entryId = `${runId}_${sha256(Buffer.from(label.file)).slice(0, 32)}`;
     const task: VerifyTask = {
-      taskId: `tsk_${label.file.replace(/\W+/g, "_").slice(0, 40)}`,
+      taskId: `tsk_${entryId}`,
       product: label.product,
       store: label.store,
       expectedCode: label.expectedCode,
@@ -147,7 +151,7 @@ export async function runLabels(opts: RunOptions): Promise<EntryResult[]> {
     };
     const ctx: VerifyContext = {
       packId: "shelf-check",
-      submissionId: `sub_${label.file.replace(/\W+/g, "_").slice(0, 40)}`,
+      submissionId: `sub_${entryId}`,
       previousImageSha256: previous,
     };
 

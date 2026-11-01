@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { CatalogResponse, JobView } from "@shelfie/core/browser";
 import { formatTime } from "../lib/format.js";
 import { EmptyState, Pill, Segmented, TextButton } from "../ui/index.js";
-import { describeJob, jobStatus, matchesFilter } from "./model.js";
+import { describeJob, jobViewStatus, matchesFilter } from "./model.js";
 import type { JobFilter } from "./model.js";
 import { Progress } from "./Progress.js";
 import { relativeTime, useNow } from "./time.js";
@@ -13,11 +13,12 @@ export function JobList(props: {
   catalog: CatalogResponse | undefined;
   selectedId: string | null;
   onOpen: (id: string) => void;
-  onNew: () => void;
+  /** Absent on the operator dashboard, where requests are not placed from this list. */
+  onNew?: (() => void) | undefined;
 }) {
   const [filter, setFilter] = useState<JobFilter>("all");
   const now = useNow();
-  const jobs = (props.jobs ?? []).filter((j) => matchesFilter(j.job.state, filter));
+  const jobs = (props.jobs ?? []).filter((j) => matchesFilter(j, filter));
   return (
     <section className="dcard dlist" aria-label="Requests">
       <div className="dcard-head">
@@ -29,20 +30,28 @@ export function JobList(props: {
           options={[
             { value: "all", label: "All" },
             { value: "active", label: "Active" },
-            { value: "done", label: "Done" },
+            { value: "delivered", label: "Delivered" },
+            { value: "failed", label: "Failed" },
+            { value: "timeout", label: "Timed out" },
           ]}
         />
       </div>
       {jobs.length === 0 ? (
         <EmptyState
-          text="No requests yet. Create one to see it here."
-          action={<TextButton onClick={props.onNew}>New order</TextButton>}
+          text={
+            filter === "all"
+              ? "No requests yet. Create one to see it here."
+              : "No requests match this filter."
+          }
+          action={
+            props.onNew ? <TextButton onClick={props.onNew}>New order</TextButton> : undefined
+          }
         />
       ) : (
         <ul className="jlist">
           {jobs.map((view) => {
             const { title, subtitle } = describeJob(view, props.catalog);
-            const status = jobStatus(view.job.state);
+            const status = jobViewStatus(view);
             const selected = props.selectedId === view.job.id;
             return (
               <li key={view.job.id}>

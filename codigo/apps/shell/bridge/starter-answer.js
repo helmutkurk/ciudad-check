@@ -35,17 +35,25 @@ export function createStarterAnswer(bridge, deps = {}) {
    * @param {unknown} input Sokosumi task description (JSON with catalog ids)
    * @param {string} journal starter session journal path
    * @param {number} [deadline] submit deadline in epoch ms (paid paths only)
+   * @param {{ escrowTxHash?: string }} [extra] confirmed lock tx (paid path)
    * @returns {Promise<string>}
    */
-  return async function answer(input, journal, deadline) {
+  async function answer(input, journal, deadline, extra = {}) {
     const sokosumiTaskId = taskIdFromJournal(journal);
     writeJournal(journal, JSON.stringify({ via: "shelfie-bridge", phase: "sending", sokosumiTaskId }));
-    const result = await bridge.run(input, { sokosumiTaskId, deadline: Number.isFinite(deadline) ? deadline : undefined });
+    /** @type {{ sokosumiTaskId: string, deadline?: number, escrowTxHash?: string }} */
+    const ctx = { sokosumiTaskId, deadline: Number.isFinite(deadline) ? deadline : undefined };
+    if (typeof extra.escrowTxHash === "string" && /^[0-9a-f]{64}$/.test(extra.escrowTxHash)) ctx.escrowTxHash = extra.escrowTxHash;
+    const result = await bridge.run(input, ctx);
     if (result.kind === "deliver") {
       writeJournal(journal, JSON.stringify({ via: "shelfie-bridge", phase: "answered", jobId: result.jobId, reportSha256: result.reportSha256 }));
       return result.resultText;
     }
     writeJournal(journal, JSON.stringify({ via: "shelfie-bridge", phase: "withheld", jobId: result.jobId, reason: result.reason }));
     throw new WithheldError(result.reason, result.comment);
-  };
+  }
+  // The engine create is idempotent on the Task id, so the starter may call this again after a
+  // crash or restart in `model-pending` (a model call is not, so the starter keeps its stop there).
+  answer.idempotent = true;
+  return answer;
 }

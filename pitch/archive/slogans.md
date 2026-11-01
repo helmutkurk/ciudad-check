@@ -7,7 +7,7 @@ All slogan options in one place, sorted by audience, with a recommendation and w
 | Use | Line | Source |
 |---|---|---|
 | Main tagline (deck, Devfolio, video end card) | **Paid only when the photo is true.** | `slides/facts.tex` (`\Tagline`), `devfolio-description.md`, `video-script.md` |
-| Three phrases judges must remember | "Paid only when the photo is true." · "The code in the photo." · "Cardano escrow makes sure nobody pays for a photo that isn't true." | `storyline.md` |
+| Three phrases judges must remember | "Paid only when the photo is true." · "The sign in the photo." · "Cardano escrow makes sure nobody pays for a photo that isn't true." | `storyline.md` |
 | Vision line | "Proof first, payment second." | `storyline.md` |
 
 Changing the main tagline means editing `slides/facts.tex` (one line), `devfolio-description.md`, `video-script.md` scene 11 and the three-phrases block in `storyline.md` at the same time.

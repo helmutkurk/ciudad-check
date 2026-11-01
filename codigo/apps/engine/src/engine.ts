@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   AppError,
   CaptureLocationSchema,
+  brandAccounts,
   ClaimIdSchema,
   ClaimRequestSchema,
   CreateJobRequestSchema,
@@ -219,6 +220,7 @@ export class Engine {
     return {
       id: task.id,
       jobId: task.jobId,
+      storeId: task.spec.storeId,
       storeName: store?.name ?? "",
       storeAddress: store?.address ?? "",
       productName: product?.name ?? "",
@@ -1579,6 +1581,8 @@ export class Engine {
         name: s.name,
         chain: s.chain,
         address: s.address,
+        lat: s.lat,
+        lon: s.lon,
         ...(s.aliases?.length ? { aliases: s.aliases } : {}),
       });
       byCity.set(id, c);
@@ -1588,6 +1592,23 @@ export class Engine {
   }
 
   configView(secureContext: boolean): ConfigResponse {
+    const env = this.env;
+    const brands = brandAccounts(env).length > 0;
+    const verifierMode = env.VERIFY_CLIENT ?? (env.FAKE_PAYMENTS ? "fake" : "real");
+    const fakeReady =
+      env.SOKOSUMI_CLIENT === "fake" &&
+      env.FAKE_PAYMENTS &&
+      verifierMode === "fake" &&
+      !env.EVIDENCE_RUN_LOCKED;
+    // Real orders (ADR-22): everything RealSokosumiClient needs, plus real payments and verifier.
+    const realReady =
+      env.SOKOSUMI_CLIENT === "real" &&
+      Boolean(env.SOKOSUMI_API_URL) &&
+      Boolean(env.SOKOSUMI_API_TOKEN) &&
+      Boolean(env.SOKOSUMI_COWORKER_ID) &&
+      Boolean(env.SOKOSUMI_ORGANIZATION_SLUG) &&
+      !env.FAKE_PAYMENTS &&
+      verifierMode === "real";
     return {
       packId: this.d.pack.config.id,
       ui: this.d.pack.config.ui,
@@ -1598,13 +1619,8 @@ export class Engine {
       demoOverrideEnabled: this.env.ALLOW_DEMO_OVERRIDE,
       orders: {
         fake: this.env.SOKOSUMI_CLIENT === "fake",
-        enabled:
-          Boolean(this.env.BRAND_TOKEN) &&
-          this.env.SOKOSUMI_CLIENT === "fake" &&
-          this.env.FAKE_PAYMENTS &&
-          (this.env.VERIFY_CLIENT ?? "fake") === "fake" &&
-          !this.env.EVIDENCE_RUN_LOCKED,
-        realReady: false,
+        enabled: brands && (fakeReady || realReady),
+        realReady: brands && realReady,
         maxStores: this.env.ORDER_MAX_STORES,
         maxCreditsPerTask: this.env.SOKOSUMI_MAX_CREDITS_PER_TASK,
       },
@@ -1614,7 +1630,8 @@ export class Engine {
   async health(): Promise<HealthResponse> {
     const [pay, vbuy, up] = await Promise.all([
       this.d.probe.payBalanceLovelace().catch(() => "0"),
-      this.d.probe.vbuyBalanceLovelace().catch(() => "0"),
+      // null = balance unknown (no address configured or lookup failed): never reported as empty.
+      this.d.probe.vbuyBalanceLovelace().catch(() => null),
       this.d.probe.verifierUp().catch(() => false),
     ]);
     return {
@@ -1622,7 +1639,7 @@ export class Engine {
       packId: this.d.pack.config.id,
       network: "preprod",
       wallets: {
-        vbuy: { balanceLovelace: vbuy },
+        vbuy: vbuy === null ? { balanceLovelace: "0", unknown: true } : { balanceLovelace: vbuy },
         pay: { balanceLovelace: pay, queueDepth: this.d.probe.payQueueDepth() },
       },
       verifier: up || this.d.fakes.verifier ? "up" : "down",

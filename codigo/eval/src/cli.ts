@@ -2,7 +2,7 @@ import { execute } from "./execute.js";
 
 // Usage: npm run eval -w @shelfie/eval -- [--mode stub|live|replay] [--labels f] [--photos dir]
 //        [--out dir] [--replay results.json] [--synthetic|--no-synthetic]
-//        [--cost-per-check 0.004] [--note text]
+//        [--cost-per-check 0.004] [--note text] [--verifier-url http://127.0.0.1:4199]
 // Stub mode needs no keys. Live mode reads VISION_* from the environment (never printed); the
 // npm script loads codigo/.env first, shell variables win. The mode never comes from .env, so a
 // hub .env with VERIFIER_MODE=live does not turn a plain `npm run eval` into paid model calls.
@@ -23,6 +23,7 @@ const out = await execute({
   mode: modeArg,
   ...(arg("labels") ? { labelsPath: arg("labels") } : {}),
   ...(arg("photos") ? { photosDir: arg("photos") } : {}),
+  ...(arg("verifier-url") ? { verifierUrl: arg("verifier-url") } : {}),
   ...(arg("out") ? { outDir: arg("out") } : {}),
   ...(arg("replay") ? { replayFrom: arg("replay") } : {}),
   ...(flag("synthetic") ? { synthetic: true } : flag("no-synthetic") ? { synthetic: false } : {}),

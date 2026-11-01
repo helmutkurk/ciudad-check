@@ -16,6 +16,7 @@ import { createEvaluator, stubVisionOptions, withStubTask } from "@shelfie/verif
 import type { Evaluator } from "@shelfie/verifier";
 import { StubVisionClient, createVisionClient, enforceSchema } from "@shelfie/vision";
 import { loadLabels } from "./labels.js";
+import { createDryEvaluator } from "./http.js";
 import { computeMetrics, renderMarkdown } from "./report.js";
 import type { Metrics } from "./report.js";
 import { replayMapFrom, runLabels, switchableStub } from "./run.js";
@@ -28,6 +29,8 @@ export interface ExecuteOptions {
   mode: "stub" | "live" | "replay";
   labelsPath?: string;
   photosDir?: string;
+  /** Live mode only: POST to this origin's admin dry endpoint instead of local vision. */
+  verifierUrl?: string;
   outDir?: string;
   /** Use generated stand-in photos for entries without a file. Default: true in stub mode only. */
   synthetic?: boolean;
@@ -58,12 +61,20 @@ export async function execute(opts: ExecuteOptions): Promise<ExecuteOutput> {
   const logger = createLogger({ level: "warn", base: { component: "eval" } });
   const synthetic = opts.synthetic ?? opts.mode === "stub";
 
-  let evaluator: Evaluator;
+  let evaluator: Pick<Evaluator, "evaluate">;
   let beforeEntry: ((l: (typeof labels)[number]) => void) | undefined;
   let provider = "stub";
   const models = new Set<string>();
+  const sourceEnv = opts.env ?? process.env;
+  const verifierUrl = opts.verifierUrl ?? sourceEnv["EVAL_VERIFIER_URL"];
+  if (opts.verifierUrl && opts.mode !== "live") {
+    throw new Error("--verifier-url requires --mode live");
+  }
 
-  if (opts.mode === "stub") {
+  if (opts.mode === "live" && verifierUrl) {
+    evaluator = createDryEvaluator(verifierUrl, sourceEnv["ADMIN_TOKEN"]);
+    provider = "dry HTTP (NOT evidence)";
+  } else if (opts.mode === "stub") {
     const vision = new StubVisionClient(stubVisionOptions());
     evaluator = withStubTask(createEvaluator({ vision, thresholds, logger }));
   } else if (opts.mode === "replay") {
@@ -79,14 +90,23 @@ export async function execute(opts: ExecuteOptions): Promise<ExecuteOutput> {
   } else {
     const source = { ...(opts.env ?? process.env), VERIFIER_MODE: "live", ENABLE_DRY: "true" };
     const env = loadEnv(VerifierEnvSchema, source);
-    const vlogger = createLogger({ level: env.LOG_LEVEL, base: { component: "eval" }, secretValues: collectSecretValues(source) });
+    const vlogger = createLogger({
+      level: env.LOG_LEVEL,
+      base: { component: "eval" },
+      secretValues: collectSecretValues(source),
+    });
     const vision = createVisionClient(env, vlogger, {
       validate: (req, json) =>
         promptOutcome(req.prompt) === "OBSERVED"
           ? enforceSchema(ObservedExtractionSchema, json)
           : enforceSchema(OosExtractionSchema, json),
     });
-    evaluator = createEvaluator({ vision, thresholds, logger: vlogger, visionTimeoutMs: env.VISION_TIMEOUT_MS });
+    evaluator = createEvaluator({
+      vision,
+      thresholds,
+      logger: vlogger,
+      visionTimeoutMs: env.VISION_TIMEOUT_MS,
+    });
     provider = env.VISION_PROVIDER ?? "gemini";
   }
 
@@ -100,7 +120,8 @@ export async function execute(opts: ExecuteOptions): Promise<ExecuteOutput> {
     ...(beforeEntry ? { beforeEntry } : {}),
     ...(opts.onEntry ? { onEntry: opts.onEntry } : {}),
   });
-  for (const e of entries) if (e.actual) models.add(`${e.actual.model.provider}/${e.actual.model.id}`);
+  for (const e of entries)
+    if (e.actual) models.add(`${e.actual.model.provider}/${e.actual.model.id}`);
 
   const results: RunResults = {
     meta: {
@@ -110,7 +131,10 @@ export async function execute(opts: ExecuteOptions): Promise<ExecuteOutput> {
       synthetic: synthetic && entries.some((e) => e.status === "ran"),
       provider,
       models: [...models],
-      thresholds,
+      thresholds:
+        opts.mode === "live" && verifierUrl
+          ? { source: "remote verifier; thresholds not reported by dry endpoint" }
+          : thresholds,
       labelsFile: labelsPath,
       note: opts.note ?? null,
       costPerCheckEur: opts.costPerCheckEur ?? null,

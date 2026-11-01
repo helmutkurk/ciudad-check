@@ -9,9 +9,9 @@ Synthesis of eight advisor passes (market, hook, judges, tools, skeptic, vision,
 | Hook | The real request replaces the fictional persona (Katharina, Isarquell). Isabel tells it in first person. |
 | Customer | "A brand entering a market without a field team: before launch it needs competitor prices and availability in specific stores." One verified photo per product per store. |
 | Market | One spoken line on stage, led by the $6B in-store merchandising spend and EUR 12 vs EUR 50; the three-number slide and the vision ladder are backups. No summed markets, no unsourced Germany figure. |
-| Arc of the demo | Cheat first (red, no money), then the true photo (green), then the x402 fee and payout tx. Fail, then pass, then pay. Jury review: `../review/pitch-jury-2026-10-30.md`. |
+| Arc of the demo | One live photo (green), then the payout tx; the cheat (red, no money) is shown as a screenshot from the morning test while the verifier works (about one minute per check). Script: [director-script.md](director-script.md). Jury review: `../review/pitch-jury-2026-10-30.md`. |
 | Voices | Two main voices (Isabel, Lorenz), Fernando one line on the tx, Helmut runs backup and time. |
-| Slides | Keep Beamer; 6 live slides (hook, four-step flow, live demo, receipts on Cardano, today/next, close), backups after `\appendix`; present with `pdfpc`. |
+| Screen | The story page `/story` (2026-10-31; replaces the homepage idea and the Beamer deck), one key press per beat or section. Order: story beats, how it works, receipts on Cardano, price, market, team, close. The Beamer deck stays as offline backup. |
 | Honesty | Say "live", "earlier run" or "mocked" for every step. State the limits before a judge does. |
 
 ## 2. The hook
@@ -67,7 +67,7 @@ Why making it look bigger than it is backfires: the product claim is "paid only 
 ## 5. Defuse inside the pitch, not in Q&A
 
 1. **Demand is not validated.** "One real request; we have not run brand interviews yet. Today we prove the mechanism."
-2. **Why a blockchain / the verifier is ours.** Name what is on-chain (escrow lock and settle/refund, payout tx, x402 verifier fee) and say "the verifier is a URL the brand can swap".
+2. **Why a blockchain / the verifier is ours.** Name what is on-chain (escrow lock and settle/refund, payout tx, x402 verifier fee) and say "the verifier is a separate paid endpoint; an independent one is just another URL" (a config change today, not a brand setting).
 3. **Location is not proven.** "The hand sign proves the photo is new and made for this task, not where it was taken. Store QR codes are next." Also: "Agencies also fix shelves; we replace only the 'is it there, at what price' check."
 
 Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS spoofing; who the workers are and cold start; Trax, Roamler, BeMyEye exist; what is live vs recorded vs mocked (prepare one honest table on a backup slide); legal: photographing in stores.
@@ -76,13 +76,13 @@ Top Q&A to drill (answers in `qa-prep.md`): why blockchain / why not Stripe; GPS
 
 | Need | Primary | Fallback |
 |---|---|---|
-| Slides | Existing Beamer deck (`slides/`), max 2 editors, others send text; Lorenz builds | Committed `shelfie.pdf` on USB and phone |
-| Presenting | `pdfpc` (presenter view, timer, notes) | `okular -presentation` / `evince -s` |
-| Demo switching | One Chrome window: Sokosumi, verifier, explorer, report; `Ctrl+1..9`; slides on a second workspace; zoom 125%, notifications off | Screenshots in the deck |
-| Phone on the big screen | The web app's own verifier/dashboard view (no cable). For the claim/code moment: `scrcpy` over USB (Android) | iPhone: QuickTime on a Mac; or the phone's screen recording played from the laptop |
+| Screen | Story page `/story`, one key press per beat or section | Offline copy (`bash scripts/story-offline.sh`); then committed `slides/shelfie.pdf` on USB and phone |
+| Presenting | Story page in Chrome tab 1, full screen (F11) | Backup deck: `pdfpc` / `evince -s` |
+| Demo switching | One Chrome window: Sokosumi, verifier, explorer, report; `Ctrl+1..9`; homepage in tab 1; zoom 125%, notifications off | Screenshots in the backup deck |
+| Phone on the big screen | The web app (worker verdict card) and the dashboard job page (verdict rows; no per-check view is built), no cable. For the claim and hand-sign moment: `scrcpy` over USB (Android) | iPhone: QuickTime on a Mac; or the phone's screen recording played from the laptop |
 | Video capture / edit | OBS Studio + Kdenlive, 1080p30, one headset mic, one narrator | CapCut on a Windows laptop |
 | Captions | `whisper video.mp4 --model small --output_format srt`, or Kdenlive speech-to-text | CapCut auto captions |
-| Rehearsal | `pdfpc` timer at 3:00 + a phone stopwatch held by a non-speaker; `/qa` skill for questions | |
+| Rehearsal | Phone timer at 3:00 + a phone stopwatch held by a non-speaker; `/qa` skill for questions | |
 | Network | Phone hotspot on a second device, tested at the venue | Offline kit: PDF, video, step screenshots, tx hashes as text |
 
 Install (Ubuntu; OBS is already there): `sudo apt install pdfpc scrcpy adb kdenlive ffmpeg`. Do not use OBS scenes live; it adds a failure point.
@@ -94,7 +94,7 @@ Install (Ubuntu; OBS is already there): `sudo apt install pdfpc scrcpy adb kdenl
 | 1 | 0:00-0:12 | Real store, hands only, photographing a drinks tag | The request (short form of the hook) |
 | 2 | 0:12-0:24 | Quick cuts: aisles, a blurry photo, a gallery of 40 photos | "Hours of walking, photos nobody can verify, and an agency bills every visit, usable or not." |
 | 3 | 0:24-0:32 | Text card | "An AI can write a report about a shelf. It cannot see it." |
-| 4-9 | 0:32-2:15 | Sokosumi job and lock tx; cheat red; claim, code, photo, green; payout tx; report and refund | As in `video-script.md` shots 4-10 |
+| 4-9 | 0:32-2:15 | Sokosumi job and lock tx; cheat red; claim, hand sign, photo, green; payout tx; report and refund | As in `video-script.md` shots 4-10 |
 | 10 | 2:15-2:28 | Isabel's real photo, then title card | Callback + tagline |
 
 Rules: store footage is story only, never shown as a demo verification. Ask the store manager; shelves only, no people, staff, screens or receipts. Every earlier-run clip carries "recorded earlier". Minimum viable video: same voice-over over six screenshots, about 1:45.
@@ -105,11 +105,10 @@ Rules: store footage is story only, never shown as a demo verification. Ask the 
 |---|---|---|
 | Fri 15:00 | Story lock: Isabel tells it aloud in 45 s, Lorenz writes it down; real numbers; consent request sent | Isabel, Lorenz |
 | Fri today, daylight | Store B-roll, 30 min, 2 shops | Helmut, Isabel |
-| Fri 18:00 | Slides v1 (5 slides) | Lorenz |
 | Fri 18:30 | Rehearsal 1: paper, timing only, 15 min | all |
 | Fri 21:00 | Rehearsal 2: with the demo on fakes, 15 min; no pitch work after 22:00 | all |
 | Sat 09:30 | Script frozen; rehearsal 3 full dress with the kill-the-demo drill | all |
-| Sat 11:00 | Slides frozen (= feature freeze) | Lorenz |
+| Sat 11:00 | Story page frozen (= feature freeze), offline copy rebuilt | Lorenz |
 | Sat 11:00-13:00 | Final demo take on the printed shelf; last paid escrow cycle started by 13:00 | Lorenz (footage), Fernando |
 | Sat 13:00-14:15 | Edit, captions, export | Helmut |
 | Sat 12:30 | Rehearsal 4 on the real preprod flow | all |
@@ -117,7 +116,7 @@ Rules: store footage is story only, never shown as a demo verification. Ask the 
 
 Rehearsal protocol: timer held by a non-speaker, stop hard at 3:00; kill-the-demo drill (someone says "dead", switch to the recording within 5 s, same words); Q&A drill, 10 questions, answer starts with the limit, then the mitigation.
 
-Stage rules: no "hello, we are team Shelfie"; open with the first sentence of the story, looking at a judge. One idea per slide, at most six words. Pause after the hook and after the red cheat. Non-speakers stand still and face the judges.
+Stage rules: no "hello, we are team Shelfie"; open with the first sentence of the story, looking at a judge. One idea per homepage section, at most six words. Pause after the hook and after the red cheat. Non-speakers stand still and face the judges.
 
 ## 9. Pitch-day checklist (Sat)
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   AppError,
+  BrandProfileSchema,
   CHALLENGE_ALPHABET,
+  brandAccounts,
   ClaimRequestSchema,
   CreateJobRequestSchema,
   DecisionResponseSchema,
@@ -519,5 +521,104 @@ describe("logger", () => {
     expect(
       collectSecretValues({ PAY_MNEMONIC_1: "abcd efgh", PORT: "4000", ADMIN_TOKEN: "tok-12345" }),
     ).toEqual(["abcd efgh", "tok-12345"]);
+  });
+});
+
+describe("brand access codes (ADR-21)", () => {
+  const wallet = (tag: string) => `addr_test1${tag.padEnd(60, "q")}`;
+  const tokenA = "a".repeat(40);
+  const tokenB = "c".repeat(40);
+  const real = {
+    SOKOSUMI_CLIENT: "real",
+    SOKOSUMI_API_TOKEN: "synthetic-api-token",
+    SOKOSUMI_COWORKER_ID: "coworker-1",
+    SOKOSUMI_ORGANIZATION_SLUG: "org-slug",
+    FAKE_PAYMENTS: "1",
+  };
+  const parse = (BRAND_ACCOUNTS: string, extra: Record<string, string> = {}) =>
+    loadEnv(EngineEnvSchema, { FAKE_PAYMENTS: "1", BRAND_ACCOUNTS, ...extra });
+
+  it("parses several brands with trimmed fields and lists them without a demo brand", () => {
+    const env = parse(
+      ` brand-a | Brand A |${wallet("w1")}|${tokenA} ; brand-b|Acme 2|${wallet("w2")}|${tokenB};`,
+    );
+    expect(brandAccounts(env)).toEqual([
+      { id: "brand-a", name: "Brand A", walletAddress: wallet("w1"), token: tokenA },
+      { id: "brand-b", name: "Acme 2", walletAddress: wallet("w2"), token: tokenB },
+    ]);
+  });
+
+  it("maps BRAND_TOKEN to a walletless demo brand, unless an account already uses it", () => {
+    const demoOnly = loadEnv(EngineEnvSchema, { FAKE_PAYMENTS: "1", BRAND_TOKEN: tokenA });
+    expect(brandAccounts(demoOnly)).toEqual([
+      { id: "demo", name: "Demo brand", walletAddress: null, token: tokenA },
+    ]);
+    const shared = parse(`brand-a|Brand A|${wallet("w1")}|${tokenA}`, { BRAND_TOKEN: tokenA });
+    expect(brandAccounts(shared).map((b) => b.id)).toEqual(["brand-a"]);
+    const both = parse(`brand-a|Brand A|${wallet("w1")}|${tokenA}`, { BRAND_TOKEN: tokenB });
+    expect(brandAccounts(both).map((b) => b.id)).toEqual(["brand-a", "demo"]);
+    expect(brandAccounts(loadEnv(EngineEnvSchema, { FAKE_PAYMENTS: "1" }))).toEqual([]);
+  });
+
+  it("refuses mainnet addresses, malformed ids, short or placeholder codes, duplicates and reserved ids", () => {
+    const bad = [
+      `brand-a|Brand A|addr1${"q".repeat(60)}|${tokenA}`,
+      `brand-a|Brand A|addr_test1short|${tokenA}`,
+      `Brand_A|Brand A|${wallet("w1")}|${tokenA}`,
+      `x|Brand A|${wallet("w1")}|${tokenA}`,
+      `brand-a|Brand A|${wallet("w1")}|${"a".repeat(31)}`,
+      `brand-a|Brand A|${wallet("w1")}|CHANGE_ME`,
+      `brand-a|Brand A|${wallet("w1")}`,
+      `brand-a|Brand A|${wallet("w1")}|${tokenA}|extra`,
+      `brand-a|${"n".repeat(61)}|${wallet("w1")}|${tokenA}`,
+      `brand-a|Brand A|${wallet("w1")}|${tokenA};brand-a|Other|${wallet("w2")}|${tokenB}`,
+      `brand-a|Brand A|${wallet("w1")}|${tokenA};brand-b|Other|${wallet("w2")}|${tokenA}`,
+      `demo|Demo|${wallet("w1")}|${tokenA}`,
+      ";",
+    ];
+    for (const value of bad) {
+      let message = "";
+      try {
+        parse(value);
+      } catch (error) {
+        message = error instanceof AppError ? error.message : String(error);
+      }
+      expect(message, value).toContain("BRAND_ACCOUNTS");
+      expect(message).not.toContain(tokenA);
+      expect(message).not.toContain("addr_test1q");
+      expect(message).not.toContain("addr1q");
+    }
+  });
+
+  it("requires BRAND_TOKEN or BRAND_ACCOUNTS for real orders", () => {
+    const missing = EngineEnvSchema.safeParse(real);
+    expect(missing.success).toBe(false);
+    expect(JSON.stringify(missing.error?.issues)).toContain("required for real orders");
+    const ok = loadEnv(EngineEnvSchema, {
+      ...real,
+      BRAND_ACCOUNTS: `brand-a|Brand A|${wallet("w1")}|${tokenA}`,
+    });
+    expect(brandAccounts(ok)).toHaveLength(1);
+  });
+
+  it("collects brand codes as secret values for log redaction", () => {
+    expect(
+      collectSecretValues({ BRAND_ACCOUNTS: `brand-a|Brand A|${wallet("w1")}|${tokenA}` }),
+    ).toEqual([tokenA]);
+  });
+
+  it("validates the brand profile shape", () => {
+    const profile = {
+      brandId: "brand-a",
+      name: "Brand A",
+      walletAddress: wallet("w1"),
+      creditsReservedToday: 0,
+      dailyCreditCap: 500,
+      maxCreditsPerTask: 100,
+      maxStores: 5,
+      fake: true,
+    };
+    expect(BrandProfileSchema.parse(profile)).toEqual(profile);
+    expect(() => BrandProfileSchema.parse({ ...profile, token: tokenA })).toThrow();
   });
 });

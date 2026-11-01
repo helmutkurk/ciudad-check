@@ -5,21 +5,36 @@ import { formatAda, minutesLeft } from "../lib/format.js";
 import { useTaskFeed } from "../lib/hooks.js";
 import { describeError, S } from "../lib/messages.js";
 import { Banner, Button, EmptyState, Icon, Skeleton } from "../ui/index.js";
-import { AppHeader } from "./AppHeader.js";
 
 export type LocationState = "idle" | "reading" | "ok" | "denied" | "unavailable";
 
-/** W1: live task feed. A task leaves the list on `task_closed`; first claim wins. */
+/** Shown instead of the city list until coarse location is allowed. Shared by Home and Tasks. */
+export function LocationPrompt(props: { state: LocationState; onRequest: () => void }) {
+  return (
+    <EmptyState
+      text={
+        props.state === "denied"
+          ? "Location is blocked. Allow it in the browser settings, then try again."
+          : S.locationOff
+      }
+      help="It is only used to check the city (about 1 km)."
+      action={
+        <Button onClick={props.onRequest} disabled={props.state === "reading"}>
+          {props.state === "reading" ? "Getting location…" : "Allow location"}
+        </Button>
+      }
+    />
+  );
+}
+
+/** W1: live task feed (the Tasks tab). A task leaves the list on `task_closed`; first claim wins. */
 export function Feed(props: {
   location: ClaimLocation | undefined;
   locationState: LocationState;
   onRequestLocation: () => void;
   onOpen: (task: TaskListItem) => void;
-  address: string | null;
-  onEditProfile: () => void;
   notice?: string | undefined;
 }) {
-  const { now } = useDeps();
   const feed = useTaskFeed(props.location);
   const locationMissing = props.locationState !== "ok";
 
@@ -27,14 +42,9 @@ export function Feed(props: {
   const showSkeleton = !locationMissing && feed.loading && feed.rows.length === 0;
 
   return (
-    <main className="screen screen-feed">
-      <AppHeader
-        address={props.address}
-        onEditProfile={props.onEditProfile}
-        status={locationMissing ? undefined : feed.status}
-      />
+    <section className="tab-section" aria-labelledby="tasks-title">
       <div className="feed-title">
-        <h1>{S.feedTitle}</h1>
+        <h1 id="tasks-title">{S.feedTitle}</h1>
         {!locationMissing && !showSkeleton ? (
           <p className="subhead">{count === 1 ? "1 open task" : `${count} open tasks`}</p>
         ) : null}
@@ -46,19 +56,7 @@ export function Feed(props: {
       ) : null}
 
       {locationMissing ? (
-        <EmptyState
-          text={
-            props.locationState === "denied"
-              ? "Location is blocked. Allow it in the browser settings, then try again."
-              : S.locationOff
-          }
-          help="It is only used to check the city (about 1 km)."
-          action={
-            <Button onClick={props.onRequestLocation} disabled={props.locationState === "reading"}>
-              {props.locationState === "reading" ? "Getting location…" : "Allow location"}
-            </Button>
-          }
-        />
+        <LocationPrompt state={props.locationState} onRequest={props.onRequestLocation} />
       ) : (
         <>
           {feed.status === "reconnecting" ? (
@@ -89,27 +87,7 @@ export function Feed(props: {
               <ul className="task-list" aria-label="Open tasks">
                 {feed.rows.map(({ task, leaving }) => (
                   <li key={task.id} className={`task-item ${leaving ? "leaving" : ""}`}>
-                    <button
-                      type="button"
-                      className="task-card"
-                      disabled={leaving}
-                      onClick={() => props.onOpen(task)}
-                    >
-                      <span className="task-main">
-                        <span className="task-product">{task.productName}</span>
-                        <span className="task-store">
-                          {task.storeName}, {task.storeAddress}
-                        </span>
-                        <span className="task-meta">
-                          <Icon name="clock" size={16} />
-                          {minutesLeft(task.windowEndsAt, now())} min left
-                        </span>
-                      </span>
-                      <span className="task-reward">
-                        <span className="task-reward-amount">{formatAda(task.payoutAmount)}</span>
-                        <Icon name="chevron" size={18} />
-                      </span>
-                    </button>
+                    <TaskCard task={task} disabled={leaving} onOpen={() => props.onOpen(task)} />
                   </li>
                 ))}
               </ul>
@@ -118,6 +96,30 @@ export function Feed(props: {
           )}
         </>
       )}
-    </main>
+    </section>
+  );
+}
+
+/** One open task as a card: product, store, address, time left, reward in tADA. */
+export function TaskCard(props: { task: TaskListItem; disabled?: boolean; onOpen: () => void }) {
+  const { now } = useDeps();
+  const { task } = props;
+  return (
+    <button type="button" className="task-card" disabled={props.disabled} onClick={props.onOpen}>
+      <span className="task-main">
+        <span className="task-product">{task.productName}</span>
+        <span className="task-store">
+          {task.storeName}, {task.storeAddress}
+        </span>
+        <span className="task-meta">
+          <Icon name="clock" size={16} />
+          {minutesLeft(task.windowEndsAt, now())} min left
+        </span>
+      </span>
+      <span className="task-reward">
+        <span className="task-reward-amount">{formatAda(task.payoutAmount)}</span>
+        <Icon name="chevron" size={18} />
+      </span>
+    </button>
   );
 }

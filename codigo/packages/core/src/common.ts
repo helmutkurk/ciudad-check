@@ -66,3 +66,13 @@ export const PayoutAddressSchema = z
 export const NetworkSchema = z.literal("preprod", {
   error: "NETWORK must be preprod (mainnet is refused)",
 });
+
+/** Brand id (ADR-21): lowercase slug, used in env, orders and the brand profile. */
+export const BrandIdSchema = z
+  .string()
+  .regex(/^[a-z0-9-]{2,40}$/, "brand id must be 2-40 of a-z, 0-9, -");
+
+/** Preprod wallet of a brand (ADR-21, shown in the profile; never a mainnet address). */
+export const BrandWalletAddressSchema = z
+  .string()
+  .regex(/^addr_test1[0-9a-z]{50,120}$/, "must be a preprod address (addr_test1...)");

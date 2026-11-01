@@ -1,26 +1,33 @@
 import { useState } from "react";
-import type { ClaimResponse, TaskListItem } from "@shelfie/core/browser";
+import type { ClaimResponse, ConfigResponse, TaskListItem } from "@shelfie/core/browser";
 import { AppError, WorkerIdSchema, isAppError } from "@shelfie/core/browser";
 import { useDeps } from "../deps.js";
 import { formatAda, minutesLeft } from "../lib/format.js";
 import { GeoError, readCoarseLocation } from "../lib/geo.js";
-import { describeError } from "../lib/messages.js";
+import { describeError, S } from "../lib/messages.js";
 import { loadWorkerId } from "../lib/storage.js";
 import type { Profile } from "../lib/storage.js";
 import { Button, Icon, NavBar } from "../ui/index.js";
 
-const STEPS = [
-  "Find the product",
-  "Write the code on paper",
-  "Hold it next to the price tag",
-  "Take one photo with the in-app camera",
-] as const;
+type ChallengeMode = ConfigResponse["challengeMode"];
+
+/**
+ * Steps shown to the worker. Handwritten copy only in handwritten mode; gesture mode says the
+ * hand sign appears when the camera opens, without a count or a side (ADR-19).
+ */
+export function stepsFor(mode: ChallengeMode | null | undefined): readonly string[] {
+  if (mode === "handwritten") return S.stepsHandwritten;
+  if (mode === "gesture") return S.stepsGesture;
+  return S.stepsNeutral;
+}
 
 /** W2: task detail and "Take this task" (claim). */
 export function TaskDetail(props: {
   task: TaskListItem;
   profile: Profile | null;
   canClaim: boolean; // consent given
+  challengeMode?: ChallengeMode | null;
+  backLabel?: string;
   onBack: () => void;
   onClaimed: (claim: ClaimResponse) => void;
   onTooSlow: () => void;
@@ -63,7 +70,7 @@ export function TaskDetail(props: {
 
   return (
     <main className="screen">
-      <NavBar back={{ label: "Tasks", onClick: props.onBack }} />
+      <NavBar back={{ label: props.backLabel ?? "Tasks", onClick: props.onBack }} />
       <section className="hero-card">
         <h1 className="hero-title">{props.task.productName}</h1>
         <p className="hero-sub">
@@ -86,7 +93,7 @@ export function TaskDetail(props: {
       <section className="steps-card" aria-label="Steps">
         <h2 className="section-title">How it works</h2>
         <ol className="step-list">
-          {STEPS.map((s) => (
+          {stepsFor(props.challengeMode).map((s) => (
             <li key={s}>{s}</li>
           ))}
         </ol>

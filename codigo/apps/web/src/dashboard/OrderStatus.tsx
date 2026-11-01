@@ -2,12 +2,12 @@ import type { CatalogResponse, OrderView } from "@shelfie/core/browser";
 import { Pill } from "../ui/index.js";
 import { jobStatus, taskStatus } from "./model.js";
 
-function statusLabel(status: OrderView["jobs"][number]["status"]) {
+export function statusLabel(status: OrderView["jobs"][number]["status"]) {
   switch (status) {
     case "SUBMITTING":
       return { label: "Placing order", tone: "neutral" as const };
     case "AWAITING_SHELL":
-      return { label: "Waiting for Shelfie", tone: "neutral" as const };
+      return { label: "Locking payment in escrow (2-3 min)", tone: "neutral" as const };
     case "SOKOSUMI_UNAVAILABLE":
       return { label: "Needs reconciliation", tone: "warning" as const };
     case "SETTLED":

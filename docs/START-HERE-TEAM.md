@@ -2,6 +2,27 @@
 
 Shelfie is ready for component work on fakes locally; the shared deployments are moving to real vision and real preprod payments (see below). Real vision on phones, a full real cycle through the deployed engine and Masumi escrow with a store photo still need validation. Use [codigo/README.md](../codigo/README.md) for commands and its complete verify-Friday status table. Canonical acceptance is [diseno/repo-layout.md §5](../diseno/repo-layout.md). Times below are Europe/Berlin targets, not proof that a milestone passed.
 
+## Hackathon day, 2026-10-31 (current)
+
+Older sections below describe the pre-hackathon plan; where they disagree, [ADR-21](../diseno/decisions.md) (brand app) and [ADR-22](../diseno/decisions.md) (demo runtime) win.
+
+| Person | Role | Works on |
+|---|---|---|
+| Helmut | D | `/dashboard`, `/w`, hub engine + verifier, Vercel |
+| Isabel | A | Sokosumi worker + bridge + Masumi Payment Service on her laptop |
+| Fernando | B | `/b` brand app |
+| Lorenz | C | `/story` pitch screen and pitch; `/homepage` is frozen |
+
+Payment flow (real mode, no fakes):
+
+1. The brand opens `/b` and signs in with its access code; there is no separate payment in `/b`.
+2. The order becomes one Sokosumi Task per store (Isabel's preprod account pays the credits).
+3. Each Task locks the Masumi escrow.
+4. The engine pays the verifier per check via x402 and pays the worker in preprod ADA on a pass.
+5. Deliver settles the escrow; withhold refunds it.
+
+Times (Europe/Berlin, Sat): feature freeze 11:00, last paid escrow cycle started by 13:00, Devfolio deadline 15:00.
+
 ## First 30 minutes, every role
 
 | Minutes | Action |

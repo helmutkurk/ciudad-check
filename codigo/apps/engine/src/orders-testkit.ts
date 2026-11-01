@@ -64,3 +64,11 @@ export function orderRig(
   const orders = new Orders({ engine, env, store, clock, ids, client: sokosumi });
   return { env, engine, store, clock, orders, logs, dir };
 }
+
+// ADR-21 brand fixtures (synthetic codes and preprod-shaped addresses only).
+export const BRAND_A = { id: "brand-a", name: "Brand A", token: "a".repeat(40) } as const;
+export const BRAND_B = { id: "brand-b", name: "Brand B", token: "c".repeat(40) } as const;
+/** `BRAND_ACCOUNTS` value for two brands, to pass with `BRAND_TOKEN: ""` (no demo brand). */
+export const TWO_BRANDS_ENV = [BRAND_A, BRAND_B]
+  .map((b) => `${b.id}|${b.name}|addr_test1${"q".repeat(60)}|${b.token}`)
+  .join(";");

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5EFE3" />
+<meta name="referrer" content="no-referrer" />
+<meta name="description" content="Repository, BUSL-1.1 license in plain words, stack, API routes, how to run Shelfie locally on fakes, and the monorepo map." />
+<title>Developers | Shelfie</title>
+<link rel="icon" href="shelfie-logo.webp" />
+<link rel="stylesheet" href="home.css" />
+<link rel="stylesheet" href="doc.css" />
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Shelfie home">
+    <img src="shelfie-logo.webp" alt="" width="36" height="37" />
+    <span>Shelf<b>ie</b></span>
+  </a>
+  <nav class="topnav" aria-label="Site">
+    <a href="market.html">Market</a>
+    <a href="technology.html">Technology</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a href="developers.html" aria-current="page">Developers</a>
+    <a class="btn btn-small" href="/dashboard">Start a check</a>
+  </nav>
+  <details class="menu">
+    <summary>Menu</summary>
+    <a href="market.html">Market</a><a href="technology.html">Technology</a><a href="roadmap.html">Roadmap</a><a href="developers.html" aria-current="page">Developers</a>
+    <a href="/dashboard">Start a check</a>
+  </details>
+</header>
+<main id="main" class="doc">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="index.html">Home</a></li><li aria-current="page">Developers</li></ol></nav>
+    <p class="eyebrow">Developers</p>
+    <h1 class="doc-title">Read the code, run it, check it</h1>
+    <p class="lead">Shelfie is public and source-available. Everything runs locally on fakes with no money.</p>
+    <div class="doc-grid">
+      <aside class="toc">
+        <details open>
+          <summary>On this page</summary>
+          <ol>
+          <li><a href="#repo">Repository</a></li>
+          <li><a href="#license">License</a></li>
+          <li><a href="#stack">Stack</a></li>
+          <li><a href="#api">API</a></li>
+          <li><a href="#run-locally">Run locally</a></li>
+          <li><a href="#packages">Packages</a></li>
+          <li><a href="#tests">Tests</a></li>
+          </ol>
+        </details>
+      </aside>
+      <article class="prose">
+
+<section id="repo">
+  <h2>Repository</h2>
+  <p>The code is public: <a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">https://github.com/helmutkurk/shelfie</a>. Day-to-day work happens on a development branch; <code>main</code> is the release branch.</p>
+  <p>Design documents are in <code>diseno/</code> (architecture, contracts, verifier rules, decisions), decision records in <code>docs/adr/</code>, facts checked during the build in <code>codigo/docs/verified.md</code>, and receipts in <code>codigo/docs/evidence/</code>.</p>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+<section id="license">
+  <h2>License</h2>
+  <p>Shelfie is licensed under the Business Source License 1.1 (BUSL-1.1). In plain words:</p>
+  <ul>
+    <li>You may copy, modify, create derivative works and redistribute the code for non-production use.</li>
+    <li>The Additional Use Grant names non-production purposes, including evaluation, education, research and judging of the TUM Blockchain &amp; AI Hackathon 2026.</li>
+    <li>Production use needs separate permission from the licensors.</li>
+    <li><strong>Change date: 2030-10-31.</strong> On that date, or on the fourth anniversary of a version's first public release if that comes first, the code converts to the <strong>Apache License, Version 2.0</strong>.</li>
+    <li>The license is source-available, not OSI open source, and grants no trademark rights in the name Shelfie or the logo.</li>
+    <li>Third-party dependencies, the organisers' starter and the x402 template code keep their own licenses.</li>
+  </ul>
+  <p>The licensors are the Shelfie team jointly: Helmut Kurk Sierra, Isabel Sagastume, Fernando Mayo and Lorenz Hermannstädter, as named in the license file.</p>
+  <p>Read the full text: <a href="https://github.com/helmutkurk/shelfie/blob/main/LICENSE" rel="noopener noreferrer">LICENSE on GitHub</a>.</p>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+<section id="stack">
+  <h2>Stack</h2>
+  <ul>
+    <li>TypeScript monorepo with npm workspaces, on Node 24.</li>
+    <li>Engine on Express. The verifier is an x402 Express seller.</li>
+    <li>Web app in React, built with Vite.</li>
+    <li>Shell: a fork of the Masumi hackathon starter, in plain JavaScript.</li>
+    <li>Cardano access through <code>@x402/*</code> 2.26.0 and <code>@evolution-sdk/evolution</code> 0.5.14.</li>
+    <li>Vitest, ESLint, Prettier.</li>
+    <li>Vercel for the web app, a Cloudflare tunnel for the engine, Google Gemini for vision.</li>
+  </ul>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+<section id="api">
+  <h2>API</h2>
+  <p>These routes exist in the code today. The engine is not a public API: the order routes need an access code and are rate limited and capped because they spend Shelfie's credits.</p>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Engine and verifier routes"><table><caption>Engine and verifier routes</caption><thead><tr><th scope="col">Route</th><th scope="col">Access</th><th scope="col">Purpose</th></tr></thead><tbody>
+<tr><td><code>GET /api/health</code></td><td>Public</td><td>Health check</td></tr>
+<tr><td><code>GET /api/config</code>, <code>/api/catalog</code>, <code>/api/tasks</code>, <code>/api/jobs</code>, <code>/api/payouts</code>, <code>/api/ledger</code></td><td>Public reads</td><td>Configuration, catalog, tasks, jobs, payouts and the evidence ledger</td></tr>
+<tr><td><code>POST /api/tasks/:taskId/claim</code>, <code>POST /api/tasks/:taskId/submissions</code></td><td>Checker flow</td><td>Claim a task, submit a photo</td></tr>
+<tr><td><code>GET /api/orders</code>, <code>POST /api/orders</code></td><td>Header <code>X-Brand-Token</code>; <code>Idempotency-Key</code> on POST</td><td>Brand orders; rate limited and capped</td></tr>
+<tr><td><code>POST /v1/verify</code> (verifier)</td><td>x402, 1 test ADA</td><td>Verify one photo</td></tr>
+<tr><td><code>GET /health</code> (verifier)</td><td>Public</td><td>Health check</td></tr>
+</tbody></table></div>
+  <p>Routes used only by the shell or by operators (job creation, settlement events, <code>/api/admin/*</code>) are not documented here.</p>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+<section id="run-locally">
+  <h2>Run locally</h2>
+  <p>Local runs use fakes: no money, no network calls to Cardano. From the <code>codigo/</code> folder, with Node 24:</p>
+<pre><code>npm ci
+npm run check</code></pre>
+  <p>Then start the three apps in separate terminals:</p>
+<pre><code>FAKE_PAYMENTS=1 VERIFIER_PAYMENT=off npm run start -w @shelfie/engine
+VERIFIER_PAYMENT=off VERIFIER_MODE=stub npm run start -w @shelfie/verifier
+npm run dev -w @shelfie/web</code></pre>
+  <p>The web app is at <code>http://127.0.0.1:5173/w</code> (checkers) and <code>/dashboard</code> (brands). For a smoke test run <code>npm run hub-up -- --fake</code>, then <code>npm run smoke</code>. Never commit a <code>.env</code> file; the example file contains names only.</p>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+<section id="packages">
+  <h2>Packages</h2>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Monorepo map"><table><caption>Monorepo map</caption><thead><tr><th scope="col">Folder</th><th scope="col">What it holds</th></tr></thead><tbody>
+<tr><td><code>apps/engine</code></td><td>API, state machines, catalog intake, geofence, journal</td></tr>
+<tr><td><code>apps/verifier</code></td><td>x402 seller, gates, dry-run and extract routes</td></tr>
+<tr><td><code>apps/shell</code></td><td>Bridge to the marketplace, a fork of the organisers' starter</td></tr>
+<tr><td><code>apps/web</code></td><td>Checker app, brand dashboard and this site</td></tr>
+<tr><td><code>packages/core</code></td><td>Shared schemas and environment loader</td></tr>
+<tr><td><code>packages/domain-shelf</code></td><td>Catalog loader, prompt constants, reports</td></tr>
+<tr><td><code>packages/payments</code></td><td>x402 buyer, payout adapter and durable queue, fakes</td></tr>
+<tr><td><code>packages/vision</code></td><td>Vision provider adapters</td></tr>
+<tr><td><code>packages/evidence</code></td><td>Hash-chained ledger and explorer helpers</td></tr>
+</tbody></table></div>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+<section id="tests">
+  <h2>Tests</h2>
+  <p>The last recorded run of <code>npm run check</code> (typecheck, lint and tests) on 2026-10-30 reported 435 tests passing, plus 29 in the shell bridge's own suite. This is a recorded number from the build log, not a live badge; rerun the command to confirm it.</p>
+  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+</section>
+      </article>
+    </div>
+  </div>
+  <section class="section section-cta">
+    <div class="wrap cta">
+      <p>See a check run end to end on the Cardano test network.</p>
+      <div class="cta-buttons">
+        <a class="btn btn-big" href="/dashboard">Start a shelf check</a>
+        <a class="btn btn-big btn-ghost" href="/w">Take a check (test ADA)</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="index.html"><img src="shelfie-logo.webp" alt="" width="28" height="29" /><span>Shelf<b>ie</b></span></a>
+      <p>Paid only when the photo is true.</p>
+    </div>
+    <nav aria-label="Product"><h2>Product</h2>
+      <a href="index.html#how">How it works</a><a href="market.html">Market</a><a href="roadmap.html">Roadmap</a></nav>
+    <nav aria-label="Technology"><h2>Technology</h2>
+      <a href="technology.html">Overview</a><a href="technology.html#trust">Why trust</a><a href="technology.html#receipts">Receipts</a></nav>
+    <nav aria-label="Developers"><h2>Developers</h2>
+      <a href="developers.html">Developers</a><a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">GitHub</a><a href="roadmap.html#build">Build log</a></nav>
+    <nav aria-label="Legal"><h2>Legal</h2>
+      <a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a>
+      <a href="https://github.com/helmutkurk/shelfie/blob/main/LICENSE" rel="noopener noreferrer">License (BUSL-1.1)</a></nav>
+  </div>
+  <p class="wrap footer-note">Student project at the TUM Blockchain &amp; AI Hackathon 2026, not an official TUM product. Built on Cardano, Masumi and x402.</p>
+</footer>
+</body>
+</html>

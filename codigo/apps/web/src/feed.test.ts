@@ -24,8 +24,6 @@ function renderFeed(onOpen: (id: string) => void = () => undefined) {
       locationState: "ok",
       onRequestLocation: () => undefined,
       onOpen: (task) => onOpen(task.id),
-      address: null,
-      onEditProfile: () => undefined,
     }),
     deps,
   );
@@ -77,8 +75,6 @@ describe("live task feed", () => {
         locationState: "ok",
         onRequestLocation: () => undefined,
         onOpen: () => undefined,
-        address: null,
-        onEditProfile: () => undefined,
       }),
       deps,
     );
@@ -94,8 +90,6 @@ describe("live task feed", () => {
         locationState: "idle",
         onRequestLocation: () => void asked++,
         onOpen: () => undefined,
-        address: null,
-        onEditProfile: () => undefined,
       }),
       deps,
     );
@@ -152,8 +146,6 @@ describe("feed reconcile while the stream is open", () => {
           locationState: "ok",
           onRequestLocation: () => undefined,
           onOpen: () => undefined,
-          address: null,
-          onEditProfile: () => undefined,
         }),
         deps,
       );

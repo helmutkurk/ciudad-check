@@ -1,5 +1,8 @@
 import {
   AppError,
+  BrandProfileSchema,
+  BrandSummarySchema,
+  BrandTransactionsResponseSchema,
   OrderViewSchema,
   OrderListResponseSchema,
   OverrideResponseSchema,
@@ -28,7 +31,10 @@ import type {
   SubmitPhotoRequest,
   ClaimLocation,
 } from "@shelfie/core/browser";
-import type { z } from "zod";
+import { z } from "zod";
+
+/** GET /api/admin/ping (operator gate): the only success body is `{ ok: true }`. */
+const AdminPingResponseSchema = z.strictObject({ ok: z.literal(true) });
 
 // Typed client for the engine API (contracts.md section 1). Every response is parsed with the
 // zod schema from @shelfie/core; errors become AppError with the stable code from the body.
@@ -189,6 +195,27 @@ export class ApiClient {
       headers: { "X-Brand-Token": brandToken, "Idempotency-Key": key },
     });
   }
+  /** ADR-21: validates a brand access code and returns the brand profile (never the code). */
+  brandMe(brandToken: string, signal?: AbortSignal) {
+    return this.request(BrandProfileSchema, "/api/brand/me", {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
+  /** Spend and check counts over the brand's own orders. */
+  brandSummary(brandToken: string, signal?: AbortSignal) {
+    return this.request(BrandSummarySchema, "/api/brand/summary", {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
+  /** On-chain transactions of the brand's own orders (scoped by the engine). */
+  brandTransactions(brandToken: string, signal?: AbortSignal) {
+    return this.request(BrandTransactionsResponseSchema, "/api/brand/transactions", {
+      ...withSignal(signal),
+      headers: { "X-Brand-Token": brandToken },
+    });
+  }
   orders(brandToken: string, signal?: AbortSignal) {
     return this.request(OrderListResponseSchema, "/api/orders", {
       ...withSignal(signal),
@@ -241,6 +268,13 @@ export class ApiClient {
   }
   ledgerStreamUrl(): string {
     return this.url("/api/ledger/stream");
+  }
+  /** Operator gate: checks the admin token before the dashboard shows operator views. */
+  adminPing(adminToken: string, signal?: AbortSignal) {
+    return this.request(AdminPingResponseSchema, "/api/admin/ping", {
+      ...withSignal(signal),
+      headers: { "X-Admin-Token": adminToken },
+    });
   }
   /** Operator path: POST /api/jobs with the admin token (held in memory by the dashboard only). */
   createJob(body: CreateJobRequest, adminToken: string) {

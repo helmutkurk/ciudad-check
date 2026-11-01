@@ -161,7 +161,7 @@ describe("happy path (price photo)", () => {
     ConfigResponseSchema.parse((await rig.call("GET", "/api/config")).json);
     const cat = await rig.call("GET", "/api/catalog");
     CatalogResponseSchema.parse(cat.json);
-    expect(JSON.stringify(cat.json)).not.toContain("lat");
+    expect(JSON.stringify(cat.json)).not.toMatch(/priceMinEur|priceMaxEur|geofence/);
     const tasks = await rig.call(
       "GET",
       `/api/tasks?status=OPEN&lat=${CENTRE.lat}&lon=${CENTRE.lon}`,
@@ -173,6 +173,20 @@ describe("happy path (price photo)", () => {
     expect(far.json.tasks).toHaveLength(0);
     LedgerListResponseSchema.parse((await rig.call("GET", "/api/ledger?afterSeq=0&limit=5")).json);
     expect((await rig.call("GET", "/api/nope")).json.error.code).toBe("not_found");
+  });
+});
+
+describe("public map data (contracts 1.1b, 1.2)", () => {
+  it("catalog stores carry lat/lon; task list items carry storeId", async () => {
+    await open();
+    await rig.createJob();
+    const cat = CatalogResponseSchema.parse((await rig.call("GET", "/api/catalog")).json);
+    const store = cat.cities.flatMap((c) => c.stores).find((s) => s.id === STORE_ID);
+    expect(store).toMatchObject({ lat: STORE_POS.lat, lon: STORE_POS.lon });
+    const list = TaskListResponseSchema.parse(
+      (await rig.call("GET", `/api/tasks?lat=${CENTRE.lat}&lon=${CENTRE.lon}`)).json,
+    );
+    expect(list.tasks[0]?.storeId).toBe(STORE_ID);
   });
 });
 
@@ -383,6 +397,7 @@ describe("claims", () => {
     for (let i = 0; i < 50 && !text.includes("event: task_opened"); i++) await sleep(20);
     expect(text).toContain("event: task_opened");
     expect(text).toContain(taskId);
+    expect(text).toContain(`"storeId":"${STORE_ID}"`);
     await rig.claim(taskId);
     for (let i = 0; i < 50 && !text.includes("event: task_closed"); i++) await sleep(20);
     expect(text).toContain("event: task_closed");

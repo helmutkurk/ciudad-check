@@ -20,7 +20,7 @@ Shelfie lets a brand check what its products really cost on shelves. An agent of
 | Learning the concepts from zero | [basic-knowledge/main.pdf](basic-knowledge/main.pdf)                                                                                                                             |
 | Setting up Thursday evening     | [preparacion/thursday-evening-checklist.md](preparacion/thursday-evening-checklist.md)                                                                                           |
 | Building on Friday              | [preparacion/friday-runbook.md](preparacion/friday-runbook.md) · [diseno/repo-layout.md](diseno/repo-layout.md) · [diseno/contracts.md](diseno/contracts.md)                     |
-| Pitching                        | [pitch/storyline.md](pitch/storyline.md) · [pitch/market-pricing.md](pitch/market-pricing.md) · [pitch/live-pitch.md](pitch/live-pitch.md) · [pitch/video-script.md](pitch/video-script.md) · [pitch/qa-prep.md](pitch/qa-prep.md) · [pitch/slogans.md](pitch/slogans.md)    |
+| Pitching                        | [pitch/storyline.md](pitch/storyline.md) · [pitch/market-pricing.md](pitch/market-pricing.md) · [pitch/director-script.md](pitch/director-script.md) · [pitch/live-pitch.md](pitch/live-pitch.md) · [pitch/video-script.md](pitch/video-script.md) · [pitch/qa-prep.md](pitch/qa-prep.md) · [pitch/README.md](pitch/README.md)    |
 | Submitting                      | [preparacion/submission-checklist.md](preparacion/submission-checklist.md) · [pitch/devfolio-description.md](pitch/devfolio-description.md)                                      |
 
 ## This repository

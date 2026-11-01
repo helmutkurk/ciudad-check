@@ -20,6 +20,7 @@ Shelfie is a **verified micro-task engine** with one **domain pack** loaded: she
 | 6 | [decisions.md](decisions.md) | everyone, before arguing about a choice | ADRs with alternatives and consequences |
 | 7 | [webapps.md](webapps.md), [ui-design.md](ui-design.md) | D (owner), A for the endpoints | Worker and brand app flows; visual system and screen layouts (Apple-like, tokens, components) |
 | 8 | [security.md](security.md) | everyone (section 4 for the controls you build), A, B, C, D by threat owner | Assets, trust boundaries, STRIDE threat table with owners and tests, scaffold controls (auth, upload, headers, secrets, tunnel, supply chain, GDPR). Checklist: [../preparacion/security-scaffold-checklist.md](../preparacion/security-scaffold-checklist.md) |
+| 9 | [glossary.md](glossary.md) | everyone, new teammates and agents first | Definitions of actors (brand, worker, operator), agents and services, work units from order to payout, checks, wallets, platforms and process terms |
 
 ## Who reads what first (Friday 09:00)
 
