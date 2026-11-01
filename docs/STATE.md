@@ -19,8 +19,8 @@ Hackathon 2026.
   the hub. This is an operational pause, not evidence of a new application defect.
 - Code inspection confirms `/b` (brand), `/w` (worker), `/dashboard` (operator),
   catalog intake, claims, camera/location checks, verifier gates, payment adapters,
-  durable payout queue and evidence ledger. `/` redirects to the static `/story/`
-  pitch. Presence in code does not establish current service availability.
+  durable payout queue and evidence ledger. `/` redirects to the static `/homepage/`
+  site; the hackathon `/story` page was removed and redirects there too. Presence in code does not establish current service availability.
 - Historical [verified facts](../codigo/docs/verified.md), [transaction
   evidence](../codigo/docs/evidence/tx-hashes.md) and the [build log](ai-log.md)
   record paid preprod verification, payouts, settlement and refunds, including the

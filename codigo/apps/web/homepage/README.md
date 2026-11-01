@@ -23,10 +23,10 @@ Source of truth: `pitch/website/homepage-decisions.md` (numbers, wording rules, 
 `default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'`. So: no inline `<script>` or `<style>`, no `style=""`, no `on*=` handlers, no external fonts, images or scripts. JavaScript sets widths through the DOM, which the CSP allows. External links are plain `<a>` with `rel="noopener noreferrer"`.
 
 ## Routing
-`vercel.json` redirects `/homepage` to `/homepage/index.html` (temporary). `/` still redirects to `/story/index.html` (`src/App.tsx`).
+`vercel.json` redirects `/`, `/homepage` and the retired `/story` paths to `/homepage/index.html`; `src/App.tsx` does the same for `/` outside Vercel.
 
 ## Run locally
 `cd codigo && npm run dev -w @shelfie/web`, then open `http://127.0.0.1:5173/homepage/index.html` (use the explicit `.html` URL in dev; the dev server does not map directories). Build check: `npm run build -w @shelfie/web` creates `dist/homepage/`.
 
 ## Fork note
-`home.css` and `cart.js` are copies of the `/story` files; later fixes to the cart scene or tokens are not shared. Changes here must not touch `public/story/`.
+`home.css` and `cart.js` began as copies of the `/story` page, removed on 2026-11-02 after the hackathon. It remains in git history.

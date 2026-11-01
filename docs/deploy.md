@@ -14,8 +14,8 @@ build: `npm run build -w @shelfie/web`, output: `apps/web/dist`.
 [`vercel.json`](../codigo/vercel.json) rewrites app `/api/*` to
 `https://api.shelfieapp.fyi/api/*`; other web hosts use
 `https://api-dev.shelfieapp.fyi/api/*`. Worker `/w`, brand `/b` and operator
-`/dashboard` load the React app; `/` redirects to `/story/index.html`.
-`/homepage/` and `/story/` are static. Web hosting alone cannot handle orders,
+`/dashboard` load the React app; `/` redirects to `/homepage/index.html`.
+`/homepage/` is static. Web hosting alone cannot handle orders,
 claims, verification or payouts.
 
 ## Local development

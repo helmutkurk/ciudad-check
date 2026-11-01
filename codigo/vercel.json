@@ -5,7 +5,10 @@
   "outputDirectory": "apps/web/dist",
   "framework": null,
   "redirects": [
-    { "source": "/homepage", "destination": "/homepage/index.html", "permanent": false }
+    { "source": "/", "destination": "/homepage/index.html", "permanent": false },
+    { "source": "/homepage", "destination": "/homepage/index.html", "permanent": false },
+    { "source": "/story", "destination": "/homepage/index.html", "permanent": false },
+    { "source": "/story/:path*", "destination": "/homepage/index.html", "permanent": false }
   ],
   "rewrites": [
     {

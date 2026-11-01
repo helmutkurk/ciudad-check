@@ -1,4 +1,4 @@
-/* Shelfie homepage (fork of /story/story.css; /story stays unchanged). Palette from the logo; system fonts only (the site CSP allows no external fonts). */
+/* Shelfie homepage. Palette from the logo; system fonts only (the site CSP allows no external fonts). */
 :root {
   --forest: #0b2e1f;
   --green: #2e7d32;
@@ -727,7 +727,7 @@ html:not(.cart-ready) .beat {
 }
 
 /* ==========================================================================
-   Homepage components (not in /story)
+   Homepage components
    ========================================================================== */
 
 /* Skip link */

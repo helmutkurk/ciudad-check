@@ -3,7 +3,7 @@
 Status: implemented with Vite 8, React 19, TypeScript, vitest and jsdom. Vercel serves main/dev, while the API is deliberately offline; current availability is in [STATE](../../../docs/STATE.md).
 
 ## Purpose
-Three React apps: worker `/w`, brand `/b`, operator `/dashboard`. `/` redirects to the static `/story/index.html` pitch; `/homepage/` is the product site. Vercel proxies `/api` to the branch API; the engine can also serve a web build directly. See `docs/deploy.md` at the repo root.
+Three React apps: worker `/w`, brand `/b`, operator `/dashboard`. `/` redirects to the static `/homepage/index.html` site; `/homepage/` is the product site. Vercel proxies `/api` to the branch API; the engine can also serve a web build directly. See `docs/deploy.md` at the repo root.
 
 ## Run
 From `codigo/` (after `npm ci` there):

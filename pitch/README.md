@@ -16,7 +16,7 @@ What is current for the live pitch, the video and the submission (cleaned up 202
 | [devfolio-description.md](devfolio-description.md) | Submission text |
 | [slides/](slides/) | Beamer backup deck; `slides/facts.tex` is the single source of changeable facts |
 
-The screen on stage is the story page `/story` (`codigo/apps/web/public/story/`); offline copy: `bash scripts/story-offline.sh`.
+The screen on stage was the story page `/story`, removed on 2026-11-02 (see git history before that date). Older pitch documents below still mention it.
 
 ## Other folders
 

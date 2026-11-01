@@ -380,3 +380,8 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - Agent lesson: distinguish hosted web availability, historical on-chain evidence and current backend uptime; verify sandbox socket/memory limits before claiming a complete check.
 - Verified (Claude Opus for Helmut): reviewed the diff; restored `ideas/ideation-*.md`, which Helmut values; `NODE_OPTIONS=--max-old-space-size=4096 mise exec node@24 -- npm run check` in codigo exited 0. Default heap still fails on ESLint.
 - Handoff: `main` and `dev` equal. Next steps in `docs/STATE.md`.
+
+## 2026-11-02 - Claude Opus 5.5 for Helmut (D) - root opens the homepage, story page removed
+
+- Done: `/` now redirects to `/homepage/index.html` (`vercel.json`, `App.tsx`); `/story` paths redirect there too, so old links keep working. Removed `public/story/`, `apps/web/story/` and `scripts/story-offline.sh`. Homepage team photos now load from `homepage/team/` (byte-identical copies).
+- Note: old pitch documents still mention `/story` as history.

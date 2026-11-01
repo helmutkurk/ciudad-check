@@ -22,7 +22,7 @@ Team: Helmut (D), Isabel (A), Fernando (B), Lorenz (C), “Los Curiosos”.
 | Recorded transactions and evaluations | [Evidence](codigo/docs/evidence/README.md), [verified facts](codigo/docs/verified.md), [eval](codigo/eval/README.md) |
 | Decisions and history | [Repo ADRs](docs/adr/README.md), [design ADRs](diseno/decisions.md), [AI log](docs/ai-log.md) |
 | Cleanup and homepage audit | [2026-11-01 audit](docs/cleanup-2026-11-01.md) |
-| Pitch | [Pitch index](pitch/README.md), [static story](codigo/apps/web/public/story/) |
+| Pitch | [Pitch index](pitch/README.md) |
 
 `codigo/` contains the npm workspace apps, packages, tests and evaluation runner.
 `investigacion/` retains research and catalogs used by the code. `diseno/` retains
