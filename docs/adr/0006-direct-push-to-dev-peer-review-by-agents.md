@@ -1,6 +1,6 @@
 # 0006. Direct push to `dev`, peer review by agents, release to `main` by all four
 
-- Status: accepted (supersedes the dev-PR, review, hotfix and push-ban parts of ADR-0005; its dev/main split stays)
+- Status: branch/release rules superseded by ADR-0008 for the post-hackathon phase; other decisions retained
 - Date: 2026-10-30
 - Deciders: Helmut
 

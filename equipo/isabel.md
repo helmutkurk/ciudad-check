@@ -22,11 +22,11 @@ Real-mode demo (ADR-22): the Sokosumi worker + bridge + MPS on this laptop, `ENG
 - Coworker id and TUM workspace slug in the starter env match `codigo/docs/verified.md` A-25.
 
 ## Open questions
-- Demo engine: `api-dev.shelfieapp.fyi` (dev) per `preparacion/hub-laptop.md`; `api` (main) only after the release PR. (Helmut)
+- Historical demo engine was `api-dev.shelfieapp.fyi` (dev). Current offline operation and reactivation instructions are in `docs/deploy.md` (ADR-0008); the event release-PR condition is superseded.
 - Sokosumi credits left on Isabel's account; each Task costs 100. (Isabel)
 - Creating the `soko_preprod_` key in the Sokosumi web app is unverified. (Isabel, verify on first use)
 - `scripts/task.sh` fails on native Windows (`fcntl`); task statuses from this laptop go through WSL or the ai-log. (Fernando, scripts owner)
-- `docs/deploy.md` is empty but linked from several docs. (Helmut)
+- Historical gap: `docs/deploy.md` was empty at this note's date; current instructions now live there.
 
 ## Last updated
 2026-10-31 02:50 Europe/Berlin by Claude Opus 5.5 (Isabel's session)

@@ -1,5 +1,7 @@
 # Risk register (top 15)
 
+> Historical build reference (2026-10-30/31), retained for unique scenarios, risks or design rationale. Current operation: [STATE](../docs/STATE.md). The backend is offline; old service, timing and implementation instructions are not current.
+
 L = likelihood, I = impact (H/M/L). Owner = role A–D.
 
 | # | Risk | L | I | Owner | Mitigation | Trigger | Fallback |

@@ -117,9 +117,9 @@ t "gate: stale hash blocks again"       context-gate.sh 2 "" "$(g Edit s1 '')"
 bash "$tmp/scripts/context-ack.sh" --session s1 >/dev/null
 t "gate: re-ack allows again"           context-gate.sh 0 "" "$(g Write s1 '')"
 # session-context prints branch
-out=$("$here/session-context.sh" </dev/null); [[ "$out" == *"Current branch: main"* && "$out" == *"protected"* && "$out" == *"CONTEXT GATE"* ]] && { pass=$((pass+1)); echo "PASS  session-context prints branch and protection note"; } || { fail=$((fail+1)); echo "FAIL  session-context: $out"; }
+out=$("$here/session-context.sh" </dev/null); [[ "$out" == *"Current branch: main"* && "$out" == *"GitHub protection remains active"* && "$out" == *"docs/STATE.md"* && "$out" != *"Switch to dev"* && "$out" != *"CONTEXT GATE:"* ]] && { pass=$((pass+1)); echo "PASS  session-context prints branch and protection note"; } || { fail=$((fail+1)); echo "FAIL  session-context: $out"; }
 git -C "$tmp" checkout -q dev
-out=$("$here/session-context.sh" </dev/null); [[ "$out" == *"Current branch: dev"* && "$out" == *"'dev' (integration)"* && "$out" == *"peer-review.sh pending"* ]] && { pass=$((pass+1)); echo "PASS  session-context explains dev and peer review"; } || { fail=$((fail+1)); echo "FAIL  session-context dev: $out"; }
+out=$("$here/session-context.sh" </dev/null); [[ "$out" == *"Current branch: dev"* && "$out" == *"dev stays equal to main"* && "$out" == *"Backend intentionally offline"* && "$out" != *"Time: deadline"* ]] && { pass=$((pass+1)); echo "PASS  session-context explains synchronized dev and offline backend"; } || { fail=$((fail+1)); echo "FAIL  session-context dev: $out"; }
 git -C "$tmp" checkout -q main
 # tasks: task.sh, SessionStart brief, Stop reminder (own temp project, never the real equipo/tasks)
 tp=$(mktemp -d); trap 'rm -rf "$tmp" "$tp"' EXIT
@@ -149,7 +149,7 @@ chk "task.sh parses a hand-edited row"  "A-03" "$(tk show A-03)"
 chk "task.sh brief is role specific"    "Tasks for A (Isabel)" "$(tk brief isabel)"
 printf 'session=st1\nhash=x\nwho=isabel\ntime=now\n' > "$tp/.claude/state/ack-st1"
 export CLAUDE_PROJECT_DIR="$tp"
-out=$("$here/session-context.sh" </dev/null); chk "session-context lists the person's tasks" "Tasks for A (Isabel)" "$out"
+out=$("$here/session-context.sh" </dev/null); chk "session-context marks event tasks historical" "event tasks do not override STATE" "$out"
 sj='{"session_id":"st1","stop_hook_active":false}'
 t "tasks-on-stop: no area change silent"   tasks-on-stop.sh 0 "" "$sj"
 sleep 1; echo x > "$tp/codigo/apps/engine/a.ts"

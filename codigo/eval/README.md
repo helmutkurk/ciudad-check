@@ -1,6 +1,6 @@
 # eval
 
-Status: implemented; works in stub mode, waiting for the photo set (Fri 30-10). Links point to the canonical design in `diseno/` at the repo root (one source of truth).
+Status: implemented; labelled datasets are retained here and dated evaluation records are in `codigo/docs/evidence/` and `codigo/docs/verified.md`. Current operation: [STATE](../../docs/STATE.md). Links point to the canonical design in `diseno/` at the repo root (one source of truth).
 
 ## Purpose
 

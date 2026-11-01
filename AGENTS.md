@@ -1,106 +1,119 @@
-# AGENTS.md - shared rules for every coding agent (Claude Code, Codex, others)
+# AGENTS.md - shared rules for coding agents
 
-Read this first. Claude Code gets it via `CLAUDE.md` (`@AGENTS.md`); Codex reads it natively. One rule file, no copies.
+Claude Code imports this file through `CLAUDE.md`; Codex reads it natively.
 
 ## The project in 5 lines
-- **Shelfie**: verified shelf checks, paid only when the photo is true. Built for the TUM Blockchain & AI Hackathon 2026, Cardano track (Agentic Commerce on Cardano).
-- A brand hires the Shelfie agent on Sokosumi (fee in Masumi escrow). The agent offers the task to all workers in Munich; the first to claim it photographs one shelf price tag with the live in-app camera (or the empty shelf spot if the product is not there). MVP: one job = one store, one product, one photo; brands pick them from catalog dropdowns and an intake filter backs this up (ADR-16, ADR-17).
-- A verifier service (sold per check via x402) runs deterministic gates G1-G7 on every price photo (a separate gate set for out-of-stock photos), after the engine has checked the photo location against the store; passing photos trigger an on-chain payout to the worker.
-- The job result is delivered (escrow settles) only if the photo passes (N=1, K=1; K-of-N is roadmap, ADR-16); if no photo passes by the window end it is withheld and the buyer is refunded.
-- Cardano **preprod** only. Test ADA only. Team: Helmut, Isabel, Fernando, Lorenz (roles A-D).
+- Shelfie verifies shelf checks: one store, one catalog product, one live photo per job.
+- A brand order becomes a Sokosumi task with Masumi escrow; the engine offers the shelf task to workers.
+- The engine checks capture location, pays the verifier via x402, and pays the worker only after a passing verdict.
+- A passing photo permits report delivery and escrow settlement; no passing photo means withholding and the buyer's refund path.
+- Cardano preprod and test ADA only. Roles: A Isabel, B Fernando, C Lorenz, D Helmut.
 
-## Build window
-The core build happens during the hackathon: Fri 2026-10-30 09:00 to Sat 2026-10-31 15:00 (Devfolio deadline), feature freeze Sat 11:00, last paid escrow cycle started by Sat 13:00, code freeze after the final smoke run. Everything before that is docs and config only. Organisers' starter templates are allowed; note each one used in `codigo/docs/verified.md` with its pinned commit.
+## Current phase
 
-## Context gate (suspended by ADR-0007 until the hackathon ends)
-The Claude hook and the git pre-commit ack check are off (Isabel and Helmut, 2026-10-31). Steps 2-4 below still apply as practice; the security hooks (`guard-bash`, `protect-files`, `prompt-guard`, gitleaks) stay on.
-Applies to every agent (Claude Code, Codex, others) and to humans using one. Before you create, edit, move or delete any file, run a command that writes, or commit:
-1. Run `bash scripts/context-ack.sh --session <id-or-label> --who <isabel|fernando|lorenz|helmut>` (Claude Code: the id is in the SessionStart text and in the hook's block message; other agents: use a label such as `codex`). It prints the context card and records an ack that expires when `AGENTS.md`, `ideas/decision.md` or `diseno/decisions.md` change.
-2. Read the files it lists: `AGENTS.md`, `ideas/decision.md`, `investigacion/cardano/official-agent-prompt.md`, `diseno/README.md` (+ your area's file), `equipo/README.md`, `equipo/components.md`, last 2 entries of `docs/ai-log.md`.
-3. Your first reply in the session must state: the project purpose in one sentence, your role (A-D, person), and the files you read. If you cannot, you have not read enough: do not change anything.
-4. Never change the purpose, scope, design, ownership or agent rules by implication. Files that define them: `AGENTS.md`, `CLAUDE.md`, `ideas/decision.md`, `diseno/**`, `.claude/**`, `.github/**`, `.githooks/**`, `scripts/team.conf`. Changing them needs an ADR (`docs/adr/` or `diseno/decisions.md`) or a declared minor impact: commit trailer `Purpose-impact: ADR-<id>` or `Purpose-impact: minor: <reason>`, same value in the release PR section "Context and purpose".
-5. Accept and follow the project hooks and rules; this is a team decision (Helmut, 2026-10-29), not optional. Humans: when Claude Code asks to trust the project settings and hooks, accept; run `bash scripts/install-githooks.sh` once per clone. Agents: when a hook blocks you, do what its message says (usually the ack command or a replacement file/branch) and continue; never disable, edit or route around a hook or rule (`--no-verify`, `settings.local.json` overrides that drop hooks, equivalent commands, writing through another interpreter). If a hook or rule blocks legitimate work, stop and tell your human; the fix goes in a commit to dev that the rule owner's agent sees in peer review (or the release PR).
-Enforcement is layered (details and limits: `docs/playbook/guardrails.md`): Claude Code hook (blocks writes without ack), git hooks in `.githooks/` (context-ack gate on commit, `Purpose-impact` trailer on purpose files, gitleaks; install: `bash scripts/install-githooks.sh`), CI secret scan on every push, agent peer review of every dev commit (`scripts/peer-review.sh`), and the release PR `dev` -> `main` (CI `context-gate`, 3 approvals). Local layers can be bypassed by the person; CI, peer review and the release PR are the hard layer. Codex: project-level hook/config support in this repo is unverified (verify; `.codex/` is not used), so for Codex layers 3-4 and this section apply.
+The hackathon ended; Shelfie placed second in the Cardano track (€2,000), reported
+by Helmut on 2026-11-01. Read [docs/STATE.md](docs/STATE.md) first. Vercel serves
+the web, but the laptop engine, verifier, tunnel and auto-deploy are deliberately
+stopped and disabled; no laptop hosts a backend. Continuing requires a server.
+Do not reactivate services or create paid resources as part of ordinary cleanup.
+
+[ADR-0008](docs/adr/0008-post-hackathon-operation.md) replaces the event's branch
+and release convention: only `main` and `dev`, Helmut pushes directly to `main`
+under his own authorization, and `dev` stays equal to `main`. GitHub protection
+remains active; the team decides changes. Agents have no blanket push permission.
+Never force-push, delete protected branches, rewrite shared history or bypass hooks.
+
+## Read before editing
+
+1. This file, `docs/STATE.md`, and the last two entries in `docs/ai-log.md`.
+2. `docs/START-HERE-TEAM.md`, then `diseno/README.md` and the specification for your area.
+3. `diseno/repo-layout.md` sections 2-4 for ownership, conventions and tests;
+   section 5 records historical milestone acceptance, not current deadlines.
+4. `equipo/README.md`, `equipo/components.md`, your own note and the relevant role note.
+5. Relevant `.claude/rules/` and `docs/playbook/skills.md`; Codex reads SKILL.md manually.
+   For platform work also read `investigacion/cardano/official-agent-prompt.md`.
+
+State the purpose, role/person and files read before changing files. Verify unknown
+Masumi, x402, Sokosumi and Cardano facts against sources and `codigo/docs/verified.md`;
+mark uncertainty explicitly. Old “verify Friday” markers are historical open questions.
+
+## Rules and hooks
+
+The workflow hooks suspended in ADR-0007 remain unwired under ADR-0008; reading
+context still applies. Do not run context-ack merely to recreate ignored state.
+Security hooks (`guard-bash`, `protect-files`, `prompt-guard`), gitleaks,
+`commit-msg` purpose trailers and CI remain in place. Install git hooks once per
+clone with `bash scripts/install-githooks.sh`. Never disable or route around a
+blocking hook. Report a legitimate block; an authorized rule change needs review.
+Codex does not run the Claude hooks; follow these rules directly.
+
+Purpose-defining paths: `AGENTS.md`, `CLAUDE.md`, `ideas/decision.md`, `diseno/**`,
+`.claude/**`, `.github/**`, `.githooks/**`, `scripts/team.conf`. Changes need an ADR
+or a declared minor impact. A later commit must use `Purpose-impact: ADR-<id>` or
+`Purpose-impact: minor: <reason>`; a PR, if used, records the same impact.
+This cleanup's decision is ADR-0008. Do not commit or push when the user asks for a diff only.
 
 ## Where the truth lives
+
 | What | Where |
 |---|---|
-| Design (canonical) | `diseno/` (architecture, domain-model, contracts, verifier-rules, repo-layout, decisions) |
-| Base context from the organisers, filled in for Shelfie | `investigacion/cardano/official-agent-prompt.md` |
-| Chosen idea and adaptability rule | `ideas/decision.md` |
-| Runbooks and checklists | `preparacion/` |
-| Facts verified during the build | `codigo/docs/verified.md` |
-| Evidence (tx hashes, screenshots) | `codigo/docs/evidence/` |
-| What happened, what is open | `docs/ai-log.md` |
-| Repo decisions | `docs/adr/` (design-level ADRs: `diseno/decisions.md`) |
-| How we work with agents | `docs/playbook/` |
-| Who does what now, extra bots/scripts | `equipo/` |
+| Current operation | `docs/STATE.md`, `docs/deploy.md`, ADR-0008 |
+| Design and contracts | `diseno/` |
+| Chosen idea and decisions | `ideas/decision.md`, `diseno/decisions.md`, `docs/adr/` |
+| Verified build facts | `codigo/docs/verified.md` |
+| Transactions and evaluations | `codigo/docs/evidence/`, `codigo/eval/` |
+| History | `docs/ai-log.md` (append only) |
+| Component registry and task history | `equipo/` |
 
-If code and design disagree, one of them is wrong: fix it in the same commit. Never guess a Masumi, x402, Sokosumi or Cardano fact; mark it "verify Friday" and look it up in `investigacion/cardano/`.
+Historical plans and team notes do not override STATE or later accepted ADRs.
+If code and an active specification disagree, reconcile them in the same change.
 
-## Read order per task
-1. This file, then the last 2 entries of `docs/ai-log.md` (open TODOs and handoffs).
-2. `investigacion/cardano/official-agent-prompt.md` for platform context (first session of the day).
-3. The `diseno/` file for your area (see `diseno/README.md` "Who reads what first").
-4. `diseno/repo-layout.md` sections 2-5 for ownership, conventions, tests and milestone acceptance.
-5. `bash scripts/peer-review.sh pending` (commits to review first), then `bash scripts/task.sh next <role>` (your open tasks; SessionStart and the context card print them), then `equipo/README.md`, `equipo/components.md` and your pair's file in `equipo/` (what others are doing and which bots/scripts already exist; reuse before building).
-6. The relevant rule file in `.claude/rules/` and your role's skills ([docs/playbook/skills.md](docs/playbook/skills.md); Codex: read the SKILL.md by hand).
+## Ownership and conventions
 
-## Ownership (roles A-D)
-Each folder has one owner: the person who knows that area best. Ownership no longer blocks anything (ADR-0006): anyone may edit any folder; the owner's agent sees the change in peer review. Full table: `diseno/repo-layout.md` section 2.
-- **A**: `codigo/apps/shell`, `codigo/apps/engine`, `codigo/packages/core` (shared contract: announce changes, mirror in `diseno/contracts.md`).
-- **B**: `codigo/packages/payments`, verifier wrapper in `codigo/apps/verifier` (up to the `evaluate(...)` call), `codigo/scripts`.
-- **C**: `evaluate` and below, `codigo/packages/domain-shelf`, `codigo/packages/vision`, `codigo/eval`.
-- **D**: `codigo/apps/web`, `codigo/packages/evidence`, `codigo/docs/evidence`, root `README.md`, pitch assets.
-People (also in `scripts/team.conf`; `.github/CODEOWNERS` is informational): A Isabel (`mariaisabel16`), B Fernando (`Fmayo444`), C Lorenz (`04Lenz04`), D Helmut (`helmutkurk`).
-Pairs (Helmut, 2026-10-29): **A+B** (Isabel + Fernando) and **C+D** (Lorenz + Helmut) work as pairs and review each other's commits first in peer review.
-Editing another role's folder is allowed; keep the change small and say so in the commit message. Announce shared-contract changes (`codigo/packages/core`, `diseno/contracts.md`) in chat. Current state per person and the registry of extra bots/scripts: `equipo/`.
+Ownership identifies expertise, not an edit barrier (ADR-0006):
+- A, Isabel: shell, engine, core.
+- B, Fernando: payments, verifier HTTP/payment wrapper, codigo/scripts.
+- C, Lorenz: verifier evaluate/gates, domain-shelf, vision, eval.
+- D, Helmut: web, evidence, README, pitch.
 
-## Conventions
-- TypeScript strict (`strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`), ESM, **Node 24** everywhere; only `apps/shell` stays JavaScript (starter).
-- Monorepo in `codigo/` (npm workspaces). Run **`npm run check`** (typecheck + lint + test) in `codigo/` before every push.
-- zod at every boundary. One `AppError` class, codes from `packages/core`. Structured JSON logs with `jobId`, `taskId`, `submissionId`.
-- Amounts in integer lovelace. Injectable clock and id generator. Fakes first (`FAKE_PAYMENTS=1`, `VERIFIER_MODE=stub`).
-- Dependencies: exact pinned versions from the x402 template (`@x402/*` 2.26.0, `@evolution-sdk/evolution` 0.5.14, `express` 4.x). Do not bump during the event. A new dependency needs a one-line reason in the commit message.
-- Prettier defaults, 100 columns; ESLint with `no-floating-promises` and `no-explicit-any`.
-- Docs: English, concise, no emojis.
+Keep cross-area changes small and identify them for review. Shared-contract changes
+must be announced to the user and mirrored in `diseno/contracts.md`.
 
-## Git and peer review (ADR-0006)
-- `dev` is the integration branch: everyone pushes directly to it, no PR per change, no required human review. Before pushing: `git pull --rebase origin dev` and `npm run check` in `codigo/` (when `package.json` exists). Feature branches are optional (risky or long work): merge into `dev` locally and push, no PR needed.
-- `main` holds only what all four of us checked. It changes only through ONE release PR `dev` -> `main`, after `npm run check` and `npm run smoke` pass on `dev`, `bash scripts/peer-review.sh status` is clean (no open `issue` in the range) and the three teammates who did not open the PR approve (GitHub enforces 3 approvals). Merge commit, not squash; then fast-forward `dev` if needed. Helmut (admin) may bypass only for an emergency fix in the last hour before the Sat 15:00 deadline, and says so in chat and in `docs/ai-log.md`.
-- Hotfixes: fix on `dev`, then a release PR. No hotfix branches from `main`.
-- Never force-push or delete `dev`/`main`; never rewrite shared history.
-- **Peer review replaces PR review on dev.** Every work block starts with `bash scripts/peer-review.sh pending`: review what it lists before your own task (read the diff with `show <sha>`, run checks if code changed, compare with `diseno/` and `ideas/decision.md`; keep it quick), then `ok <sha>` or `issue <sha> <note>`. Small and obvious problem: fix it in a new commit on `dev` that references the sha. Otherwise mark `issue`; the author's agent fixes it in its next block. Agents disagree: the humans decide in chat and write it down (ADR or `diseno/decisions.md`). Procedure: `.claude/agents/reviewer.md`.
-- Conventional commits: `feat(payments): ...`, `fix(verifier): ...`, `docs: ...`, `chore: ...`. Reference the task in the message, e.g. `(A-10)`. A new dependency or a pinned-version change gets its one-line reason in the commit message. Update docs in the same commit.
-- Ask the human before: `gh pr merge`, any new dependency. `git push` to `dev` needs no asking once `npm run check` passed.
+TypeScript strict, ESM, Node 24; shell stays JavaScript. npm workspaces in `codigo/`.
+Run `mise exec node@24 -- npm run check` there before declaring code done or publishing.
+Use pinned dependencies and the lockfile; ask before adding a dependency; never edit
+lockfiles manually. Prettier defaults, 100 columns, ESLint no-floating-promises and
+no-explicit-any. zod at boundaries, one core AppError, structured redacted logs,
+integer lovelace, injectable clocks/ids. Fakes are for local development and CI;
+never present fake/stub output as live evidence. Docs are concise English.
 
-## Never do
-- Commit or print secrets: mnemonics, signing keys, Blockfrost key, Masumi `ADMIN_KEY` / `ENCRYPTION_KEY`, LLM keys, Sokosumi tokens. Local `.env` only; `.env.example` has names only.
-- Read `.env*` (except `.env.example`) by any route, or look for ways around the hooks.
-- Push to `main`, force-push or delete `dev`/`main`, skip hooks (`--no-verify`), merge the release PR yourself (the opener never counts as an approver of their own PR), change repo visibility.
-- Use mainnet, real money, or real third-party personal data.
-- Bump pinned dependencies or edit lockfiles by hand.
-- Touch `invoice/` (Helmut's personal receipts, git-ignored).
-- Invent a tx hash, an address, a price, a Masumi/x402 behaviour or a deadline. Unknown means "verify Friday".
-- Enable an operator override or fakes in an evidence run, or present fake output as real.
-- Add large files (photos, videos, PDFs other than the two kept) to git.
+## Security and public content
 
-## Security baseline
-Threat model, controls and the test that proves each: `diseno/security.md` (canonical). First commits on Friday follow `preparacion/security-scaffold-checklist.md`; path-scoped short rules: `.claude/rules/security.md`. Secure by default from the first commit: env schema and network guard, redacting logger, admin auth, session cookie, upload pipeline, idempotency, loopback binds. Changes to payments, auth, upload, env, CI or the tunnel need their security test in the same commit and a `security-reviewer` pass.
+- Never read `.env*` except `.env.example`, by any route. Never print or commit keys,
+  tokens, signing material, mnemonics, credentials or raw worker coordinates/photos.
+- Never touch ignored files, `invoice/`, personal receipts or local runtime state
+  without a separate explicit task. Preserve untracked user files.
+- No mainnet, real money, new third-party personal data, private client information,
+  team-member opinions or business strategy in public changes.
+- No invented transaction hashes, addresses, prices, platform behavior or verification.
+- Do not enable overrides/fakes for an evidence run, change repo visibility or LICENSE,
+  or add large media files to git.
+- Follow `diseno/security.md` and `.claude/rules/security.md`. Payment, auth, upload,
+  env, CI and tunnel behavior changes need matching security tests and a security review.
 
-## Keeping context up to date
-- Same commit as the code: update `diseno/` sections, `.env.example`, `codigo/docs/verified.md`.
-- Registered in the same commit: any new bot, script, helper agent, prompt or tool that others may rely on goes into `equipo/components.md` (rules: `equipo/README.md`).
-- Decisions that change design, tooling or workflow: ADR in `docs/adr/` (skill `adr`).
-- End of every work block: append to `docs/ai-log.md` (skill `sync-context`): done, `- TODO:` open items, `- Handoff:` for the next person. Append only.
-- End of every work block also: overwrite your own `equipo/<name>.md` (current focus, branch, components, open questions, last updated). Only your own file.
-- Every real transaction: a row in `codigo/docs/evidence/tx-hashes.md` with preprod explorer link and screenshot name (skill `log-evidence`). Copy hashes from tool output, never from memory.
-- Milestones M1-M6: acceptance and evidence in `diseno/repo-layout.md` section 5 (skill `milestone-check`).
-- Lessons about working with agents: one line in `docs/ai-log.md`; lasting ones in `docs/playbook/lessons-from-previous-projects.md` style.
-- **Task tracking** (Helmut, 2026-10-29): per-role task lists in `equipo/tasks/` (`A.md`-`D.md`, `team.md`), edited only through `bash scripts/task.sh`; humans never need to edit them. Every work block starts with `bash scripts/peer-review.sh pending` (review what it lists), then `bash scripts/task.sh next <role>` (then `start <id>`) and ends with status updates (`done <id> --evidence <text>`, `block <id> <reason>`). Work you discover that is not listed: `task.sh add <role> <title> --acceptance <text>` (milestone with `--milestone Mx`). Commits reference their task id in the message, e.g. `(A-10)`; only the release PR still carries a "Tasks:" line (CI). The Stop hook reminds you when your role's files changed and no task did.
+## Work tracking and handoff
 
-## Handoff notes
-When you stop, leave: branch name and state, what runs and what does not, the exact next command, open questions with owner, evidence still to capture. Put it in `docs/ai-log.md` (history) and refresh your `equipo/<name>.md` (current state); the next session reads both. Task statuses are part of the handoff: run `bash scripts/task.sh list <role> --open` and make sure it matches reality (statuses travel with your commits, so push the task files with your code).
+The hackathon task lists and peer-review tool remain as historical/reusable tools;
+they do not force work on `dev` or an event deadline. New tracked work uses
+`bash scripts/task.sh` (`add`, `start`, `done`, `block`); never hand-edit task tables.
+Do not mark old tasks complete without evidence. Remote peer review requires an
+authenticated `gh`; never post comments without explicit authorization.
 
-## Verification before "done"
-Show proof, not claims: command and result of `npm run check`, test names, tx hash seen on the preprod explorer. If you could not run something, say so.
+Use conventional commits if a commit is authorized; reference the task and dependency
+reason when applicable. Review the diff and checks before publishing. Helmut decides
+how to advance protected `main` and synchronize `dev`; agents do not bypass protection.
+
+At the end of a work block append done, TODO and Handoff to `docs/ai-log.md`; refresh
+only your own `equipo/<name>.md`. Register reusable helpers in `equipo/components.md`.
+Record real transaction evidence from tool output in `codigo/docs/evidence/tx-hashes.md`.
+Show the exact validation command/result and disclose unavailable checks.

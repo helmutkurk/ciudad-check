@@ -1,6 +1,6 @@
 # 0005. Branch model: `dev` for integration, `main` for final
 
-- Status: partially superseded by ADR-0006 (dev PRs, reviews, hotfixes, push ban); the dev/main split stays
+- Status: branch/release rules superseded by ADR-0008 for the post-hackathon phase (previously amended by ADR-0006)
 - Date: 2026-10-30
 - Deciders: Helmut
 

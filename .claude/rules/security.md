@@ -20,4 +20,4 @@ Baseline, threat table and tests: `diseno/security.md` (canonical). Scaffold ord
 - Personal data (worker location, photos, payout address): minimal, consent text shown, EXIF/GPS stripped before storage, photos outside the web root and the repo, deleted after the event. Details in `diseno/security.md` section 4.9.
 - A change that touches payments, auth, upload, env, CI or the tunnel needs its `*.sec.test.ts` in the same commit (list in `diseno/security.md` section 3).
 - The repo is public from the first push (ADR 0003): every committed byte is public and permanent. See `docs/public-release.md`.
-- Found a leaked secret: stop, tell the owner of the credential, rotate it (`docs/github-setup.md` section 8), then remove it from history before any further push.
+- Found a leaked secret: stop, tell the owner of the credential, rotate it (`docs/public-release.md`, Credential incident), then remove it from history before any further push.

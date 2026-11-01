@@ -1,5 +1,7 @@
 # UI inventory (Phase 0, read-only)
 
+> Historical build reference (2026-10-30/31), retained for unique scenarios, risks or design rationale. Current operation: [STATE](../STATE.md). The backend is offline; old service, timing and implementation instructions are not current. Spent worker mockups, flow experiments and implementation prompts were removed; retained branding, dashboard concepts and QA are review references.
+
 Snapshot: branch `dev`, HEAD `c3344c3` at session start. Scope: `codigo/apps/web/src/**`, `index.html`, `vite.config.ts`, `public/`, the design package in this folder. No source edits, no commits. Not run in this phase: `npm run check`, `npm test`, the browser. Line refs are to the file itself (`file:line`). Class: **A** styling/reorganisation only, **B** real data already available, **C** needs new API/storage/approval, **D** defer.
 
 ## 1. Routing and view state

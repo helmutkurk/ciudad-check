@@ -1,6 +1,6 @@
 # packages/payments
 
-Status: implemented and tested on fakes (Fri 30-10); nothing here has touched preprod yet. Links point to the canonical design in `diseno/` at the repo root (one source of truth).
+Status: implemented with fake and real preprod adapters. Historical transactions are in `codigo/docs/evidence/tx-hashes.md`; current operation is in [STATE](../../../docs/STATE.md). No live payments were repeated during cleanup.
 
 ## Purpose
 
@@ -50,7 +50,7 @@ Wallet signers, x402 buyer with spend cap, plain-transfer payout adapter, per-wa
 ## Run
 `npm test -w @shelfie/payments`. Fault-injection tests (repo-layout section 4): timeout after send then reconcile gives one payout; crash between write-ahead and hash (no transfer, and transfer-but-hash-lost); concurrent enqueue of one task; insufficient funds pauses; caps; inconclusive reconcile never resends; automatic reconcile on poll (no lookup inside the settling delay, throttled, finds a timed-out transfer without resending, never requeues on absence, fails closed without `sendingSince`); stale alert raised once.
 
-## TODO / verify Friday (record answers in `codigo/docs/verified.md`)
+## Build-era open questions (reconcile with verified.md before reuse) (record answers in `codigo/docs/verified.md`)
 - ADR-04: a plain preprod transfer with metadata from `EvolutionPayoutAdapter` was never executed. If it fails by 13:00 Fri: fallback order in ADR-04 (Lucid/Mesh behind `PayoutAdapter`; worker address as x402 `payTo`; manual `markPaid`, flagged).
 - Metadata label 674 and `{ msg: [tag] }` shape; Blockfrost base URL (`BLOCKFROST_PREPROD_URL`); the REST shapes used by `find`, `confirmations`, `balance` (written from the public API reference). Blockfrost does not list mempool transactions, hence the settling delay before "absent" counts as proof.
 - x402 buyer: whether 1 tADA passes the facilitator (else 2 tADA), `PAYMENT-RESPONSE` decoding (`getPaymentSettleResponse`), payee pin (`SELLER_ADDRESS` is now in the engine env schema and wiring passes `expectedPayTo`; a hosted paid run is still pending).

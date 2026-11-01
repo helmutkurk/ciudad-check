@@ -1,8 +1,9 @@
 # Repo layout, conventions, tests, milestones
 
-The repo root is the existing `codigo/` folder (empty now). Friday morning: `git init` there, then create the structure below. The design folder is copied to `docs/design/` in the repo so judges see it.
-
-Nothing in this file is created before the event starts.
+The Git repository root contains this design and the implemented npm monorepo in
+`codigo/`. Current operation is in [STATE](../docs/STATE.md) and ADR-0008.
+The planned layout and milestone dates below record the hackathon build; they are
+not current deployment instructions. No new Git repository is needed in `codigo/`.
 
 ## 1. Layout
 
@@ -63,7 +64,7 @@ Shared rule: the verifier route file has two owners by function. B owns everythi
 - **Logging**: structured JSON lines with `jobId`, `taskId`, `submissionId`; never log mnemonics, tokens, API keys or image bytes.
 - **Secrets**: only env files, throwaway wallets, never in the repo or in screenshots. A pre-commit grep for `MNEMONIC`, `API_KEY`, `addr_test1` private patterns is optional.
 - **Time and IDs**: injectable clock and id generator (tests and demos).
-- **Git**: everyone pushes to `dev` (feature branches optional) and agents peer-review each other's commits; releases use one `dev` -> `main` PR after check and smoke pass and 3 approvals, merged with a merge commit (ADR-0006). See [AGENTS.md](../AGENTS.md) and [CONTRIBUTING.md](../CONTRIBUTING.md) for the rules. Commit small and often; the repo is public, so keep history clean of secrets from the first commit.
+- **Git**: ADR-0008 governs current maintenance: Helmut maintains `main` directly and keeps `dev` equal to it. GitHub protection stays active and team-controlled. See [AGENTS.md](../AGENTS.md) and [CONTRIBUTING.md](../CONTRIBUTING.md). The event release process is historical.
 - **Fakes first**: every component runs against fakes of its neighbours (`FAKE_PAYMENTS=1`, `VERIFIER_PAYMENT=off`, `VERIFIER_MODE=stub`, fake shell via `POST /api/jobs` from curl or the dashboard's "demo job" button). This is what lets four people work at once.
 
 ## 4. Test strategy per component

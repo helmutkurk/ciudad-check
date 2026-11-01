@@ -1,4 +1,9 @@
-# equipo/ - team coordination (current state per person)
+# equipo/ - component registry and team records
+
+As of 2026-11-01, [STATE](../docs/STATE.md) and ADR-0008 govern operation.
+Other people's dated notes and event task tables are retained as historical records;
+their deployment, branch and deadline statements do not describe current uptime.
+Do not mark old tasks done without evidence or hand-edit task tables.
 
 Purpose: every member and their coding agent records what they are doing now and what they added, so every other agent can find it without asking. Example: Isabel builds a new bot; her file and the registry say what it is, where the code is, how to run it, its status and who owns it.
 

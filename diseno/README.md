@@ -1,6 +1,9 @@
 # Shelfie design package
 
-Design documents only. No source code exists yet and none may be written before the build window opens (hackathon FAQ: the core build must happen during the hackathon). Everything here is meant to be implemented from Friday 09:00 by four people in parallel, without meetings.
+Design, contracts and build decisions for the implemented prototype. Read
+[STATE](../docs/STATE.md) for current operation. Event dates, milestones and
+“verify Friday” markers below are historical; consult `codigo/docs/verified.md`
+for recorded answers and code/tests for implementation. ADR-0008 governs operation.
 
 Context: [../ideas/decision.md](../ideas/decision.md) (chosen idea and the adaptability rule), [../investigacion/tracks-oficiales-2026-10-29.md](../investigacion/tracks-oficiales-2026-10-29.md) (Cardano track rules), [../investigacion/cardano/masumi-runbook.md](../investigacion/cardano/masumi-runbook.md), [../investigacion/cardano/x402-runbook.md](../investigacion/cardano/x402-runbook.md), [../investigacion/cardano/team-plan.md](../investigacion/cardano/team-plan.md) (roles A-D, milestone ladder; written for the earlier ShopScout idea, re-mapped to Shelfie in repo-layout.md).
 
@@ -22,12 +25,12 @@ Shelfie is a **verified micro-task engine** with one **domain pack** loaded: she
 | 8 | [security.md](security.md) | everyone (section 4 for the controls you build), A, B, C, D by threat owner | Assets, trust boundaries, STRIDE threat table with owners and tests, scaffold controls (auth, upload, headers, secrets, tunnel, supply chain, GDPR). Checklist: [../preparacion/security-scaffold-checklist.md](../preparacion/security-scaffold-checklist.md) |
 | 9 | [glossary.md](glossary.md) | everyone, new teammates and agents first | Definitions of actors (brand, worker, operator), agents and services, work units from order to payout, checks, wallets, platforms and process terms |
 
-## Who reads what first (Friday 09:00)
+## Who reads what first
 
 - **A** (shell, engine): architecture, domain-model, contracts sections 0-1, repo-layout.
 - **B** (payments, x402): architecture, domain-model (payout queue), contracts sections 3-4, decisions.
 - **C** (verifier, pack): verifier-rules, contracts section 5-6, domain-model (Submission, Verdict).
-- **Everyone, Friday 09:00:** security.md section 4 and the scaffold checklist before the first feature commit.
+- **Everyone:** security.md section 4 and the scaffold checklist before the first feature commit.
 - **D** (web, evidence, pitch): webapps.md and ui-design.md, contracts sections 0-1, repo-layout (milestones, evidence), architecture (sequence diagrams for the demo).
 
 ## Conventions used in these files

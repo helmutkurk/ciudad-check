@@ -1,5 +1,7 @@
 # Decisions (ADR style)
 
+> Post-hackathon operation is governed by [repo ADR-0008](../docs/adr/0008-post-hackathon-operation.md). In particular, ADR-22 below records the historical demo runtime; its laptop hosting and release instructions are superseded for this phase.
+
 Short records. Status "accepted" means: build on it unless a "verify Friday" item turns it over; the fallback is named in each record. Changes are appended as a new ADR, not edited silently.
 
 ## ADR-01 Verified micro-task engine with a domain pack
@@ -192,8 +194,8 @@ Short records. Status "accepted" means: build on it unless a "verify Friday" ite
      | Sokosumi worker + MPS | on Isabel's laptop | Isabel (A) |
      | Pitch and presentation | deck, script, video (`pitch/`) | Lorenz (C) |
 - **Alternatives:** move MPS to Helmut's hub (new DB, wallets, registration and a private link from the worker; too risky hours before the freeze); keep fakes as a stage fallback (rejected: fake output must not be presented as real, AGENTS.md).
-- **Consequences:** Isabel's laptop and Helmut's laptop must both stay on and online during the demo; Isabel's account needs enough Sokosumi credits; the worker's `ENGINE_URL` must point to the tunnel, not 127.0.0.1. The worker uses `https://api-dev.shelfieapp.fyi` (dev) per [hub-laptop.md](../preparacion/hub-laptop.md); moving the demo to `api` (main) needs the release PR (decide: Helmut). Creating the `soko_preprod_` key in the Sokosumi web app is still unverified (verify on first use).
-- **Amends:** ADR-20 point 3 (names the buyer account), [hub-laptop.md](../preparacion/hub-laptop.md) (hub operator), [adr20-validation.md](../codigo/docs/adr20-validation.md) (historical).
+- **Consequences:** Isabel's laptop and Helmut's laptop must both stay on and online during the demo; Isabel's account needs enough Sokosumi credits; the worker's `ENGINE_URL` must point to the tunnel, not 127.0.0.1. The worker uses `https://api-dev.shelfieapp.fyi` (dev) per [hub-laptop.md](https://github.com/helmutkurk/shelfie/blob/7c92de9b9ea307b63f0b78925e69beeadb1a2c0b/preparacion/hub-laptop.md); moving the demo to `api` (main) needs the release PR (decide: Helmut). Creating the `soko_preprod_` key in the Sokosumi web app is still unverified (verify on first use).
+- **Amends:** ADR-20 point 3 (names the buyer account), [hub-laptop.md](https://github.com/helmutkurk/shelfie/blob/7c92de9b9ea307b63f0b78925e69beeadb1a2c0b/preparacion/hub-laptop.md) (hub operator), [adr20-validation.md](../codigo/docs/adr20-validation.md) (historical).
 
 ## Open (not yet decided)
 - Early delivery (`earlyDeliver`) default: false (dashboard shows the full table); revisit if the Masumi submit deadline is tight.

@@ -372,3 +372,11 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 - TODO: redeploy engine and web from dev; then one real order to see Credits paid on /b.
 - TODO: explorer screenshots for the evidence rows of Task 01a18fe6.
 - Handoff: branch `dev`, all pushed. Worker for the demo runs on one laptop only.
+
+## 2026-11-01 - Codex for Helmut (D) - post-hackathon state and cleanup (D-44)
+
+- Done: documented Helmut's operation decision in `docs/STATE.md` and ADR-0008 (second in Cardano, EUR 2,000; laptop backend/tunnel/updater stopped and disabled; no laptop backend; web on Vercel; only main/dev; Helmut maintains main directly and keeps dev equal). Filled the previously empty deploy guide from versioned tooling. Updated entry points, agent/contributor guidance, session context, optional PR template and relevant references.
+- Done: removed 53 spent tracked files; full path manifest, reasons, retained doubts, and code candidates are in `docs/cleanup-2026-11-01.md`. Preserved decisions, evidence, eval data, licensing, final pitch/code/tests and deploy tooling. No application code/flag deletion: full-check green could not be established. Repaired only 11 broken homepage back links; claims and legal texts unchanged.
+- Agent lesson: distinguish hosted web availability, historical on-chain evidence and current backend uptime; verify sandbox socket/memory limits before claiming a complete check.
+- Verified (Claude Opus for Helmut): reviewed the diff; restored `ideas/ideation-*.md`, which Helmut values; `NODE_OPTIONS=--max-old-space-size=4096 mise exec node@24 -- npm run check` in codigo exited 0. Default heap still fails on ESLint.
+- Handoff: `main` and `dev` equal. Next steps in `docs/STATE.md`.

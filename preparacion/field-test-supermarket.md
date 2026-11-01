@@ -1,5 +1,7 @@
 # Field test runbook: REWE and House of Communication stage
 
+> Historical build reference (2026-10-30/31), retained for unique scenarios, risks or design rationale. Current operation: [STATE](../docs/STATE.md). The backend is offline; old service, timing and implementation instructions are not current.
+
 Owner: D (Helmut), written 2026-10-30 from the code at `dev` 05c41d1 plus the gesture challenge (ce7ec5f, C-16). Every row below comes from a code path, not from the design docs. "Unverified" marks anything inferred from code that nobody has seen on a phone yet.
 
 Stores: REWE `rewe-81671-august-everding-strasse-20` (dropdown label "REWE, Hanne-Hiob-Straße 10"), stage `demo-hoc-friedenstrasse-24`. Defaults used below: geofence 150 m, claim TTL 300 s, answer window 90 s after the hand sign is shown, 3 attempts per task, 3 location tries per claim, job window 900 s, payout 3 tADA, verify fee 1 tADA.

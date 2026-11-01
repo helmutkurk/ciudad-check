@@ -2,13 +2,17 @@
 
 Verified shelf checks, paid only when the photo is true. The engine admits one catalog store and product per job, verifies one worker photo, pays only on PASS, and delivers the report or withholds it for the buyer's refund. Cardano preprod and test ADA only.
 
-The boilerplate is implemented with fakes, regression tests and a browser build. Paid x402, SDK transfers and Masumi settlement still need venue validation. Start with the [team guide](../docs/START-HERE-TEAM.md), [contracts](../diseno/contracts.md) and each component README.
+Current post-hackathon operation: [STATE](../docs/STATE.md). The public web remains
+on Vercel; the engine/verifier backend is deliberately offline. Historical real
+preprod payments and the complete engine/photo cycle are recorded in
+[verified facts](docs/verified.md) and [evidence](docs/evidence/tx-hashes.md).
+Local fake development remains available; it does not prove live availability.
 
 ## Layout
 
 | Folder | Owner | Already available |
 |---|---|---|
-| `apps/shell` | A, Isabel | Dependency-free JS bridge and fake-engine tests; starter still to attach |
+| `apps/shell` | A, Isabel | JS bridge, pinned starter patch and shell tests (starter checkout is git-ignored) |
 | `apps/engine`, `packages/core` | A, Isabel | API, state machines, catalog intake, geofence, journal, shared schemas and env loader |
 | `packages/payments`, `scripts` | B, Fernando | x402 buyer, payout adapter and durable queue, fakes, smoke, hub-up, fund-check |
 | `apps/verifier` | B wrapper, C gate | x402 seller, validation before payment, idempotency, dry/extract routes, G1-G7 and OOS gates |
@@ -17,7 +21,9 @@ The boilerplate is implemented with fakes, regression tests and a browser build.
 
 ## How to run
 
-Test without a laptop: open https://dev.shelfieapp.fyi/w (workers, on a phone) and https://dev.shelfieapp.fyi/dashboard (operator token from Helmut). For local work the hub laptop is no longer needed (`npm run dev` on fakes is enough), but the shared backend behind these URLs still runs on Helmut's laptop and must stay on until a cloud VM exists. Decision (Helmut, 2026-10-30 evening): the shared deployments must not run fakes; they use the real switches below (real Gemini vision, real preprod payments) so the team finds bugs and UI improvements. Fakes stay only for local development and CI (`npm run check`, local `npm run smoke`). Until the hub env carries the payment secrets (A-21, B-14) the deployment may still show `fakes.payments:true`; then it is not evidence. Details: [deploy.md](../docs/deploy.md).
+The hosted `/w`, `/b` and `/dashboard` require the offline API for live functions.
+For hosting/reactivation use [deploy.md](../docs/deploy.md); continuing the backend
+requires a server. Do not start the retired laptop hub from old task notes.
 
 Use Node 24 and npm. The checked local version is 24.22.2; the repo's `.node-version` selects major 24. Keep global Node unchanged if needed:
 
@@ -43,7 +49,7 @@ npm run dev -w @shelfie/web
 
 Engine: `http://127.0.0.1:4000/api/health`. Verifier: `http://127.0.0.1:4021/health`. Web: `http://127.0.0.1:5173/w` or `/dashboard`; `/api` is proxied to the engine. `VITE_ENGINE_URL` changes the dev proxy target; otherwise it uses `ENGINE_PORT` (4000 by default). The engine's fake verifier is in-process, so the smoke does not depend on the separate verifier. To exercise the separate stub service with a real decodable fixture, set `VERIFY_CLIENT=real`, `VERIFIER_PAYMENT=off`; the marker-based smoke uses synthetic JPEGs and is not suitable for that path.
 
-The shell has no live starter yet: run `npm run test -w @shelfie/shell` and follow its [fork instructions](apps/shell/README.md). Its dev script prints that handoff; it does not launch a Coworker.
+The tracked shell bridge and starter patch are in `apps/shell/`; setup of the separate, pinned starter checkout is in its [README](apps/shell/README.md). The workspace dev script does not launch a Coworker.
 
 For the hub rehearsal and smoke:
 
@@ -71,7 +77,10 @@ The eval calls the same `evaluate` function in-process, without HTTP. Stub/synth
 
 ### Fake and real switches
 
-Local development and CI use the Rehearsal column. Shared deployments (dev.shelfieapp.fyi / api-dev, later app / api) use the Real column: `FAKE_PAYMENTS=0`, `VERIFIER_PAYMENT=on`, `VERIFY_CLIENT=real`, `VERIFIER_MODE=live`, `VISION_*` (primary `gemini-3.5-flash-lite` plus a Gemini backup), wallet mnemonics, `BLOCKFROST_PROJECT_ID`, `SELLER_ADDRESS`, `FACILITATOR_URL` and `VERIFY_RUN_CAP_LOVELACE=200000000`. Values only in Helmut's `~/.config/shelfie/dev.env`, never in git or chat. Status: Gemini key being set; payment secrets still to hand over by Isabel (A-21).
+Local development and CI use the Rehearsal column. The Real column describes
+requirements for an authorized preprod evidence run, not a currently running hub.
+The vision key was removed from the hub. Humans configure private credentials and
+budgets only when reactivation is approved; never put their values in git or chat.
 
 | Name | Rehearsal | Real/evidence requirement |
 |---|---|---|
@@ -93,25 +102,18 @@ Local development and CI use the Rehearsal column. Shared deployments (dev.shelf
 
 Mnemonics and keys are server-only. Web imports `@shelfie/core/browser` and `@shelfie/evidence/explorer`; neither pulls Node built-ins or server env names into the bundle. Queue state defaults to `payout-queue.json` beside `STORE_PATH`; all default engine data is git-ignored. Queue events and engine verdicts share the evidence ledger.
 
-## Verify Friday status
+## Evidence and remaining validation
 
-This pass completed no on-chain milestone itself; Fernando and Isabel have since logged real preprod transactions for M1, M2, M4 and M5 in [docs/evidence/tx-hashes.md](docs/evidence/tx-hashes.md). Missing: a full real cycle through the deployed engine with a store photo (B-14, T-27). Timers (worker execution window, job window, claim TTL, gesture window) are being lengthened by Lorenz (C-17): the values in contracts section 5 and the runbook must be re-read from code after his PR. Record externally confirmed answers with source/time in [docs/verified.md](docs/verified.md); retain transaction evidence in [docs/evidence](docs/evidence/README.md).
+The old implementation-pass status table is superseded by the dated records in
+[verified.md](docs/verified.md), [transaction evidence](docs/evidence/tx-hashes.md)
+and [ai-log](../docs/ai-log.md). These record historical real x402, SDK payouts,
+escrow settlement and refunds, including the full engine/photo cycle. This is
+not a claim that today's hosted service works.
 
-| Owner | Item | Current state / next verification |
-|---|---|---|
-| A | Masumi starter and official template pin, `answer` seam, task id and deadline types, no-hash withholding, ids-only input schema | Bridge exists; clone/pin and inspect starter; execute unpaid task first |
-| A | Sokosumi select fields, free-text-to-ids fallback, decline before payment vs refund after lock, submit deadline/refund timing | Unverified; use catalogs and retain `REJECTED_INPUT` on intake rejection |
-| A | Contract proposals | Extra error codes `forbidden`/`payment_required`/`invalid_transition`; verify request price ranges/reference price and `claimExpiresAt`; GET job/config and claim-release response shapes; ledger kind list; undocumented defaults still need consumer review |
-| A | Engine limits | Worker session cookie deferred: `workerId` in body for now; W-VBUY health balance remains zero outside fakes; tunnel admin restriction, approximate Munich box and override coverage still open; PNG upload unsupported |
-| B | Hosted x402, 1 vs 2 tADA minimum, receipt `transaction` decoding, duplicate retry charge, seller pin | Implemented and fixture-tested; no paid hosted-facilitator run or explorer confirmation |
-| B | ADR-04 plain transfer, metadata label 674/msg shape, Blockfrost preprod REST shapes and confirmations, timeout reconciliation | Adapter and fault-injection queue exist; no real transfer. Check by Fri 13:00 or apply ADR-04 fallback. Queue observer exceptions are suppressed in payments; audit ledger durability before evidence |
-| B | Funding variables | Public `WALLET_ADDRESS_VBUY/PAY/MPS` now validated centrally; balances/faucet limits/cool-down still unverified |
-| B + A | Hub scripts | App script names exist; socket startup/smoke blocked here by sandbox EPERM. Verify cloudflared URL parsing, tunnel headers, HUB_LAN_IP, full descendant cleanup on hub stop; hub-check, bundle-check, evidence-preflight and purge helpers remain unbuilt |
-| C | Real vision | Provider/model ids/base URLs from env; one real call per adapter and image JSON mode/token/temperature support unverified; shell ZAI image support unknown |
-| C | Evaluation | Catalog is read from research in place; 27 products without EAN are dropped and null ranges defaulted. Confirm catalog location, actual demo EANs, G1 variance floor 25 and all thresholds on 20 price + 8 OOS photos. Near-duplicate memory is process-local |
-| C + D | Image library / labels | sharp 0.34.5 already in verifier/eval, pending Helmut's OK; REWE ten-photo draft pending Lorenz; blur is intentional. Prompt constants documented in verifier-rules §3 |
-| D | Web and venue | Public subpaths and production bundle verified; real iOS/Android camera/GPS, dark mode, 130% text, Lighthouse, CIP-30 support and secure LAN/network isolation still unverified. Paste address remains default; reload loses active claim, health banner only detects empty wallets |
-| D | Dashboard payload proposals | GET jobs lacks counts, no verdict-list endpoint, SSE task shape accepted in both forms; confirm with A before expanding contracts |
-| D / all | Repo and release | Branch protection, secret scanning/push protection, starter audit, ignore-scripts support and recorded evidence still to confirm; no new dependencies without Helmut's OK and an exact pin ([library policy](../docs/open-source-libraries.md)) |
+Known open areas: worker authentication and wallet ownership, actual CIP-30/mobile
+wallet compatibility, broader real-photo/OOS evaluation, iPhone app icon,
+server persistence/deployment and code cleanup. Current findings, local test
+results and limitations are in the [cleanup audit](../docs/cleanup-2026-11-01.md).
 
-Local verification in this pass: Node 24 production build and socket-free regression checks can run; full HTTP tests, hub startup and smoke cannot pass in this sandbox because socket creation is refused. This is not evidence of a successful end-to-end run; rerun the commands above on the hub laptop.
+Keep fakes and overrides visibly separate from evidence. Templates and starter
+pins remain in `docs/verified.md`; do not upgrade dependencies during cleanup.

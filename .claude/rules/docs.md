@@ -8,7 +8,7 @@ paths:
 
 - English, concise, imperative, no emojis. Short sections and tables over prose.
 - `diseno/` is canonical. If code and design disagree, fix one of them in the same commit and say which in the commit message.
-- Mark unknowns as "decide Friday" or "verify Friday" and move the answer to `codigo/docs/verified.md` when known. Never guess a fact about Masumi, x402, Sokosumi or Cardano.
+- Mark unknowns as unverified and move the answer to `codigo/docs/verified.md` when known. Never guess a fact about Masumi, x402, Sokosumi or Cardano.
 - Mark planned or stubbed parts as such. Docs must not describe more than the code does.
 - Decisions go to an ADR (`docs/adr/`, skill `adr`). Do not bury a decision in a commit comment or chat.
 - Relative links only. Keep one source per fact; link instead of copying.

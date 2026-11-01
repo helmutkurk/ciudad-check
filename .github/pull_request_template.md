@@ -1,31 +1,26 @@
-<!-- This template is for the ONE release PR: dev -> main (ADR-0006). Changes to dev are pushed directly and peer-reviewed (scripts/peer-review.sh); do not open other PRs. -->
-## What is released
-<!-- 2-5 lines: milestones reached, user-visible changes. -->
+<!-- Optional PR template. ADR-0008 governs post-hackathon maintenance; no mandatory dev-to-main release or three-approval convention is asserted here. GitHub protection remains team-controlled. -->
+## What changed
+<!-- Concrete problem, resulting behavior and relevant limitations. -->
 
-## Release checklist
-- [ ] Base `main`, head `dev`; merge with a merge commit (not squash), then fast-forward `dev` if needed
-- [ ] `npm run check` on `dev`: ____
-- [ ] `npm run smoke` on `dev`: ____
-- [ ] `bash scripts/peer-review.sh status` is clean (exit 0, no open `issue`): ____
-- [ ] Three approvals from the teammates who did not open this PR (GitHub enforces 3; the opener is the 4th)
-- [ ] Emergency admin bypass used? No / Yes (only in the last hour before Sat 15:00; said in chat and in `docs/ai-log.md`)
+## Validation
+- Node 24 `npm run check` in `codigo/`: ____
+- Other relevant validation / unavailable checks: ____
 
 ## Context and purpose
-<!-- Required, checked by CI (job `context-gate`). Fill every line; no placeholders. -->
-- Files read: <list the files you and your agent actually read>
-- Milestone / design section: M_ and diseno/<file> section ...
-- Purpose impact: none | ADR-<id> | minor: <reason>  (AGENTS.md, CLAUDE.md, ideas/decision.md, diseno/, .claude/, .github/, .githooks/, scripts/team.conf need ADR-<id> or minor: <reason>)
+<!-- Checked by CI when a PR is used. -->
+- Files read: <files actually read>
+- Milestone / design section: <current maintenance area or design section>
+- Purpose impact: <none | ADR-id | minor: reason>
 
 ## Tasks
-<!-- Required, checked by CI (job `task-status`). Ids from equipo/tasks/ (`bash scripts/task.sh list <role> --open`). -->
-- Tasks: <none | A-05 (doing), A-06 (done)>
+<!-- Checked by CI; never claim an unverified old event task is done. -->
+- Tasks: none
 
-## Release content
-- Milestones: M_ / none
-- Contracts (`packages/core`, `diseno/contracts.md`) changed? announced in chat: yes / no / n.a.
-- New dependencies (pinned, reason in the commit message): none / ...
-- Evidence: tx hashes in `codigo/docs/evidence/tx-hashes.md` (or: none)
-- No secrets, no mainnet, no `invoice/`, no large images; payment paths: idempotency key, lovelace integers, preprod only
-- New bot/script/tool/helper agent registered in `equipo/components.md` (or: none); `docs/ai-log.md` and ADRs up to date
+## Review notes
+- Contracts changed and announced: no / details
+- Dependencies added: none / exact pin and reason
+- Evidence: none / links to recorded evidence
+- Reusable helper registered: none / component registry entry
+- No secrets or private data; preprod only; log and relevant documentation updated
 
 ## Risks and follow-ups

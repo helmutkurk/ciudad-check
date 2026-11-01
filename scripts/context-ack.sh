@@ -41,10 +41,10 @@ echo "=== Shelfie context card (read before changing anything) ==="
 echo "Purpose (AGENTS.md, 'The project in 5 lines'):"
 section "## The project in 5 lines" | cut -c1-400
 echo
-echo "Scope / window (AGENTS.md, 'Build window'):"
-section "## Build window" | cut -c1-300
+echo "Operation (AGENTS.md, 'Current phase'):"
+section "## Current phase" | cut -c1-300
 echo
-echo "Never-do list: AGENTS.md > 'Never do' (secrets, mainnet, main, other roles' folders, invented facts)."
+echo "Never-do list: AGENTS.md > 'Security and public content' (secrets, mainnet, unauthorized publication, invented facts)."
 if [[ -n "$who" ]]; then
   pf="equipo/$(echo "$who" | tr '[:upper:]' '[:lower:]').md"
   if [[ -f $pf ]]; then

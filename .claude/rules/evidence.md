@@ -1,7 +1,6 @@
 ---
 paths:
   - "codigo/docs/evidence/**"
-  - "preparacion/evidence-log-template.md"
 ---
 # Evidence
 

@@ -1,9 +1,9 @@
 # apps/web (@shelfie/web)
 
-Status: implemented against the contracts, runs on the engine's fakes. Built with Vite 8, React 19 and TypeScript; tests with vitest and jsdom. Links point to the canonical design in `diseno/` at the repo root (one source of truth).
+Status: implemented with Vite 8, React 19, TypeScript, vitest and jsdom. Vercel serves main/dev, while the API is deliberately offline; current availability is in [STATE](../../../docs/STATE.md).
 
 ## Purpose
-Both web apps in one project: the worker app (`/w`) and the customer dashboard (`/dashboard`). Same origin as the engine in production (the engine serves the build), so no CORS.
+Three React apps: worker `/w`, brand `/b`, operator `/dashboard`. `/` redirects to the static `/story/index.html` pitch; `/homepage/` is the product site. Vercel proxies `/api` to the branch API; the engine can also serve a web build directly. See `docs/deploy.md` at the repo root.
 
 ## Run
 From `codigo/` (after `npm ci` there):

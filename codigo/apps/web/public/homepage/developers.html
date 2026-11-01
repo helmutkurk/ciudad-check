@@ -59,7 +59,7 @@
   <h2>Repository</h2>
   <p>The code is public: <a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">https://github.com/helmutkurk/shelfie</a>. Day-to-day work happens on a development branch; <code>main</code> is the release branch.</p>
   <p>Design documents are in <code>diseno/</code> (architecture, contracts, verifier rules, decisions), decision records in <code>docs/adr/</code>, facts checked during the build in <code>codigo/docs/verified.md</code>, and receipts in <code>codigo/docs/evidence/</code>.</p>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
 <section id="license">
   <h2>License</h2>
@@ -74,7 +74,7 @@
   </ul>
   <p>The licensors are the Shelfie team jointly: Helmut Kurk Sierra, Isabel Sagastume, Fernando Mayo and Lorenz Hermannstädter, as named in the license file.</p>
   <p>Read the full text: <a href="https://github.com/helmutkurk/shelfie/blob/main/LICENSE" rel="noopener noreferrer">LICENSE on GitHub</a>.</p>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
 <section id="stack">
   <h2>Stack</h2>
@@ -87,7 +87,7 @@
     <li>Vitest, ESLint, Prettier.</li>
     <li>Vercel for the web app, a Cloudflare tunnel for the engine, Google Gemini for vision.</li>
   </ul>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
 <section id="api">
   <h2>API</h2>
@@ -101,7 +101,7 @@
 <tr><td><code>GET /health</code> (verifier)</td><td>Public</td><td>Health check</td></tr>
 </tbody></table></div>
   <p>Routes used only by the shell or by operators (job creation, settlement events, <code>/api/admin/*</code>) are not documented here.</p>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
 <section id="run-locally">
   <h2>Run locally</h2>
@@ -113,7 +113,7 @@ npm run check</code></pre>
 VERIFIER_PAYMENT=off VERIFIER_MODE=stub npm run start -w @shelfie/verifier
 npm run dev -w @shelfie/web</code></pre>
   <p>The web app is at <code>http://127.0.0.1:5173/w</code> (checkers) and <code>/dashboard</code> (brands). For a smoke test run <code>npm run hub-up -- --fake</code>, then <code>npm run smoke</code>. Never commit a <code>.env</code> file; the example file contains names only.</p>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
 <section id="packages">
   <h2>Packages</h2>
@@ -128,12 +128,12 @@ npm run dev -w @shelfie/web</code></pre>
 <tr><td><code>packages/vision</code></td><td>Vision provider adapters</td></tr>
 <tr><td><code>packages/evidence</code></td><td>Hash-chained ledger and explorer helpers</td></tr>
 </tbody></table></div>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
 <section id="tests">
   <h2>Tests</h2>
   <p>The last recorded run of <code>npm run check</code> (typecheck, lint and tests) on 2026-10-30 reported 435 tests passing, plus 29 in the shell bridge's own suite. This is a recorded number from the build log, not a live badge; rerun the command to confirm it.</p>
-  <p><a class="back" href="index.html#developers">Back to developers on the home page</a></p>
+  <p><a class="back" href="index.html">Back to home</a></p>
 </section>
       </article>
     </div>

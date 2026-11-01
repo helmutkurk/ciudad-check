@@ -1,6 +1,6 @@
 # apps/engine (@shelfie/engine)
 
-Status: implemented on fakes (Express 4.21.2, TypeScript strict, zod, no database). Links point to the canonical design in `diseno/` at the repo root.
+Status: implemented with fake and real adapters; historical paid runs are in `codigo/docs/verified.md` and `codigo/docs/evidence/`. Current operation: [STATE](../../../docs/STATE.md); hosted backend deliberately offline. Express 4.21.2, TypeScript strict, zod and file-backed state.
 
 ## Purpose
 Job, Task, Claim, Submission state machines (all transitions go through `transition()` from `@shelfie/core`); intake filter; challenge codes; soft city check at claim; capture-time geofence precheck; job decision (K rule, default 1 of 1); orchestration of verifier calls and payouts; REST + SSE API; optional static web app; hash-chained evidence ledger (`@shelfie/evidence`).
@@ -37,7 +37,7 @@ Extra runtime switches (validated by core `EngineEnvSchema`): `CATALOG_DIR`, `WE
 - `src/wiring.ts` uses `@shelfie/payments`: `createPayoutAdapter` + `createPayoutQueue` (+ `FilePayoutStore` beside `STORE_PATH`) in every mode (the adapter is the fake one under `FAKE_PAYMENTS=1`); `PAYMENTS_IMPL=engine-fake` swaps in the in-engine `FakePayoutQueue` without loading the wallet SDKs. The verifier client is the in-engine marker-based `FakeVerifyClient` under `FAKE_PAYMENTS=1`; `VERIFY_CLIENT=real` uses `createVerifyClient` (dry endpoint when `VERIFIER_PAYMENT=off`, x402 when `on`). `main.ts` calls `queue.recover()` at start and `queue.pollConfirmations()` every 3 s. Queue `onEvent` appends to the same evidence ledger, with job/task/payout refs and fake/dry flags; its file defaults beside `STORE_PATH`. A socket-free wiring regression proves verify and payout hashes land once in the job ledger.
 - `src/domain-pack.ts` uses `shelfPack`, `loadCatalog` and `renderReport` from `@shelfie/domain-shelf` in `main.ts`; the tests keep the local `defaultShelfPack` and a synthetic catalog so they do not move with pack edits.
 
-## TODO / verify Friday
+## Build-era open questions (reconcile with verified.md before reuse)
 - Real run never exercised: x402 verify client, Evolution payout adapter, W-VBUY balance in `/api/health` (shows `"0"` outside fakes), `SELLER_ADDRESS` is now validated in `EngineEnvSchema` and required for real paid verification.
 - Worker identity is the `workerId` body field (contracts); security.md wants a server session cookie (`/api/auth/*`, not in contracts). Not implemented.
 - Photo upload is base64 JSON only (multipart is optional in contracts). JPEG only; PNG is refused as `image_not_decodable`.

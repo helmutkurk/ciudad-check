@@ -1,6 +1,6 @@
 # apps/verifier
 
-Status: implemented and tested (Fri 30-10); the paid x402 path has not run against the real facilitator yet. Links point to the canonical design in `diseno/` at the repo root (one source of truth).
+Status: implemented; historical real paid x402 and vision runs are recorded in `codigo/docs/verified.md` and evidence. Current operation: [STATE](../../../docs/STATE.md); hosted verifier deliberately offline.
 
 ## Purpose
 
@@ -54,7 +54,7 @@ Real x402: `VERIFIER_PAYMENT=on` (default), `SELLER_ADDRESS`, `FACILITATOR_URL`,
 ## Tests
 Every reason code has a fixture test (`gates.test.ts` proves coverage against core's list); both gate sets in `evaluate.test.ts`; idempotency, payment-off route, validation-before-payment, the real `@x402/express` 402 response against a fake facilitator, dry/extract auth, and the stub reader end to end in `app.test.ts`; injection fixtures in `injection.sec.test.ts`.
 
-## TODO / verify Friday
+## Build-era open questions (reconcile with verified.md before reuse)
 - A paid request against the hosted facilitator (M1): 1 tADA accepted? `PAYMENT-RESPONSE` header carries `transaction`? Package names match the runbook: `@x402/express` 2.26.0 exports `paymentMiddleware` and `x402ResourceServer`; `HTTPFacilitatorClient` comes from `@x402/core/server`, `ExactCardanoScheme` from `@x402/cardano/exact/server`.
 - `/v1/price` returns `payTo: "none"` when `SELLER_ADDRESS` is unset (dev).
 - Near-duplicate detection (`near_duplicate_image`) only knows photos this process has seen (the request carries only sha256 of previous photos); lost on restart.

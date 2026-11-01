@@ -1,5 +1,7 @@
 # Questions for mentors and organisers (prioritised)
 
+> Historical build reference (2026-10-30/31), retained for unique scenarios, risks or design rationale. Current operation: [STATE](../docs/STATE.md). The backend is offline; old service, timing and implementation instructions are not current.
+
 P1 = ask first; P2 = if time.
 
 ## Organisers (Telegram, Thursday evening)

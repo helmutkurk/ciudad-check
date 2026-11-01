@@ -1,5 +1,7 @@
 # Shelfie — approved visual direction / implementation handoff
 
+> Historical build reference (2026-10-30/31), retained for unique scenarios, risks or design rationale. Current operation: [STATE](../STATE.md). The backend is offline; old service, timing and implementation instructions are not current. Spent worker mockups, flow experiments and implementation prompts were removed; retained branding, dashboard concepts and QA are review references.
+
 **Repository:** https://github.com/helmutkurk/shelfie  
 **Target:** existing Vite + React + TypeScript web app (`codigo/apps/web`): worker `/w`, customer/operator `/dashboard`.  
 **Prepared:** 2026-10-30. This package is DESIGN REFERENCE + IMPLEMENTATION INSTRUCTIONS, not implemented code. All written prompts are in English.
@@ -8,11 +10,9 @@
 
 1. Open `00_reference/APPROVED_DIRECTION_BOARD.png`. This is the team's **chosen visual direction** (warm cream, forest green, friendly and lightly gamified worker experience, clean restrained dashboard). The board contains visually invented examples; it is NOT a product specification.
 2. Use `01_branding/logo_D_approved_original.png` as the **approved logo** (two interlocking oval links only between the two cubes; tiny friendly robot is the dot over the "i"). The larger PNG is interpolated, NOT a vector master.
-3. Open individual **primary** mockups in `02_primary_worker/` and `03_primary_dashboard/` for the chosen board's five main worker and five dashboard screens. These are zoomed concept illustrations, not exact UI layout constraints.
-4. Open `04_secondary_worker/` and `05_secondary_dashboard/` for the team's newly generated standalone images. They are SECONDARY visual elaborations, not authoritative over the selected board, existing behaviors, or APIs.
-5. `06_flow_only/` contains earlier UI flow concepts (task detail, camera, verification, receipts, onboarding, admin views) solely to communicate flow patterns. Their blue palette, written challenge-code screens, sample currencies and statuses are superseded by the real repo and by this handoff.
-6. Hand `07_prompts/00_MASTER_CLAUDE_PROMPT.md` to Claude Code, then the corresponding worker/dashboard/branding/feature prompts. Include all image folders in its context. Do not ask Claude to treat screenshots as a pixel-perfect contract.
-7. Use `08_context_and_QA/` for the actual repo inventory, feature decisions, implementation matrix and acceptance checks.
+3. Dashboard concepts remain in `03_primary_dashboard/` and `05_secondary_dashboard/`, including deferred worker-management ideas. They are visual references, not implemented feature promises.
+4. Worker mockups and old flow experiments were retired after implementation; current source and tests are authoritative for those flows.
+5. One-use implementation prompts are retired. Retained `08_context_and_QA/` and `UI_INVENTORY.md` are dated audit references, not instructions to replay the redesign.
 
 ## Interpretation hierarchy (highest first)
 
