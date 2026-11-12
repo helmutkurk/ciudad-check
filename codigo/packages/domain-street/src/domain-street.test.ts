@@ -40,7 +40,7 @@ describe("street pack", () => {
     for (const n of names) expect(StreetGateNameSchema.safeParse(n).success, n).toBe(true);
     expect(names).toEqual(StreetGateNameSchema.options);
     const rule = (n: string): Record<string, unknown> =>
-      (streetPack.rules.find((r) => r.name === n)?.params ?? {}) as Record<string, unknown>;
+      streetPack.rules.find((r) => r.name === n)?.params ?? {};
     expect(rule("location_in_radius")["accuracyCapM"]).toBe(streetPack.location.accuracyCapM);
     expect(rule("fix_fresh")["maxFixAgeMs"]).toBe(streetPack.location.maxFixAgeMs);
     expect(rule("category_match")["minConfidence"]).toBe(

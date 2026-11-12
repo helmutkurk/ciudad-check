@@ -21,6 +21,7 @@ describe("admin auth (E1, E11)", () => {
     const { createApp } = await import("./http/app.js");
     const app = createApp({
       engine: rig.engine,
+      street: rig.street,
       env: rig.env,
       logger: {
         debug() {},
@@ -37,7 +38,9 @@ describe("admin auth (E1, E11)", () => {
     const routes = (router.stack as unknown as Layer[])
       .filter((l) => l.route)
       .map((l) => l.route as NonNullable<Layer["route"]>);
-    expect(routes.length).toBeGreaterThanOrEqual(6);
+    expect(routes.length).toBeGreaterThanOrEqual(7);
+    // the street admin route is part of the enumeration (CiudadCheck)
+    expect(routes.map((r) => r.path)).toContain("/missions");
     for (const r of routes) {
       const method = Object.keys(r.methods)[0] ?? "post";
       const path = `/api/admin${r.path.replace(":id", "x")}`;

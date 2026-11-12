@@ -9,3 +9,4 @@ export type { Catalog } from "./catalog.js";
 export { defaultShelfPack } from "./pack.js";
 export { wireAdapters, EngineExtrasSchema } from "./wiring.js";
 export * from "./fakes/index.js";
+export * from "./street/index.js";

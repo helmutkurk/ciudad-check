@@ -6,6 +6,8 @@ import express from "express";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import type { Orders } from "../orders.js";
 import type { Engine } from "../engine.js";
+import { isStreetPhotoUpload, streetAdminRoutes, streetRouter } from "../street/routes.js";
+import type { StreetService } from "../street/service.js";
 import {
   FailLock,
   RateLimiter,
@@ -21,7 +23,10 @@ import {
 } from "./security.js";
 
 export interface AppOptions {
-  engine: Engine;
+  /** Legacy Shelfie engine. Absent in street mode: none of its routes are mounted then. */
+  engine?: Engine | undefined;
+  /** CiudadCheck street flow (reports, missions, evidence, dashboard). */
+  street?: StreetService | undefined;
   orders?: Orders;
   env: EngineEnv;
   logger: Logger;
@@ -29,7 +34,13 @@ export interface AppOptions {
   /** Extra Host names to accept (LAN IP, tunnel host). PUBLIC_BASE_URL host is always accepted. */
   extraHosts?: readonly string[];
   /** Requests per minute per IP; `null` disables a limiter (tests). */
-  limits?: { worker: number | null; claim: number | null; submit: number | null };
+  limits?: {
+    worker: number | null;
+    claim: number | null;
+    submit: number | null;
+    /** Citizen reports (street); default 30 per minute. */
+    report?: number | null;
+  };
   webDist?: string | undefined;
   sseMaxPerIp?: number;
 }
@@ -87,6 +98,7 @@ export function createApp(opts: AppOptions): express.Express {
   const workerLimit = mk(lim.worker);
   const claimLimit = mk(lim.claim);
   const submitLimit = mk(lim.submit);
+  const reportLimit = mk(lim.report === undefined ? 30 : lim.report);
   const sseMax = opts.sseMaxPerIp ?? 10;
   const ledgerStreams = new Map<string, number>();
   // ADR-21: one access code per brand; the list is fixed at boot (env), an empty list fails closed.
@@ -145,7 +157,11 @@ export function createApp(opts: AppOptions): express.Express {
   const bigJson = express.json({ limit: photoLimit, strict: true });
   const isSubmission = (req: Request): boolean =>
     req.method === "POST" && /^\/api\/tasks\/[^/]+\/submissions$/.test(req.path);
-  app.use((req, res, next) => (isSubmission(req) ? next() : smallJson(req, res, next)));
+  // Photo uploads (legacy submissions, street reports and mission submits) get a bounded big
+  // parser on their own route; everything else is capped at 16 kb here.
+  app.use((req, res, next) =>
+    isSubmission(req) || isStreetPhotoUpload(req) ? next() : smallJson(req, res, next),
+  );
 
   // Orders have their own header-only auth and budget-spending rate limit, including reads.
   // Each brand sees only its own orders (ADR-21); `res.locals.brandId` comes from requireBrand.
@@ -206,166 +222,190 @@ export function createApp(opts: AppOptions): express.Express {
   );
   app.use("/api/brand", brandRouter);
 
-  // ---------------------------------------------------------------- public reads
-  app.get(
-    "/api/health",
-    h(async (_req, res) => res.json(await engine.health())),
-  );
-  app.get(
-    "/api/config",
-    h((req, res) => {
-      const host = (req.hostname || "").toLowerCase();
-      const secure =
-        req.secure ||
-        req.headers["x-forwarded-proto"] === "https" ||
-        host === "localhost" ||
-        host === "127.0.0.1";
-      res.json(engine.configView(secure));
-    }),
-  );
-  app.get(
-    "/api/catalog",
-    workerLimit,
-    h((_req, res) => res.json(engine.catalogView())),
-  );
-  app.get(
-    "/api/jobs",
-    h((_req, res) => res.json(engine.listJobs())),
-  );
+  // ---------------------------------------------------------------- street (CiudadCheck)
+  const street = opts.street;
+  if (street) {
+    app.use(
+      "/api",
+      streetRouter(street, {
+        read: workerLimit,
+        report: reportLimit,
+        claim: claimLimit,
+        submit: submitLimit,
+      }),
+    );
+  }
+  if (!engine) {
+    app.get(
+      "/api/health",
+      h((_req, res) =>
+        res.json({ ok: true, mode: "street", fakes: street?.fakes ?? null, now: clock.nowIso() }),
+      ),
+    );
+  }
 
-  // ---------------------------------------------------------------- jobs (shell or admin)
-  app.post(
-    "/api/jobs",
-    shellOrAdmin,
-    h((req, res) => {
-      const out = engine.createJob(req.body, isAdminToken(req, tokens) ? "admin" : "shell");
-      res.status(out.status).json(out.body);
-    }),
-  );
-  app.get(
-    "/api/jobs/:jobId",
-    h((req, res) => res.json(engine.getJob(param(req, "jobId")))),
-  );
-  app.get(
-    "/api/jobs/:jobId/decision",
-    shellOrAdmin,
-    h(async (req, res) => {
-      res.json(await engine.decision(param(req, "jobId"), req.query));
-    }),
-  );
-  app.post(
-    "/api/jobs/:jobId/settlement-events",
-    shellOrAdmin,
-    h((req, res) => {
-      const out = engine.settlementEvent(param(req, "jobId"), req.body);
-      res.status(out.status).json(out.body);
-    }),
-  );
-  app.post(
-    "/api/jobs/:jobId/cancel",
-    adminOnly,
-    h((req, res) => res.json(engine.cancelJob(param(req, "jobId")))),
-  );
+  if (engine) {
+    // ---------------------------------------------------------------- public reads
+    app.get(
+      "/api/health",
+      h(async (_req, res) => res.json(await engine.health())),
+    );
+    app.get(
+      "/api/config",
+      h((req, res) => {
+        const host = (req.hostname || "").toLowerCase();
+        const secure =
+          req.secure ||
+          req.headers["x-forwarded-proto"] === "https" ||
+          host === "localhost" ||
+          host === "127.0.0.1";
+        res.json(engine.configView(secure));
+      }),
+    );
+    app.get(
+      "/api/catalog",
+      workerLimit,
+      h((_req, res) => res.json(engine.catalogView())),
+    );
+    app.get(
+      "/api/jobs",
+      h((_req, res) => res.json(engine.listJobs())),
+    );
 
-  // ---------------------------------------------------------------- tasks and claims
-  app.get(
-    "/api/tasks",
-    workerLimit,
-    h((req, res) => res.json(engine.listTasks(req.query))),
-  );
-  app.get(
-    "/api/tasks/stream",
-    h((req, res) => {
-      const city = engine.streamCity(req.query);
-      const ip = req.ip ?? "unknown";
-      const unsubscribe = engine.feed.subscribe(
-        {
-          city,
-          send: (e) => {
-            sseSend(res, e.type, feedPayload(e));
+    // ---------------------------------------------------------------- jobs (shell or admin)
+    app.post(
+      "/api/jobs",
+      shellOrAdmin,
+      h((req, res) => {
+        const out = engine.createJob(req.body, isAdminToken(req, tokens) ? "admin" : "shell");
+        res.status(out.status).json(out.body);
+      }),
+    );
+    app.get(
+      "/api/jobs/:jobId",
+      h((req, res) => res.json(engine.getJob(param(req, "jobId")))),
+    );
+    app.get(
+      "/api/jobs/:jobId/decision",
+      shellOrAdmin,
+      h(async (req, res) => {
+        res.json(await engine.decision(param(req, "jobId"), req.query));
+      }),
+    );
+    app.post(
+      "/api/jobs/:jobId/settlement-events",
+      shellOrAdmin,
+      h((req, res) => {
+        const out = engine.settlementEvent(param(req, "jobId"), req.body);
+        res.status(out.status).json(out.body);
+      }),
+    );
+    app.post(
+      "/api/jobs/:jobId/cancel",
+      adminOnly,
+      h((req, res) => res.json(engine.cancelJob(param(req, "jobId")))),
+    );
+
+    // ---------------------------------------------------------------- tasks and claims
+    app.get(
+      "/api/tasks",
+      workerLimit,
+      h((req, res) => res.json(engine.listTasks(req.query))),
+    );
+    app.get(
+      "/api/tasks/stream",
+      h((req, res) => {
+        const city = engine.streamCity(req.query);
+        const ip = req.ip ?? "unknown";
+        const unsubscribe = engine.feed.subscribe(
+          {
+            city,
+            send: (e) => {
+              sseSend(res, e.type, feedPayload(e));
+            },
           },
-        },
-        ip,
-        sseMax,
-      );
-      if (!unsubscribe) throw new AppError("rate_limited", "Too many open streams.");
-      sseOpen(req, res);
-      const timer = setInterval(() => {
-        sseSend(res, "ping", {});
-      }, 15_000);
-      req.on("close", () => {
-        clearInterval(timer);
-        unsubscribe();
-      });
-    }),
-  );
-  app.post(
-    "/api/tasks/:taskId/claim",
-    claimLimit,
-    h((req, res) => {
-      const out = engine.claimTask(param(req, "taskId"), req.body);
-      res.status(out.status).json(out.body);
-    }),
-  );
-  app.post(
-    "/api/claims/:claimId/challenge",
-    workerLimit,
-    h((req, res) => res.json(engine.revealChallenge(param(req, "claimId")))),
-  );
-  app.post(
-    "/api/claims/:claimId/release",
-    workerLimit,
-    h((req, res) => res.json(engine.releaseClaim(param(req, "claimId")))),
-  );
+          ip,
+          sseMax,
+        );
+        if (!unsubscribe) throw new AppError("rate_limited", "Too many open streams.");
+        sseOpen(req, res);
+        const timer = setInterval(() => {
+          sseSend(res, "ping", {});
+        }, 15_000);
+        req.on("close", () => {
+          clearInterval(timer);
+          unsubscribe();
+        });
+      }),
+    );
+    app.post(
+      "/api/tasks/:taskId/claim",
+      claimLimit,
+      h((req, res) => {
+        const out = engine.claimTask(param(req, "taskId"), req.body);
+        res.status(out.status).json(out.body);
+      }),
+    );
+    app.post(
+      "/api/claims/:claimId/challenge",
+      workerLimit,
+      h((req, res) => res.json(engine.revealChallenge(param(req, "claimId")))),
+    );
+    app.post(
+      "/api/claims/:claimId/release",
+      workerLimit,
+      h((req, res) => res.json(engine.releaseClaim(param(req, "claimId")))),
+    );
 
-  // ---------------------------------------------------------------- submissions
-  app.post(
-    "/api/tasks/:taskId/submissions",
-    submitLimit,
-    bigJson,
-    h((req, res) => {
-      const out = engine.submitPhoto(param(req, "taskId"), req.body, {
-        adminAuthed: isAdminToken(req, tokens),
-      });
-      res.status(out.status).json(out.body);
-    }),
-  );
-  app.get(
-    "/api/submissions/:submissionId",
-    workerLimit,
-    h((req, res) => res.json(engine.getSubmission(param(req, "submissionId")))),
-  );
+    // ---------------------------------------------------------------- submissions
+    app.post(
+      "/api/tasks/:taskId/submissions",
+      submitLimit,
+      bigJson,
+      h((req, res) => {
+        const out = engine.submitPhoto(param(req, "taskId"), req.body, {
+          adminAuthed: isAdminToken(req, tokens),
+        });
+        res.status(out.status).json(out.body);
+      }),
+    );
+    app.get(
+      "/api/submissions/:submissionId",
+      workerLimit,
+      h((req, res) => res.json(engine.getSubmission(param(req, "submissionId")))),
+    );
 
-  // ---------------------------------------------------------------- payouts, ledger
-  app.get(
-    "/api/payouts",
-    h((req, res) => res.json(engine.listPayouts(req.query))),
-  );
-  app.get(
-    "/api/ledger",
-    h((req, res) => res.json(engine.ledgerView(req.query))),
-  );
-  app.get(
-    "/api/ledger/stream",
-    h((req, res) => {
-      const ip = req.ip ?? "unknown";
-      const n = ledgerStreams.get(ip) ?? 0;
-      if (n >= sseMax) throw new AppError("rate_limited", "Too many open streams.");
-      ledgerStreams.set(ip, n + 1);
-      sseOpen(req, res);
-      const unsub = engine.ledger.subscribe((entry) => {
-        sseSend(res, "entry", entry);
-      });
-      const timer = setInterval(() => {
-        res.write(": ping\n\n");
-      }, 15_000);
-      req.on("close", () => {
-        clearInterval(timer);
-        unsub();
-        ledgerStreams.set(ip, Math.max(0, (ledgerStreams.get(ip) ?? 1) - 1));
-      });
-    }),
-  );
+    // ---------------------------------------------------------------- payouts, ledger
+    app.get(
+      "/api/payouts",
+      h((req, res) => res.json(engine.listPayouts(req.query))),
+    );
+    app.get(
+      "/api/ledger",
+      h((req, res) => res.json(engine.ledgerView(req.query))),
+    );
+    app.get(
+      "/api/ledger/stream",
+      h((req, res) => {
+        const ip = req.ip ?? "unknown";
+        const n = ledgerStreams.get(ip) ?? 0;
+        if (n >= sseMax) throw new AppError("rate_limited", "Too many open streams.");
+        ledgerStreams.set(ip, n + 1);
+        sseOpen(req, res);
+        const unsub = engine.ledger.subscribe((entry) => {
+          sseSend(res, "entry", entry);
+        });
+        const timer = setInterval(() => {
+          res.write(": ping\n\n");
+        }, 15_000);
+        req.on("close", () => {
+          clearInterval(timer);
+          unsub();
+          ledgerStreams.set(ip, Math.max(0, (ledgerStreams.get(ip) ?? 1) - 1));
+        });
+      }),
+    );
+  }
 
   // ---------------------------------------------------------------- admin: one router, auth applied once
   const admin = express.Router();
@@ -375,36 +415,39 @@ export function createApp(opts: AppOptions): express.Express {
     "/ping",
     h((_req, res) => res.json({ ok: true })),
   );
-  admin.post(
-    "/submissions/:id/override",
-    h((req, res) => {
-      const out = engine.adminOverride(param(req, "id"), req.body);
-      res.status(out.status).json(out.body);
-    }),
-  );
-  admin.post(
-    "/payouts/:id/reconcile",
-    h(async (req, res) => res.json(await engine.adminReconcile(param(req, "id")))),
-  );
-  admin.post(
-    "/payouts/:id/retry",
-    h(async (req, res) => res.json(await engine.adminRetry(param(req, "id")))),
-  );
-  admin.post(
-    "/payouts/:id/mark-paid",
-    h(async (req, res) => res.json(await engine.adminMarkPaid(param(req, "id"), req.body))),
-  );
-  admin.post(
-    "/jobs/:id/finalize",
-    h((req, res) => {
-      const out = engine.finalizeJob(param(req, "id"));
-      res.status(out.status).json(out.body);
-    }),
-  );
-  admin.post(
-    "/reset",
-    h((_req, res) => res.json(engine.adminReset())),
-  );
+  if (street) streetAdminRoutes(admin, street);
+  if (engine) {
+    admin.post(
+      "/submissions/:id/override",
+      h((req, res) => {
+        const out = engine.adminOverride(param(req, "id"), req.body);
+        res.status(out.status).json(out.body);
+      }),
+    );
+    admin.post(
+      "/payouts/:id/reconcile",
+      h(async (req, res) => res.json(await engine.adminReconcile(param(req, "id")))),
+    );
+    admin.post(
+      "/payouts/:id/retry",
+      h(async (req, res) => res.json(await engine.adminRetry(param(req, "id")))),
+    );
+    admin.post(
+      "/payouts/:id/mark-paid",
+      h(async (req, res) => res.json(await engine.adminMarkPaid(param(req, "id"), req.body))),
+    );
+    admin.post(
+      "/jobs/:id/finalize",
+      h((req, res) => {
+        const out = engine.finalizeJob(param(req, "id"));
+        res.status(out.status).json(out.body);
+      }),
+    );
+    admin.post(
+      "/reset",
+      h((_req, res) => res.json(engine.adminReset())),
+    );
+  }
   app.use("/api/admin", admin);
   (app.locals as { adminRouter?: express.Router }).adminRouter = admin;
 

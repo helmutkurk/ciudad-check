@@ -22,6 +22,10 @@ import { createApp } from "./http/app.js";
 import type { AppOptions } from "./http/app.js";
 import { defaultShelfPack } from "./pack.js";
 import { MemoryStore } from "./store.js";
+import { streetPack } from "@shelfie/domain-street";
+import { StreetService } from "./street/service.js";
+import { StreetStore } from "./street/store.js";
+import { FakeStreetVerifier } from "./street/verifier.js";
 
 export const ADMIN = "dev-admin-token";
 export const SHELL = "dev-shell-token";
@@ -153,6 +157,10 @@ export interface Rig {
   imageDir: string;
   verify: FakeVerifyClient;
   payouts: FakePayoutQueue;
+  /** CiudadCheck street flow, mounted next to the legacy engine. */
+  street: StreetService;
+  streetStore: StreetStore;
+  streetVerify: FakeStreetVerifier;
   server: Server;
   base: string;
   logs: string[];
@@ -224,12 +232,27 @@ export async function makeRig(opts: RigOptions = {}): Promise<Rig> {
     payoutPollMs: 0,
     verifyBackoffMs: [0, 0],
   });
+  const streetStore = new StreetStore();
+  const streetVerify = new FakeStreetVerifier(streetPack, clock);
+  const street = new StreetService({
+    store: streetStore,
+    verifier: streetVerify,
+    pack: streetPack,
+    clock,
+    ids,
+    logger,
+    // Keep street uploads outside the legacy image directory so legacy upload assertions remain
+    // isolated while both flows share one test rig.
+    imageDir: `${imageDir}-street`,
+    fakePayments: true,
+  });
   const app = createApp({
     engine,
+    street,
     env,
     logger,
     clock,
-    limits: { worker: null, claim: null, submit: null },
+    limits: { worker: null, claim: null, submit: null, report: null },
     ...opts.app,
   });
   const server = await new Promise<Server>((resolve) => {
@@ -322,6 +345,9 @@ export async function makeRig(opts: RigOptions = {}): Promise<Rig> {
     imageDir,
     verify,
     payouts,
+    street,
+    streetStore,
+    streetVerify,
     server,
     base,
     logs,
