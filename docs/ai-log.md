@@ -385,3 +385,10 @@ Rules: do not edit old entries (correct with a new entry); no secrets or mnemoni
 
 - Done: `/` now redirects to `/homepage/index.html` (`vercel.json`, `App.tsx`); `/story` paths redirect there too, so old links keep working. Removed `public/story/`, `apps/web/story/` and `scripts/story-offline.sh`. Homepage team photos now load from `homepage/team/` (byte-identical copies).
 - Note: old pitch documents still mention `/story` as history.
+
+## 2026-11-12 - Codex for Helmut (D) - CiudadCheck street engine scaffold
+
+- Done: added the street engine service, persistence, verifier adapter, report/mission/evidence/dashboard routes and isolated upload directory; street mode starts without loading the legacy engine and requires simulated payments. Added street HTTP and service tests.
+- Validation: `mise exec node@24 -- npm run check` in `codigo/` passes: 609 Vitest tests and 33 bridge tests; typecheck and lint pass.
+- TODO: review and integrate the remaining web, site and verifier branches; Notion page access from Codex was unavailable during this block.
+- Handoff: commit `9e8d14a` and log commit `83cf204` are pushed to `feat/street-core`; nothing from that branch is merged into `develop` yet.

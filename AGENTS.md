@@ -59,6 +59,7 @@ Purpose-defining paths: `AGENTS.md`, `CLAUDE.md`, `ideas/decision.md`, `diseno/*
 | Design and security | `diseno/` |
 | Decisions | `docs/adr/`, `diseno/decisions.md` |
 | History | `docs/ai-log.md` (append only) |
+| Current CiudadCheck build status and developer handoff | `docs/CIUDADCHECK-HANDOFF.md` |
 
 Strategy, budget, customers and interview notes stay in the team workspace, never in this public repo.
 If code and an active specification disagree, reconcile them in the same change.
