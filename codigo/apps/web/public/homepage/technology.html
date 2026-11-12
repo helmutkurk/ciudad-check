@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5EFE3" />
+<meta name="referrer" content="no-referrer" />
+<meta name="description" content="How a Shelfie check works, why the blockchain matters, public Cardano preprod receipts, and one section per technology with its limits." />
+<title>Technology and receipts | Shelfie</title>
+<link rel="icon" href="shelfie-logo.webp" />
+<link rel="stylesheet" href="home.css" />
+<link rel="stylesheet" href="doc.css" />
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Shelfie home">
+    <img src="shelfie-logo.webp" alt="" width="36" height="37" />
+    <span>Shelf<b>ie</b></span>
+  </a>
+  <nav class="topnav" aria-label="Site">
+    <a href="market.html">Market</a>
+    <a href="technology.html" aria-current="page">Technology</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a href="developers.html">Developers</a>
+    <a class="btn btn-small" href="/dashboard">Start a check</a>
+  </nav>
+  <details class="menu">
+    <summary>Menu</summary>
+    <a href="market.html">Market</a><a href="technology.html" aria-current="page">Technology</a><a href="roadmap.html">Roadmap</a><a href="developers.html">Developers</a>
+    <a href="/dashboard">Start a check</a>
+  </details>
+</header>
+<main id="main" class="doc">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="index.html">Home</a></li><li aria-current="page">Technology</li></ol></nav>
+    <p class="eyebrow">Technology</p>
+    <h1 class="doc-title">How Shelfie works, and why you can check it</h1>
+    <p class="lead">A step-by-step view of one check, the guarantees the blockchain gives and does not give, and every receipt we can show today.</p>
+    <div class="doc-grid">
+      <aside class="toc">
+        <details open>
+          <summary>On this page</summary>
+          <ol>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#trust">Why trust: the blockchain</a></li>
+          <li><a href="#receipts">Receipts</a></li>
+          <li><a href="#cardano">Cardano</a></li>
+          <li><a href="#masumi">Masumi</a></li>
+          <li><a href="#x402">x402</a></li>
+          <li><a href="#sokosumi">Sokosumi</a></li>
+          <li><a href="#verifier-gates">Verifier gates</a></li>
+          <li><a href="#hand-sign">Hand sign</a></li>
+          <li><a href="#location">Location check</a></li>
+          <li><a href="#vision">Vision models</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          </ol>
+        </details>
+      </aside>
+      <article class="prose">
+
+<section id="how">
+  <h2>How it works, step by step</h2>
+  <ol>
+    <li><strong>A brand orders.</strong> It picks one product and one Munich store from our seeded catalog. Free text is rejected. The order is paid in Sokosumi credits, and Masumi locks the fee in escrow on Cardano. In the demo, Shelfie places the order on the brand's behalf, so the buyer and seller sides are both Shelfie accounts.</li>
+    <li><strong>The shell creates a job.</strong> A thin bridge picks up the task and creates one engine job. One job is one store and one photo.</li>
+    <li><strong>A checker takes the check.</strong> The checker's phone checks the city when the task is claimed. The app shows a one-time hand sign when the live camera opens, and the photo must arrive within 90 seconds. At most 3 attempts per task.</li>
+    <li><strong>The engine checks location, then calls the verifier.</strong> A photo taken too far from the store is refused before the verifier is called, so it costs no fee.</li>
+    <li><strong>The verifier is paid per check.</strong> The engine pays the separate verifier service 1 test ADA over x402, pass or fail. The verifier reads the photo with a vision model, and fixed rules decide.</li>
+    <li><strong>The engine decides.</strong> On a pass, the checker is paid in test ADA, the report is submitted and the escrow settles. Otherwise nothing is submitted.</li>
+  </ol>
+  <h3>When something goes wrong</h3>
+  <ul>
+    <li><strong>The photo fails.</strong> Nothing is paid to the checker. The checker can retry with a new hand sign, up to 3 attempts.</li>
+    <li><strong>No photo passes before the window ends.</strong> The engine withholds the result and submits nothing. The escrow then lets the buyer reclaim the funds after its unlock time. In our test run the refund came about 30 minutes after the lock; settlements took 30 to 45 minutes. The measured refund ran with the engine on fakes and no photo.</li>
+    <li><strong>The product is not on the shelf.</strong> The checker photographs the empty slot with the shelf label. A separate gate set checks the label is readable, matches the product, and the slot is empty. The pay is the same and the brand receives an out-of-stock report. A different product in the slot is rejected on purpose.</li>
+    <li><strong>The verifier payment is slow.</strong> One x402 settlement waited about 96 seconds for a confirmation, so the team moved to a zero-confirmation policy for the verifier. The consequence: a fee payment may not yet be final when the check runs.</li>
+  </ul>
+  <p><strong>Brands and checkers.</strong> A brand sees its orders, verdicts and transaction links on the dashboard. A checker uses the web app on a phone with the live camera. Checkers receive test ADA with no monetary value.</p>
+  <p><a class="back" href="index.html#how">Back to how it works on the home page</a></p>
+</section>
+
+<section id="trust">
+  <h2>Why trust: the blockchain</h2>
+  <p>Proof first, payment second, and the receipts are public. Shelfie runs on Cardano preprod, the public test network. Every payment on this page is a real transaction with test money, and anyone can open it.</p>
+  <h3>Funds are locked before the work starts</h3>
+  <p>The brand's fee goes into a Masumi escrow contract on Cardano when the job is ordered. It is locked in a contract and released by its rules: a result is submitted, or the buyer reclaims the funds after the unlock time. In the demo, the buyer and the seller are both Shelfie accounts, and the fee comes from a Sokosumi test buyer wallet, not from a real brand.</p>
+  <h3>Released on a passing result</h3>
+  <p>If a photo passes the verifier, the report is submitted and the escrow settles to Shelfie. If no photo passes before the window ends, Shelfie submits nothing, and the buyer is refunded (about 30 minutes in our test run).</p>
+  <h3>The verifier is paid per check, over x402</h3>
+  <p>Shelfie's engine pays the verifier service 1 test ADA per photo over x402 (HTTP 402). Each check is a visible on-chain payment, pass or fail. In the demo we operate both wallets ourselves, so the on-chain fee shows that a payment happened, not that it came from an independent party.</p>
+  <h3>Why a database alone would not give the same guarantees</h3>
+  <p>A database is a record the operator can edit. Escrow and receipts on a public ledger can be checked by anyone without trusting Shelfie's own records, and funds move by contract rules, not by our promise. Shelfie also keeps a hash-chained evidence ledger of its own; the part we cannot rewrite is the chain.</p>
+  <h3>What is on-chain and what is not</h3>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="On-chain and off-chain data"><table><caption>On-chain and off-chain data</caption><thead><tr><th scope="col">On-chain (Cardano preprod)</th><th scope="col">Off-chain</th></tr></thead><tbody>
+<tr><td>Escrow lock, result submission, settlement or refund</td><td>The photo and its gate results, stored on Shelfie's server and deleted after the event</td></tr>
+<tr><td>x402 verifier fee per check</td><td>The vision model's reading of the photo (Google Gemini)</td></tr>
+<tr><td>Worker payout, a plain transfer with metadata</td><td>Location check, done in the browser</td></tr>
+<tr><td>Masumi agent registration</td><td>Hash-chained evidence ledger on Shelfie's server</td></tr>
+</tbody></table></div>
+  <div class="callout callout-limit"><p class="callout-title">Honest limits</p>
+    <ul>
+      <li>This is a prototype on a test network: no mainnet, no real money.</li>
+      <li>The chain proves where funds moved. The pass or fail verdict itself still rests on the verifier, which Shelfie operates in the demo, and the photo is stored off-chain.</li>
+      <li>The payout address is public on the ledger.</li>
+      <li>The hand sign proves a photo is fresh, not where it was taken. The location check is a deterrent, not proof.</li>
+      <li>A production verifier should be run by an independent party.</li>
+    </ul></div>
+  <p><a class="back" href="index.html#trust">Back to why trust on the home page</a></p>
+</section>
+
+<section id="receipts">
+  <h2>Receipts: real transactions on Cardano preprod</h2>
+  <p><strong>Real test transactions from separate runs. No single job has yet gone through the whole chain with a verified real photo; that is our next milestone.</strong></p>
+  <p>Network: Cardano preprod, test ADA with no monetary value. Each row is a real transaction, labelled with the run it belongs to and what it does not show. Source: <code>codigo/docs/evidence/tx-hashes.md</code>.</p>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Receipts on Cardano preprod, grouped by run"><table class="receipts-table"><caption>Receipts on Cardano preprod, grouped by run</caption><thead><tr><th scope="col">Step</th><th scope="col">Status and what it is</th><th scope="col">Transaction hash (links to the explorer)</th></tr></thead><tbody>
+<tr class="group"><th scope="colgroup" colspan="3">Run 1: escrow lock and refund, engine on fakes, no photo (Task 01a18d49)</th></tr>
+<tr><th scope="row">Escrow lock</th><td><span class="pill pill-none">No photo</span><br>Fee locked in Masumi escrow (1 test USDM plus 4.47 tADA collateral), job through the bridge, engine on fakes.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/8415ae7d015d981ac14605f796b46ac58da61cf9150f3e710bfa0fd728cdd081" rel="noopener noreferrer">8415ae7d015d981ac14605f796b46ac58da61cf9150f3e710bfa0fd728cdd081</a></td></tr>
+<tr><th scope="row">Escrow refund</th><td><span class="pill pill-none">No photo</span><br>The engine decided to withhold, no result was submitted, and the buyer was refunded about 30 minutes after the lock.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/ca8f5de9d66a6aa4657d9f8dbf64670f7bbd7e9b66c61355a816ad8ae47fa1d6" rel="noopener noreferrer">ca8f5de9d66a6aa4657d9f8dbf64670f7bbd7e9b66c61355a816ad8ae47fa1d6</a></td></tr>
+<tr class="group"><th scope="colgroup" colspan="3">Run 2: escrow cycle under the Shelfie registration, engine on fakes, synthetic photo (Task 01a18e27)</th></tr>
+<tr><th scope="row">Escrow lock</th><td><span class="pill pill-fake">Engine on fakes</span><br>Task created by a direct REST call to Sokosumi, engine on fakes.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/c6147b082bf4553ee421c735b8a7670bbb7150af4a39978b772ef69b95e3efd2" rel="noopener noreferrer">c6147b082bf4553ee421c735b8a7670bbb7150af4a39978b772ef69b95e3efd2</a></td></tr>
+<tr><th scope="row">Result submitted</th><td><span class="pill pill-fake">Engine on fakes</span><br>Result submitted for the same Task, Shelfie registration.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/1c505e4c66b02745888d5507a806931a1c08201c5ed52116550b26018e44d0ce" rel="noopener noreferrer">1c505e4c66b02745888d5507a806931a1c08201c5ed52116550b26018e44d0ce</a></td></tr>
+<tr><th scope="row">Escrow settlement</th><td><span class="pill pill-fake">Engine on fakes</span><br>An escrow settlement, not the settlement of a verified real photo (synthetic photo).</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/0614b337065b50701df9589d47e5c205a43b409c057eeb109d043042b0b752d0" rel="noopener noreferrer">0614b337065b50701df9589d47e5c205a43b409c057eeb109d043042b0b752d0</a></td></tr>
+<tr class="group"><th scope="colgroup" colspan="3">Run 3: earlier escrow cycle under the organisers' starter registration (Task 01a18c5e)</th></tr>
+<tr><th scope="row">Escrow lock</th><td><span class="pill pill-none">No verified photo</span><br>Earlier test run under the starter registration, before Shelfie was registered.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/5a1bb0bb5fc6f2a520228ec819a97681855331193498a1c785e2479bc81312b5" rel="noopener noreferrer">5a1bb0bb5fc6f2a520228ec819a97681855331193498a1c785e2479bc81312b5</a></td></tr>
+<tr><th scope="row">Result submitted</th><td><span class="pill pill-none">No verified photo</span><br>Same earlier run.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/f7fad4e57b3f24c89f5e296308aef1e2d22914b246f4f1c32360f8f5253d1726" rel="noopener noreferrer">f7fad4e57b3f24c89f5e296308aef1e2d22914b246f4f1c32360f8f5253d1726</a></td></tr>
+<tr><th scope="row">Escrow settlement</th><td><span class="pill pill-none">No verified photo</span><br>Same earlier run: 1 test USDM to the seller wallet, collateral back to the buyer.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/b3e38993fbda017a2d24ada72474825b8d1afbb91ffce149610b0063f21b2746" rel="noopener noreferrer">b3e38993fbda017a2d24ada72474825b8d1afbb91ffce149610b0063f21b2746</a></td></tr>
+<tr class="group"><th scope="colgroup" colspan="3">Verifier fee over x402, separate real payments</th></tr>
+<tr><th scope="row">x402 verifier fee</th><td><span class="pill pill-stub">Stub verdict</span><br>Real payment: 1 tADA from the engine's buyer wallet to the verifier's wallet. The verdict came from a stub reader, so the check itself is not evidence. The receipt shows 0 confirmations when printed.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d" rel="noopener noreferrer">cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d</a></td></tr>
+<tr><th scope="row">x402 verifier fee, first run</th><td><span class="pill pill-stub">Stub verdict</span><br>Real payment. The buyer timed out after 120 seconds waiting for confirmation, so no receipt was printed; the hash was read from the chain and is exactly one transaction. Stub verdict.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/1547a4a767e2963f35cd7b03547c66f3c52beaeb13f451c0e6501bd6fdbb955a" rel="noopener noreferrer">1547a4a767e2963f35cd7b03547c66f3c52beaeb13f451c0e6501bd6fdbb955a</a></td></tr>
+<tr class="group"><th scope="colgroup" colspan="3">Worker payout, separate real runs, no fakes</th></tr>
+<tr><th scope="row">Worker payout, engine queue</th><td><span class="pill pill-real">Real run</span><br>3 tADA from the payout wallet to a team member's demo wallet through the engine's payout queue (no double pay on re-enqueue or restart).</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8" rel="noopener noreferrer">1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8</a></td></tr>
+<tr><th scope="row">Worker payout, plain transfer</th><td><span class="pill pill-real">Real run</span><br>2 tADA to a team member's demo wallet, with metadata.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/60d49a3a5e17919834460f3bb9ad13d5f092a128c5e69590c576bc92d2e7b6e7" rel="noopener noreferrer">60d49a3a5e17919834460f3bb9ad13d5f092a128c5e69590c576bc92d2e7b6e7</a></td></tr>
+<tr class="group"><th scope="colgroup" colspan="3">Agent registration</th></tr>
+<tr><th scope="row">Agent registration &quot;Shelfie&quot;</th><td><span class="pill pill-real">Registry entry</span><br>Masumi registry entry for the Shelfie agent, confirmed on chain.</td><td><a class="hash" href="https://preprod.cardanoscan.io/transaction/40160269be813ddf067efb62bee296738b6893d70b1593e97caeec4af589db56" rel="noopener noreferrer">40160269be813ddf067efb62bee296738b6893d70b1593e97caeec4af589db56</a></td></tr>
+</tbody></table></div>
+  <h3>How to check a hash yourself</h3>
+  <ol>
+    <li>Copy the full transaction hash from the table, or click it.</li>
+    <li>Open <code>preprod.cardanoscan.io</code>, select the preprod network, and paste the hash into the transaction search (the link in the table does this for you).</li>
+    <li>Compare what the explorer shows with our label: the amount, the sender and receiver, and the time. If they differ from our label, our label is wrong, and we want to know.</li>
+  </ol>
+  <p><a class="back" href="index.html#proof">Back to proof on the home page</a></p>
+</section>
+
+<section id="cardano">
+  <h2>Cardano, eUTxO and preprod</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> Cardano records value as unspent transaction outputs (UTxOs). A transaction consumes whole outputs and creates new ones, so its result is known before it is submitted. The extended UTxO model lets an output carry a script and data, which is how escrow contracts such as Masumi's work: the script decides when locked funds may be spent.</p>
+    <p><span class="k">What it does for Shelfie.</span> Shelfie uses the preprod network only. It is Cardano's public test network with the same rules as mainnet and free test ADA from a faucet. Amounts are integer lovelace (1 tADA = 1,000,000 lovelace). The code refuses mainnet on purpose, and every service checks this at startup.</p>
+    <p><span class="k">Limit today.</span> Test money only. Preprod payments settle in seconds to a minute or two.</p>
+  </div>
+  <p class="links"><strong>Official links</strong></p><ul class="links"><li><a href="https://docs.cardano.org/" rel="noopener noreferrer">Cardano documentation</a></li><li><a href="https://developers.cardano.org/" rel="noopener noreferrer">Cardano developer portal</a></li><li><a href="https://docs.cardano.org/cardano-testnets/tools/faucet" rel="noopener noreferrer">Testnet faucet</a></li></ul>
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="masumi">
+  <h2>Masumi: escrow and agent registry</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> Masumi is the payment and registry layer under Sokosumi. An agent is registered on-chain, and each paid task locks the buyer's funds in a Masumi smart contract through the Masumi Payment Service.</p>
+    <p><span class="k">What it does for Shelfie.</span> We registered the Shelfie agent on chain. The seller submits a result hash; if it arrives, the seller can withdraw after an unlock time, otherwise the buyer can reclaim the funds. Shelfie maps this to its rule: a passing photo means the engine decides to deliver and the result is submitted; no passing photo means no result and the refund applies. Measured on preprod: about 30 to 45 minutes for a settlement or a refund.</p>
+    <p><span class="k">Limit today.</span> In the demo, the buyer and seller sides are both ours. The Masumi fee in tests was about 1 test USDM.</p>
+  </div>
+  <p class="links"><strong>Official links</strong></p><ul class="links"><li><a href="https://www.masumi.network/dev" rel="noopener noreferrer">Masumi for developers</a></li><li><a href="https://www.masumi.network/tum-hackathon/agent-guide.md" rel="noopener noreferrer">Hackathon agent guide</a></li><li><a href="https://github.com/masumi-network/tum-hackathon-quickstart" rel="noopener noreferrer">Hackathon quickstart</a></li></ul>
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="x402">
+  <h2>x402: pay-per-check over HTTP 402</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> x402 is an open standard built on the HTTP status 402 Payment Required: a server answers a request with its price, the client signs a payment and retries, and the server serves the result. Cardano has its own scheme, with a hosted facilitator run by the Cardano Foundation that checks and relays the wallet-signed transaction without holding keys or funds.</p>
+    <p><span class="k">What it does for Shelfie.</span> The verifier exposes <code>POST /v1/verify</code>, priced at 1 test ADA. The engine's buyer wallet signs the payment under a spend cap per payment and per run. The fee is paid for every check that reaches the verifier, and the transaction hash is written to the evidence ledger. Location failures are rejected before the verifier is called, so they cost no fee.</p>
+    <p><span class="k">Limit today.</span> The two x402 receipts we have carry a stub verdict, and we operate both wallets. We switched to a zero-confirmation policy, so a fee payment may not yet be final when the check runs.</p>
+  </div>
+  <p class="links"><strong>Official links</strong></p><ul class="links"><li><a href="https://developers.cardano.org/x402/" rel="noopener noreferrer">x402 on Cardano</a></li><li><a href="https://docs.x402.org" rel="noopener noreferrer">x402 documentation</a></li><li><a href="https://www.x402.org" rel="noopener noreferrer">x402.org</a></li><li><a href="https://github.com/x402-foundation/x402/blob/main/specs/schemes/exact/scheme_exact_cardano.md" rel="noopener noreferrer">Cardano exact scheme specification</a></li></ul>
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="sokosumi">
+  <h2>Sokosumi: how a brand hires the agent</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> Sokosumi is an agent marketplace built on Masumi. The Shelfie agent is listed there as a coworker.</p>
+    <p><span class="k">What it does for Shelfie.</span> A brand creates a task (one product and one Munich store from our catalog), pays in Sokosumi credits, and Masumi locks the fee in escrow. Our shell, a thin fork of the organisers' starter, picks up the task and creates one engine job. Today there are two entry paths: the Sokosumi interface, and the order form on our dashboard, which places the same Sokosumi task through Sokosumi's API with Shelfie's own account.</p>
+    <p><span class="k">Limit today.</span> The order API is not public: it needs an access code and is capped per order and per day, because it spends Shelfie's credits. In production the brand would pay with its own account; that is on the roadmap.</p>
+  </div>
+  <p class="links"><strong>Official links</strong></p><ul class="links"><li><a href="https://www.sokosumi.com" rel="noopener noreferrer">Sokosumi</a></li><li><a href="https://preprod.sokosumi.com/signup" rel="noopener noreferrer">Sokosumi preprod, test credits</a></li></ul>
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="verifier-gates">
+  <h2>The verifier gates</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> A vision model only reads the photo; plain code decides. Every gate is evaluated and reported, and the photo passes only if every gate passes.</p>
+    <p><span class="k">What it does for Shelfie.</span> The gates check, in plain words: the image is usable (decodable, large enough, not blank); the one-time hand sign in the photo matches the one issued; price and product text are readable; the product matches the order; the price is plausible for that product; the photo arrived inside the time window by the server's clock; the photo is not a duplicate or near-duplicate; and the photo is not a picture of a screen. For an out-of-stock report, a separate gate set checks the shelf label and the empty slot.</p>
+    <p><span class="k">Limit today.</span> A gate is a rule with fixed thresholds, not a guarantee. We have not yet measured the false pass rate on a large real photo set.</p>
+  </div>
+  
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="hand-sign">
+  <h2>The one-time hand sign and the live camera</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> To show a photo is new and made for this task, the app shows a hand sign (2 to 5 raised fingers, left or right of the price tag) only when the camera opens. The photo must arrive within 90 seconds.</p>
+    <p><span class="k">What it does for Shelfie.</span> There are 8 possible signs, so a blind guess passes this one gate with probability 1 in 8; the other gates and the location check still apply. Photos come only from the live in-app camera, and the app has no gallery upload. The verification model reports what it sees; code compares it with the issued sign.</p>
+    <p><span class="k">Limit today.</span> A printout of the tag plus the right fingers would pass, and the sign does not prove location. A fallback mode with printed code cards exists as configuration, in case hand reading proves unreliable.</p>
+  </div>
+  
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="location">
+  <h2>Location check</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> The app reads the phone's location when a task is claimed, to check that the checker is in the store's city, and at the shutter, to check the distance to the store (default radius 150 m, with the reported accuracy considered).</p>
+    <p><span class="k">What it does for Shelfie.</span> The check runs before the verifier is called, so a photo taken elsewhere is refused with no fee. The engine's request log does not contain raw coordinates (covered by an automated test).</p>
+    <p><span class="k">Limit today.</span> Browser location can be spoofed, so this is a deterrent, not proof. Store-owned QR codes or attested capture would be stronger and need store cooperation; they are on the roadmap.</p>
+  </div>
+  
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="vision">
+  <h2>Vision models</h2>
+  <div class="facts">
+    <p><span class="k">What it is.</span> The verifier sends one downscaled, re-encoded photo without metadata to a vision model and asks for strict JSON: price text, product text, barcode digits, hand sign, shelf-label and slot fields, and an advisory flag for screens.</p>
+    <p><span class="k">What it does for Shelfie.</span> Google Gemini, through its OpenAI-compatible endpoint, is the primary provider. The model's output is untrusted data: our code parses numbers itself and decides pass or fail with fixed thresholds. We chose this because a refund or payout must rest on a rule that can be explained, not on a model's opinion. The model is replaceable through configuration. In our test run the mean latency was 8.5 seconds and the 95th percentile 13.2 seconds.</p>
+    <p><span class="k">Limit today.</span> An OpenAI adapter exists as a fallback, but it is not configured or verified in the current deployment. The photo goes to Google; see the <a href="privacy.html">privacy notice</a>.</p>
+  </div>
+  <p class="links"><strong>Official links</strong></p><ul class="links"><li><a href="https://ai.google.dev/gemini-api/docs/openai" rel="noopener noreferrer">Gemini API, OpenAI compatibility</a></li></ul>
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <figure class="arch">
+    <svg viewBox="0 0 960 440" role="img" aria-labelledby="arch-t arch-d" width="960" height="440" xmlns="http://www.w3.org/2000/svg">
+  <title id="arch-t">Shelfie architecture</title>
+  <desc id="arch-d">A brand orders through Sokosumi and Masumi, which lock the fee in escrow on Cardano preprod. A shell creates a job for the engine. A worker phone sends a photo to the engine. The engine pays a separate verifier over x402, the verifier reads the photo with a vision model, and the engine decides. On a pass the result is submitted and the escrow settles; otherwise nothing is submitted and the escrow refunds the buyer. The engine pays the worker through a plain transfer.</desc>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0b2e1f" /></marker>
+  </defs>
+  <g fill="#fffdf8" stroke="#0b2e1f" stroke-width="2">
+    <rect x="20" y="30" width="170" height="64" rx="10" />
+    <rect x="260" y="30" width="200" height="64" rx="10" />
+    <rect x="530" y="30" width="200" height="64" rx="10" fill="#cfe7c1" />
+    <rect x="260" y="170" width="200" height="72" rx="10" />
+    <rect x="20" y="170" width="170" height="72" rx="10" />
+    <rect x="530" y="170" width="200" height="72" rx="10" />
+    <rect x="770" y="170" width="170" height="72" rx="10" />
+    <rect x="260" y="330" width="200" height="64" rx="10" />
+    <rect x="530" y="330" width="200" height="64" rx="10" />
+    <rect x="770" y="330" width="170" height="64" rx="10" fill="#cfe7c1" />
+  </g>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#0b2e1f" text-anchor="middle">
+    <text x="105" y="68" font-weight="700">1 Brand</text>
+    <text x="360" y="62" font-weight="700">2 Sokosumi + Masumi</text><text x="360" y="82" font-size="14">order, escrow lock</text>
+    <text x="630" y="62" font-weight="700">Cardano preprod</text><text x="630" y="82" font-size="14">test network, public</text>
+    <text x="360" y="202" font-weight="700">3 Engine</text><text x="360" y="222" font-size="14">jobs, rules, decision</text>
+    <text x="105" y="202" font-weight="700">4 Worker phone</text><text x="105" y="222" font-size="14">live camera, location</text>
+    <text x="630" y="202" font-weight="700">5 Verifier</text><text x="630" y="222" font-size="14">separate x402 service</text>
+    <text x="855" y="202" font-weight="700">Vision model</text><text x="855" y="222" font-size="14">reads the photo</text>
+    <text x="360" y="358" font-weight="700">6 Decision</text><text x="360" y="378" font-size="14">pass or withhold</text>
+    <text x="630" y="358" font-weight="700">Evidence ledger</text><text x="630" y="378" font-size="14">hash-chained</text>
+    <text x="855" y="358" font-weight="700">Worker wallet</text><text x="855" y="378" font-size="14">test ADA payout</text>
+  </g>
+  <g stroke="#0b2e1f" stroke-width="2" fill="none" marker-end="url(#ah)">
+    <path d="M190 62 H258" />
+    <path d="M460 62 H528" />
+    <path d="M360 94 V168" />
+    <path d="M190 206 H258" />
+    <path d="M460 206 H528" />
+    <path d="M730 206 H768" />
+    <path d="M360 242 V328" />
+    <path d="M460 362 H528" />
+    <path d="M730 362 H768" />
+  </g>
+</svg>
+    <figcaption>Architecture overview. The numbers follow the steps in <a href="#how">How it works</a>.</figcaption>
+  </figure>
+  <p><strong>The same diagram as a list.</strong></p>
+  <ol>
+    <li>A brand orders through Sokosumi and Masumi; the fee is locked in escrow on Cardano preprod.</li>
+    <li>A shell (a bridge to the marketplace) creates one job for the engine, with ids only.</li>
+    <li>The engine runs the state machines, intake, dispatch and decisions, and writes a hash-chained evidence ledger.</li>
+    <li>A checker's phone (web app with live camera and location) claims the task and submits one photo.</li>
+    <li>The engine pays the separate verifier service over x402; the verifier reads the photo with a vision model and applies the gates.</li>
+    <li>The engine decides. Deliver: the result is submitted, the escrow settles, and the checker is paid by a plain transfer from the payout wallet. Withhold: no result is submitted and the buyer is refunded.</li>
+  </ol>
+  <p>Layers: web app (worker app and dashboard), engine, verifier (a separate x402 service), payments (wallets, queue, idempotency) and evidence (ledger and explorer links). The web app is hosted on Vercel. Today the engine, verifier and shell run on team machines, and the engine is exposed through a Cloudflare tunnel.</p>
+  <p><a class="back" href="index.html#technology">Back to technology on the home page</a></p>
+</section>
+
+<section id="faq">
+  <h2>FAQ</h2>
+  <details><summary>Is this real money?</summary><p>No. Shelfie runs on Cardano preprod, a public test network. All amounts are test ADA or test USDM with no monetary value. Euro figures on this site are illustrative.</p></details>
+  <details><summary>What happens if the photo fails?</summary><p>Nothing is paid to the checker, who can retry with a new hand sign, up to 3 attempts. If no photo passes before the window ends, the result is withheld and the buyer is refunded, about 30 to 45 minutes later on preprod.</p></details>
+  <details><summary>Can a checker fake a photo?</summary><p>The app has no gallery upload, the hand sign is revealed only when the camera opens and must match within 90 seconds, a photo of a screen is rejected, and duplicates are rejected. It is not perfect: a printout of a tag plus the right fingers could pass, and a blind guess passes the hand-sign gate 1 time in 8. We list these limits openly.</p></details>
+  <details><summary>Does the location check prove the checker was in the store?</summary><p>No. It compares browser location with the store, which can be spoofed. It is a deterrent. Store-owned QR codes are on the roadmap.</p></details>
+  <details><summary>Why is the verifier paid even when the photo fails?</summary><p>The verifier does the work either way, so it is paid per check. A verifier paid only on a pass would be tempted to approve bad photos. In the demo we operate both sides ourselves and say so; a production verifier should be independent.</p></details>
+  <details><summary>Why a blockchain and not a normal payment provider?</summary><p>The escrow rule (release on a result, refund otherwise) runs as a contract, and every payment is publicly checkable. A normal provider would also work for payments; the point of this prototype is that agents pay agents and people without a trusted middleman. Whether a brand wants to deal in ADA is open, and fiat payout is on the roadmap.</p></details>
+  <details><summary>What data do you keep?</summary><p>The photo, the checker's payout address and a display name, for the event. Photos are deleted after the event. The payout address and transaction are public on the ledger and cannot be erased. See the <a href="privacy.html">privacy notice</a>.</p></details>
+  <details><summary>Is Shelfie open source?</summary><p>The code is public and source-available under BUSL-1.1: free for evaluation, education, research and judging of the hackathon; production use needs permission; it converts to Apache 2.0 on 2030-10-31 at the latest. See <a href="developers.html#license">License</a>.</p></details>
+  <p><a class="back" href="index.html#faq">Back to the FAQ on the home page</a></p>
+</section>
+      </article>
+    </div>
+  </div>
+  <section class="section section-cta">
+    <div class="wrap cta">
+      <p>See a check run end to end on the Cardano test network.</p>
+      <div class="cta-buttons">
+        <a class="btn btn-big" href="/dashboard">Start a shelf check</a>
+        <a class="btn btn-big btn-ghost" href="/w">Take a check (test ADA)</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="index.html"><img src="shelfie-logo.webp" alt="" width="28" height="29" /><span>Shelf<b>ie</b></span></a>
+      <p>Paid only when the photo is true.</p>
+    </div>
+    <nav aria-label="Product"><h2>Product</h2>
+      <a href="index.html#how">How it works</a><a href="market.html">Market</a><a href="roadmap.html">Roadmap</a></nav>
+    <nav aria-label="Technology"><h2>Technology</h2>
+      <a href="technology.html">Overview</a><a href="technology.html#trust">Why trust</a><a href="technology.html#receipts">Receipts</a></nav>
+    <nav aria-label="Developers"><h2>Developers</h2>
+      <a href="developers.html">Developers</a><a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">GitHub</a><a href="roadmap.html#build">Build log</a></nav>
+    <nav aria-label="Legal"><h2>Legal</h2>
+      <a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a>
+      <a href="https://github.com/helmutkurk/shelfie/blob/main/LICENSE" rel="noopener noreferrer">License (BUSL-1.1)</a></nav>
+  </div>
+  <p class="wrap footer-note">Student project at the TUM Blockchain &amp; AI Hackathon 2026, not an official TUM product. Built on Cardano, Masumi and x402.</p>
+</footer>
+</body>
+</html>

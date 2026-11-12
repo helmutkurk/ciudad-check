@@ -1,0 +1,639 @@
+\chapter{Cardano}
+
+\section*{Why this matters for us}
+The track is called ``Agentic Commerce on Cardano''. Every payment in Shelfie (the verifier fee, the worker payout, the escrow around the brand's job) is a Cardano transaction. If the team understands Cardano's \emph{UTXO} model, two of the most common bugs (``why does my wallet say no funds?'' and ``why can't two payments leave one wallet at once?'') become obvious instead of mysterious. This chapter explains what Cardano is, how its money works, which tools we use to talk to it, and finally exactly which parts we touch in our project.
+
+\section{What is Cardano?}
+
+\term{Cardano} is a public, proof-of-stake blockchain (see Chapter~1) with its own coin, \term{ADA}. It was built with a research-driven approach and is known for formal methods, low and predictable fees, and a ledger model called \emph{extended UTXO} that we explain in detail below.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{4.2cm}p{10.2cm}@{}}
+\toprule
+\textbf{Property} & \textbf{On Cardano}\\
+\midrule
+Consensus & Ouroboros, a Proof-of-Stake protocol\\
+Native coin & ADA (smallest unit: lovelace)\\
+Ledger model & extended UTXO (eUTXO)\\
+Smart contract languages & Plutus (Haskell-based), Aiken, and others that compile to the same on-chain code\\
+Native tokens & built into the ledger; no contract needed to create or send them\\
+TypeScript tooling & Mesh, Lucid Evolution, Evolution SDK (used by the x402 template)\\
+\bottomrule
+\end{tabular}
+\caption{Cardano at a glance.}
+\end{table}
+
+\section{ADA and lovelace}
+
+The coin is called \term{ADA}. Like cents are to euros, the smallest unit is called a \term{lovelace}:
+\[
+1\ \text{ADA} = 1{,}000{,}000\ \text{lovelace}.
+\]
+Software works with whole numbers of lovelace (no decimals, no rounding errors); humans read ADA. Our design contracts use lovelace, and our prose uses ADA.
+
+\begin{examplebox}{Converting between ADA and lovelace}
+\begin{center}
+\small
+\begin{tabular}{rcr}
+\toprule
+\textbf{ADA} & & \textbf{lovelace}\\
+\midrule
+1 ADA & = & 1{,}000{,}000\\
+2 ADA (a typical x402 price in the runbook) & = & 2{,}000{,}000\\
+0.17 ADA (typical fee) & = & 170{,}000\\
+0.5 ADA & = & 500{,}000\\
+5 ADA & = & 5{,}000{,}000\\
+\bottomrule
+\end{tabular}
+\end{center}
+To go from ADA to lovelace, multiply by one million; to go back, divide by one million. In a code field such as \code{amount: "5000000"} that means \emph{5 ADA}, not five million ADA.
+\end{examplebox}
+
+\begin{warningbox}{Off by a factor of a million}
+A classic bug: writing \code{5} when you meant 5~ADA sends 5 lovelace (0.000005 ADA), which is below the minimum and will be rejected. Always check the unit in a field name or doc before using a number.
+\end{warningbox}
+
+\begin{shelfiebox}{tADA, not ADA}
+On the preprod test network, the coin is named \term{tADA} (test ADA). It behaves exactly like ADA but has no value. All Shelfie prices and payouts are in tADA. Any euro value in the pitch is illustrative only.
+\end{shelfiebox}
+
+\section{Ouroboros and stake pools}
+
+\term{Ouroboros} is Cardano's Proof-of-Stake protocol. Time is cut into short \term{slots} (one second each) grouped into \term{epochs} (five days). For each slot a \term{stake pool} is chosen at random, weighted by the amount of ADA staked with it, and that pool creates the block. A pool is run by a \term{stake pool operator}.
+
+\subsection{Delegation}
+You do not need to run a pool to take part. You can \term{delegate} your stake to a pool: your coins stay in your wallet, under your control, and are never sent anywhere; you only point their voting weight to a pool and receive a share of the rewards. Delegation is a mainnet topic and does not matter for the hackathon; it is mentioned here so that the words are familiar.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[human] (h1) at (0,1.2) {Holder 1\\1,000 ADA};
+  \node[human] (h2) at (0,-0.2) {Holder 2\\300 ADA};
+  \node[human] (h3) at (0,-1.6) {Holder 3\\5,000 ADA};
+  \node[chain,minimum width=3cm,minimum height=2.4cm] (pool) at (5,0) {Stake pool\\total stake 6,300};
+  \node[good] (blk) at (9.8,0) {Chosen for a slot\\$\rightarrow$ creates block};
+  \draw[data] (h1) -- node[lbl]{delegate} (pool);
+  \draw[data] (h2) -- (pool);
+  \draw[data] (h3) -- (pool);
+  \draw[flow] (pool) -- node[lbl]{probability $\propto$ stake} (blk);
+\end{tikzpicture}
+\caption{Delegation: holders keep their coins and lend their weight to a pool. The numbers are made up.}
+\end{figure}
+
+\section{The eUTXO model, step by step}
+
+This is the most important concept of the chapter. Take your time.
+
+\subsection{Two ways to keep a ledger}
+There are two common ways to record who owns what:
+
+\begin{description}
+  \item[Account model.] Each address has a balance, like a bank account: ``Mia: 15 ADA''. A payment subtracts from one balance and adds to another. Ethereum works this way.
+  \item[UTXO model.] There are no balances. The ledger holds a set of individual coin ``chunks'' called \term{UTXOs}. Your ``balance'' is the sum of the chunks you can spend. Bitcoin and Cardano work this way.
+\end{description}
+
+\term{UTXO} stands for \emph{Unspent Transaction Output}. An \emph{output} is created by a transaction and sits on the ledger, owned by an address, until another transaction \emph{spends} it. A UTXO can only be spent \emph{whole and once}.
+
+\begin{analogybox}{Banknotes and coins in a wallet}
+Your leather wallet has a 10-euro note and a 5-euro note. You do not own ``15 euros in an account''; you own two physical items that add up to 15. To pay 4 euros you hand over the 10-euro note. The shop gives you 6 euros back as \emph{change}. The note you gave is gone (spent); you now hold new items: the 5-euro note and the 6 euros change. UTXOs work exactly like this.
+\end{analogybox}
+
+\subsection{Inputs and outputs}
+Every transaction has:
+\begin{itemize}
+  \item \textbf{Inputs:} the UTXOs it \emph{consumes} (destroys). Each must be owned by someone who signs, or locked by a script that agrees.
+  \item \textbf{Outputs:} the new UTXOs it \emph{creates}, each with an address and an amount.
+  \item A \textbf{fee} and optional extras (metadata, scripts).
+\end{itemize}
+The golden rule:
+\[
+\sum \text{inputs} \;=\; \sum \text{outputs} \;+\; \text{fee}.
+\]
+Nothing is created and nothing vanishes; it is only re-cut into new pieces.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  % before
+  \node[font=\sffamily\bfseries\small,cBlue] at (1.2,3.3) {Mia's UTXOs before};
+  \node[utxo,minimum height=1.4cm] (a) at (1.2,2.0) {UTXO A\\\textbf{10 ADA}\\owner: Mia};
+  \node[utxo,minimum height=1.0cm] (b) at (1.2,0.4) {UTXO B\\\textbf{5 ADA}\\owner: Mia};
+  % tx
+  \node[chain,minimum width=3.4cm,minimum height=3cm] (tx) at (6.4,1.2) {\textbf{Transaction}\\inputs: A\\fee: 0.17 ADA\\signed by Mia};
+  \draw[->,very thick,draw=cRed] (a) -- node[lbl,text=cRed]{consumed} (tx.west |- a);
+  % after
+  \node[font=\sffamily\bfseries\small,cBlue] at (11.6,3.3) {New UTXOs};
+  \node[utxo,fill=cGold!20,draw=cGold!90!black,minimum height=1.2cm] (o1) at (11.6,2.1) {UTXO C\\\textbf{4 ADA}\\owner: Noor};
+  \node[utxo,minimum height=1.2cm] (o2) at (11.6,0.6) {UTXO D (change)\\\textbf{5.83 ADA}\\owner: Mia};
+  \draw[->,very thick,draw=cGreen] (tx.east |- o1) -- node[lbl,text=cGreen]{created} (o1);
+  \draw[->,very thick,draw=cGreen] (tx.east |- o2) -- (o2);
+  \node[utxo,draw=cGrey,fill=cGrey!10,minimum height=1cm] at (6.4,-1.0) {B (untouched)\\\textbf{5 ADA}};
+  \draw[dashed,draw=cGrey] (b) -- (4.55,-1.0);
+  \node[font=\sffamily\scriptsize,cGrey] at (6.4,-1.8) {10 = 4 + 5.83 + 0.17 (fee)};
+\end{tikzpicture}
+\caption{Mia pays Noor 4 ADA. Input A (10 ADA) is destroyed; two new outputs appear: 4 ADA for Noor and 5.83 ADA change back to Mia; 0.17 ADA is the fee. UTXO B is not used.}
+\end{figure}
+
+\subsection{Why there is always a change output}
+Because a UTXO can only be spent whole, you cannot ``take 4 out of the 10''. Instead you consume all 10 and create \emph{two} outputs: one for the recipient and one that sends the rest back to yourself (the \term{change output}). A wallet does this automatically. If you forget to add a change output in your own code, the leftover ADA is swallowed by the fee.
+
+\begin{warningbox}{Forgetting the change}
+If the inputs add up to 10~ADA but your outputs only add up to 4~ADA, the transaction is invalid (fee too high) or, in a hand-built transaction, you would donate the remaining 5.83~ADA to the fee. Always check that inputs, outputs and fee balance.
+\end{warningbox}
+
+\subsection{Worked numeric example}
+
+\begin{examplebox}{Mia pays Noor, twice}
+\textbf{Start.} Mia's wallet holds two UTXOs: A = 10~ADA and B = 5~ADA. Her ``balance'' is 15~ADA. Fee for each payment: 0.17~ADA (illustrative).
+
+\medskip
+\textbf{Payment 1: 4 ADA to Noor.} The wallet picks A (it is big enough).
+\begin{center}
+\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+ & ADA & \\
+\midrule
+Input A & 10.00 & \\
+Output to Noor (new UTXO C) & 4.00 & \\
+Change to Mia (new UTXO D) & 5.83 & \\
+Fee & 0.17 & \\
+\midrule
+Check: 4.00 + 5.83 + 0.17 & 10.00 & equals the input \\
+\bottomrule
+\end{tabular}
+\end{center}
+Mia now owns B (5.00) and D (5.83): balance 10.83 ADA.
+
+\medskip
+\textbf{Payment 2: 10 ADA to Noor.} Neither B (5.00) nor D (5.83) is large enough on its own, so the wallet uses \emph{both} as inputs.
+\begin{center}
+\small
+\begin{tabular}{@{}lrl@{}}
+\toprule
+ & ADA & \\
+\midrule
+Inputs B + D & 10.83 & \\
+Output to Noor & 10.00 & \\
+Change to Mia & 0.66 & \\
+Fee & 0.17 & \\
+\midrule
+Check: 10.00 + 0.66 + 0.17 & 10.83 & equals the inputs \\
+\bottomrule
+\end{tabular}
+\end{center}
+Mia keeps one UTXO of 0.66 ADA. (Whether 0.66 ADA is allowed as a lone output depends on the minimum-ADA rule, see below; the example only illustrates the arithmetic.)
+\end{examplebox}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.95,transform shape]
+  \node[utxo] (b) at (0,1.0) {B\ \textbf{5.00}};
+  \node[utxo] (d) at (0,-0.6) {D\ \textbf{5.83}};
+  \node[chain,minimum width=2.6cm,minimum height=2.2cm] (tx) at (4.6,0.2) {\textbf{Tx 2}\\2 inputs\\fee 0.17};
+  \draw[->,very thick,draw=cRed] (b) -- (tx.west |- b);
+  \draw[->,very thick,draw=cRed] (d) -- (tx.west |- d);
+  \node[utxo,fill=cGold!20,draw=cGold!90!black] (e) at (9,0.9) {E\ \textbf{10.00}\\Noor};
+  \node[utxo] (f) at (9,-0.7) {F\ \textbf{0.66}\\Mia (change)};
+  \draw[->,very thick,draw=cGreen] (tx.east |- e) -- (e);
+  \draw[->,very thick,draw=cGreen] (tx.east |- f) -- (f);
+  \node[font=\sffamily\scriptsize,cGrey] at (4.6,-1.4) {2 inputs combined into 2 outputs};
+\end{tikzpicture}
+\caption{Combining small UTXOs: Payment~2 consumes B and D together.}
+\end{figure}
+
+\subsection{The ledger is a set of unspent outputs}
+It helps to picture the whole chain as a big shelf of UTXOs. A transaction removes some items from the shelf (inputs) and puts new ones on it (outputs). An item that has been removed can never be used again. This is why double spending is impossible: the second attempt to spend the same UTXO finds it already gone.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[font=\sffamily\bfseries\small,cBlue] at (1.6,3.1) {Ledger before};
+  \node[utxo] at (1.6,2.1) {A\ 10 ADA\\Mia};
+  \node[utxo] at (1.6,0.9) {B\ 5 ADA\\Mia};
+  \node[utxo] at (1.6,-0.3) {X\ 7 ADA\\Ben};
+  \node[chain,minimum width=2.8cm,minimum height=1.6cm] (tx) at (6,1.5) {Tx 1\\spends A};
+  \draw[->,very thick,draw=cRed] (2.9,2.1) -- (tx.west |- 0,1.9);
+  \node[font=\sffamily\bfseries\small,cBlue] at (10.4,3.1) {Ledger after};
+  \node[utxo,draw=cRed,fill=cRed!8,dashed] at (10.4,2.1) {A\ spent};
+  \node[utxo] at (10.4,0.9) {B\ 5 ADA\\Mia};
+  \node[utxo] at (10.4,-0.3) {X\ 7 ADA\\Ben};
+  \node[utxo,fill=cGold!20,draw=cGold!90!black] at (13.1,2.1) {C\ 4\\Noor};
+  \node[utxo] at (13.1,0.9) {D\ 5.83\\Mia};
+  \draw[->,very thick,draw=cGreen] (tx.east |- 0,1.9) -- (9.3,1.9);
+\end{tikzpicture}
+\caption{Each transaction rewrites a small part of the shelf of unspent outputs. A spent UTXO cannot be used again.}
+\end{figure}
+
+\subsection{Account model versus eUTXO}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.5cm}XX@{}}
+\toprule
+ & \textbf{Account model (e.g.\ Ethereum)} & \textbf{(e)UTXO model (Cardano)}\\
+\midrule
+State is & balance per account & set of unspent outputs\\
+A payment & subtracts and adds balances & consumes inputs, creates outputs\\
+Change output & not needed & needed\\
+Two payments at once from one wallet & usually ok (ordered by a nonce) & can conflict if they pick the same UTXO\\
+Fee known before sending & only approximately & exact (depends on tx size)\\
+Failed tx still costs fee & often yes & mostly no: invalid txs are rejected before inclusion\\
+Smart contract state & stored inside the contract & carried in each UTXO's datum\\
+Mental picture & bank account & banknotes in a wallet\\
+\bottomrule
+\end{tabularx}
+\caption{Account model versus eUTXO.}
+\end{table}
+
+\begin{shelfiebox}{One wallet cannot pay twice at the same time}
+The x402 runbook warns: ``one wallet cannot pay concurrently (the first UTxO is the nonce)''. Two parallel payments from the same wallet may pick the same UTXO as input, and the second one fails because that UTXO is already spent. This is why our design uses \emph{separate} wallets (W-VBUY, W-PAY, W-SELL) and a \emph{serial queue per wallet} (one send at a time, ADR-08). The throughput limit becomes the confirmation latency, about 20--60 seconds per check.
+\end{shelfiebox}
+
+\section{Extended UTXO: datum, redeemer, validator}
+
+So far, every UTXO was owned by a key: only its owner's signature can spend it. The ``extended'' part of eUTXO allows a UTXO to be locked by a \emph{script} instead. Three ingredients appear.
+
+\begin{description}
+  \item[Validator (script).] A small program attached to an address (a \term{script address}). It decides whether a transaction may spend a UTXO sitting at that address. It answers only \emph{yes} or \emph{no}.
+  \item[Datum.] Data stored \emph{inside the locked UTXO}, such as ``buyer = Bea, seller = Sam, deadline = Friday 18:00''. It is the state of the agreement.
+  \item[Redeemer.] Data provided \emph{by the spender} in the new transaction, such as ``action = Release'' or ``action = Refund''. It is the argument with which one tries to unlock.
+\end{description}
+
+The validator receives the datum, the redeemer and the transaction context (who signed, what outputs are created, what time it is) and returns allow or deny.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[utxo,minimum width=3.6cm,minimum height=2.6cm,fill=cGold!15,draw=cGold!90!black,align=left] (u) at (0,0)
+    {\textbf{Locked UTXO}\\[2pt]funds: 20 ADA\\\textbf{Datum:}\\buyer = Bea\\seller = Sam\\deadline = Fri 18:00};
+  \node[agent,minimum width=3cm,minimum height=2.2cm] (v) at (6.2,0) {\textbf{Validator}\\(script at the\\script address)};
+  \node[human,minimum width=3cm] (tx) at (6.2,-3.1) {\textbf{New transaction}\\Redeemer: ``Release''\\signed by Bea};
+  \node[good] (ok) at (11.2,0.9) {Allowed:\\funds move to Sam};
+  \node[bad] (no) at (11.2,-0.9) {Denied:\\tx is rejected};
+  \draw[data] (u) -- node[lbl]{datum} (v);
+  \draw[data] (tx) -- node[lbl,xshift=-6mm]{redeemer + context} (v);
+  \draw[flow] (v) -- node[lbl]{rules met} (ok);
+  \draw[flow,dashed] (v) -- node[lbl]{rules broken} (no);
+\end{tikzpicture}
+\caption{A validator checks datum, redeemer and the transaction before allowing the locked UTXO to be spent.}
+\end{figure}
+
+\begin{analogybox}{The safety-deposit box}
+The locked UTXO is a deposit box at the bank. The \emph{datum} is the label with the agreement written on it. The \emph{redeemer} is what you say when you arrive: ``I am here to collect''. The \emph{validator} is the bank clerk who checks your papers against the label. No clerk can be bribed or changed: it is code that runs the same way for everybody.
+\end{analogybox}
+
+\subsection{Why this design matters}
+Because the validator runs on a transaction you have already built, you can predict the result before sending: if the check fails, the transaction is simply rejected. No surprises, deterministic costs. This is one of Cardano's selling points.
+
+\begin{examplebox}{A tiny escrow}
+Bea wants to buy a result from Sam for 20~ADA.
+\begin{enumerate}
+  \item \textbf{Lock:} Bea sends 20 ADA to the script address with the datum \{buyer: Bea, seller: Sam, deadline: Friday 18:00\}.
+  \item \textbf{Release:} when Sam delivers, a transaction with redeemer \emph{Release}, signed by Bea (or by an agreed party), spends the UTXO and creates an output of 20 ADA to Sam.
+  \item \textbf{Refund:} if the deadline has passed and Sam never delivered, Bea can spend the UTXO with redeemer \emph{Refund} and gets the 20 ADA back.
+\end{enumerate}
+The script enforces both outcomes. Nobody needs to trust a middleman.
+\end{examplebox}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=2.2cm]
+  \node[human] (bea) {Bea\\(buyer)};
+  \node[agent,right=2.4cm of bea,minimum width=3cm] (esc) {Escrow UTXO\\20 ADA\\+ datum};
+  \node[good,right=2.4cm of esc] (sam) {Sam\\(seller)};
+  \draw[pay] (bea) -- node[lbl]{1. lock} (esc);
+  \draw[pay] (esc) -- node[lbl]{2a. release} (sam);
+  \draw[pay,dashed] (esc) to[bend left=50] node[lbl]{2b. refund after deadline} (bea);
+\end{tikzpicture}
+\caption{Escrow: the money waits in the script until the job is done or the deadline passes.}
+\end{figure}
+
+\begin{shelfiebox}{Escrow comes from Masumi}
+Our MVP does not write its own validator. The brand's fee for the lead agent is held in a \emph{Masumi escrow} (a ready-made contract, used through the Masumi Payment Service). After a worker's photo has passed our verifier, the engine pays the worker with a plain transfer from W-PAY. Writing a custom Aiken contract is only a possible stretch idea.
+\end{shelfiebox}
+
+\subsection{Plutus and Aiken}
+Validators are written in a smart-contract language and compiled to a low-level on-chain format.
+\begin{itemize}
+  \item \term{Plutus}: Cardano's original contract platform, based on Haskell.
+  \item \term{Aiken}: a newer, simpler language designed for validators, with its own CLI. The Mesh docs have a ``first validator'' guide covering datum, redeemer and signatures.
+\end{itemize}
+The off-chain code (building and submitting transactions) is usually written in TypeScript with libraries such as Mesh or Lucid Evolution, while the \emph{on-chain} part is the validator. We reuse existing on-chain contracts and write only off-chain TypeScript. The research notes rate writing and debugging our own Aiken validator as a medium-high to high effort, so it is not in the MVP.
+
+\section{Native tokens}
+
+On Cardano, tokens other than ADA are \term{native assets}: the ledger itself knows how to hold and move them, just like ADA. You do \emph{not} need a smart contract to create, hold or send such a token. A native token is identified by two parts:
+\begin{itemize}
+  \item the \term{policy ID}: a hash identifying the minting rules,
+  \item the \term{asset name}: a short label within that policy.
+\end{itemize}
+A UTXO can carry ADA and several kinds of native tokens at once.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[utxo,minimum width=5.6cm,minimum height=2.4cm,align=left] (u) at (0,0)
+    {\textbf{One UTXO at Mia's address}\\[2pt]\ \ 3.000000 ADA\\\ \ 12 tUSDM (policy \ttfamily\scriptsize e675b46e\ldots)\\\ \ 1 fan-badge NFT (policy \ttfamily\scriptsize 9a41f7\ldots)};
+  \node[font=\sffamily\scriptsize,cGrey,align=left] at (7.3,0) {ADA + tokens travel\\together inside the\\same output.};
+\end{tikzpicture}
+\caption{A UTXO may hold ADA and any number of native tokens. The second policy is invented for the illustration.}
+\end{figure}
+
+\subsection{Example: tUSDM}
+\term{tUSDM} is a test version of a US-dollar stablecoin (USDM) used on the testnet. The x402 runbook found a trap: there are \emph{two different} tUSDM tokens, one given by the SDK's test-token page (policy starting \code{e675b46e}) and one from the Masumi dispenser (policy starting \code{16a55b2a}). They have different policy IDs, so a wallet funded with one cannot pay a route priced in the other.
+
+\begin{shelfiebox}{Why we price in tADA}
+Pricing in lovelace (tADA) avoids the two-token mismatch completely. Decision ADR-03: ``price and payouts in tADA, not tUSDM''. The Masumi quote for the paid task, however, uses 1 test USDM, which belongs to the Masumi path and is handled by the Masumi service.
+\end{shelfiebox}
+
+\section{Fees and the minimum ADA}
+
+\subsection{Transaction fees}
+Each transaction pays a fee, calculated from its size (and from script execution if scripts run). For simple payments the runbook quotes roughly \textbf{0.17 ADA per payment}. The fee is exact once the transaction is built, so you can display it before signing.
+
+\subsection{Minimum ADA per output}
+Every UTXO that exists on the ledger must carry a minimum amount of ADA, the \term{min-ADA} (also called min-UTXO). It prevents the ledger from filling up with worthless dust. The minimum grows with the size of the output (tokens, datum). For a simple ADA-only output it is about 1 ADA. The runbook states: ``lovelace routes need at least 1 tADA (min-UTxO)''.
+
+\begin{examplebox}{Why we cannot pay a worker 0.3 tADA}
+If Shelfie tried to send a tiny payout of 0.3~tADA, the output would hold less than the minimum and the transaction would be rejected. A payout must be \emph{at least the minimum} (about 1~tADA for a simple output). Also, sending a token to someone requires attaching some ADA, which the sender provides. Our default price of 1~tADA per verifier check sits exactly at this floor, and ``verify Friday that the facilitator accepts it, else use 2~tADA'' is written in decision ADR-02.
+\end{examplebox}
+
+\section{Metadata}
+
+A transaction may carry optional \term{metadata}: a small piece of structured data (text, numbers, lists) attached to the transaction and stored forever on-chain. It does not change who owns what. Typical uses: invoice numbers, tags, references, a note.
+
+\begin{shelfiebox}{The payout tag}
+Every worker payout carries metadata such as \code{shelfie:<payoutId>}. If the app crashes after sending but before recording the hash, the reconcile step searches the chain for that tag and finds the earlier transaction, so that exactly one payout is made. Whether the Evolution SDK can attach metadata to plain transfers is still marked \textbf{verify Friday} (Task B, before 13:00).
+\end{shelfiebox}
+
+Metadata is public; never put personal or secret data there.
+
+\section{Networks: mainnet, preprod, preview}
+
+Cardano runs several independent networks. Their ledgers are separate, and coins from one are useless on another.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{2.6cm}p{3.3cm}p{8.4cm}@{}}
+\toprule
+\textbf{Network} & \textbf{Coin} & \textbf{Purpose}\\
+\midrule
+Mainnet & ADA (real) & the production network with real money\\
+Preprod & tADA (free) & stable test network that imitates mainnet; \textbf{this is what the hackathon and Shelfie use}\\
+Preview & tADA (free) & test network where new protocol features arrive first; less stable\\
+\bottomrule
+\end{tabular}
+\caption{Cardano networks.}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[bad,minimum width=3.4cm] (m) at (0,0) {Mainnet\\real ADA\\\texttt{addr1...}};
+  \node[good,minimum width=3.4cm] (p) at (5.2,0) {\textbf{Preprod}\\tADA (our network)\\\texttt{addr\_test1...}};
+  \node[service,minimum width=3.4cm] (v) at (10.4,0) {Preview\\tADA\\\texttt{addr\_test1...}};
+  \draw[<->,thick,draw=cRed,dashed] (m) -- node[lbl,text=cRed]{no transfer} (p);
+  \draw[<->,thick,draw=cRed,dashed] (p) -- node[lbl,text=cRed]{no transfer} (v);
+\end{tikzpicture}
+\caption{Three separate networks. Preprod and preview addresses look alike, so always check the network setting in your tools.}
+\end{figure}
+
+\begin{warningbox}{Sokosumi MCP defaults to mainnet}
+The Masumi runbook says: ``Confirm Preprod; mainnet default'' for the Sokosumi MCP server. Also use the \code{--preprod} flag in the Sokosumi CLI. In code, the network string in the x402 template is \code{cardano:preprod}.
+\end{warningbox}
+
+\section{Getting test ADA}
+
+\subsection{The Cardano faucet}
+The official \term{faucet} (documented under docs.cardano.org, ``Cardano testnets'') gives free tADA to a testnet address. The limits per claim are not stated in our notes.
+
+\subsection{The Masumi dispenser}
+The \term{Masumi dispenser} (dispenser.masumi.network) hands out test ADA and test USDM for the Masumi path. Facts from the runbooks:
+\begin{itemize}
+  \item it needs a \textbf{verification code from the Masumi registration email};
+  \item it offers an optional separate \textbf{5 ADA collateral} claim;
+  \item you must confirm it is on \textbf{preprod};
+  \item funding of the Masumi seller wallet may take about 15--30 minutes to show up;
+  \item per-claim amounts and limits are not documented: ask the mentors (open question).
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[human] (w) at (0,0) {Our preprod\\address};
+  \node[service] (f) at (5,1.1) {Cardano faucet\\(tADA)};
+  \node[service] (d) at (5,-1.1) {Masumi dispenser\\(tADA, tUSDM, collateral)};
+  \node[good] (b) at (10,0) {Balance on-chain\\visible in explorer};
+  \draw[flow] (w) -- node[lbl]{paste address} (f);
+  \draw[flow] (w) -- node[lbl]{+ email code} (d);
+  \draw[pay] (f) -- node[lbl]{test coins} (b);
+  \draw[pay] (d) -- (b);
+\end{tikzpicture}
+\caption{Two sources of free test funds. Both send coins to our address; we then see them in the explorer.}
+\end{figure}
+
+\section{Blockfrost: reading and submitting without running a node}
+
+To talk to Cardano you normally need a full \term{node}: a program that downloads the whole chain (many gigabytes) and stays in sync. That is far too heavy for a hackathon laptop.
+
+\term{Blockfrost} is a hosted API service: you send simple HTTP requests (with an API key, called a \emph{project ID}) and Blockfrost answers with chain data, or submits your signed transaction for you. Free accounts exist; creating one is a human step on blockfrost.io, and one project is tied to one network (we need a \textbf{preprod} project).
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[agent] (app) at (0,0) {Our code\\(TypeScript)};
+  \node[service,minimum width=3cm] (bf) at (5.2,0) {Blockfrost API\\(project ID = key)};
+  \node[chain,minimum width=3.2cm] (cn) at (10.2,0) {Cardano preprod\\network};
+  \draw[flow] (app) -- node[lbl,above=2pt]{query / submit tx} (bf);
+  \draw[flow,dashed] (bf) -- node[lbl,above=2pt]{answers} (app);
+  \draw[flow] (bf) -- (cn);
+\end{tikzpicture}
+\caption{With Blockfrost we do not run a node: it relays reads and transaction submissions.}
+\end{figure}
+
+What we use it for: finding UTXOs of a wallet, building and submitting a transaction, checking whether a payment is confirmed. Notes from the runbooks:
+\begin{itemize}
+  \item the x402 template needs \code{BLOCKFROST\_PROJECT\_ID}; Masumi uses \code{BLOCKFROST\_API\_KEY\_PREPROD};
+  \item the facilitator's \code{/verify} and \code{/settle} calls use Blockfrost quota;
+  \item \textbf{a Blockfrost key in browser code is visible to everyone}, so keep it on the server;
+  \item never commit the key to Git.
+\end{itemize}
+
+\section{Cardanoscan: reading a transaction}
+
+\term{Cardanoscan} is a block explorer for Cardano. The preprod site is \code{preprod.cardanoscan.io}. A transaction page is reached with
+\begin{center}
+\code{https://preprod.cardanoscan.io/transaction/<tx hash>}
+\end{center}
+and an address page (inferred from the same host) with
+\begin{center}
+\code{https://preprod.cardanoscan.io/address/<address>}
+\end{center}
+The Masumi runbook asks us to paste the receipt's \code{txHash} into Cardanoscan, inspect the confirmed seller output, and save the resulting URL as evidence.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[draw=cGrey,rounded corners=4pt,fill=cLight,minimum width=14.6cm,minimum height=7.2cm,anchor=north west] (page) at (0,0) {};
+  \node[font=\sffamily\bfseries\small,anchor=north west] at (0.3,-0.2) {Transaction (Cardanoscan, preprod)};
+  \node[font=\ttfamily\scriptsize,anchor=north west] at (0.3,-0.85) {Hash: 8f3c1b\ldots a91d  (64 hex characters)};
+  \node[good,anchor=north west,font=\sffamily\scriptsize] at (0.3,-1.5) {Status: Success \yes\quad Confirmations: 12};
+  % inputs
+  \node[font=\sffamily\bfseries\scriptsize,anchor=north west,cBlue] at (0.3,-2.5) {Inputs};
+  \node[utxo,anchor=north west] at (0.3,-2.9) {addr\_test1qz\ldots mia\\10.000000 ADA};
+  % arrow
+  \draw[->,very thick,draw=cGrey] (3.0,-3.45) -- (5.1,-3.45);
+  % outputs
+  \node[font=\sffamily\bfseries\scriptsize,anchor=north west,cBlue] at (5.3,-2.5) {Outputs};
+  \node[utxo,anchor=north west,fill=cGold!20,draw=cGold!90!black] at (5.3,-2.9) {addr\_test1qp\ldots noor\\4.000000 ADA};
+  \node[utxo,anchor=north west] at (5.3,-4.1) {addr\_test1qz\ldots mia (change)\\5.830000 ADA};
+  \node[utxo,anchor=north west,fill=cOrange!12,draw=cOrange,minimum width=3.4cm] at (10.2,-2.9) {Fee\\0.170000 ADA};
+  \node[font=\sffamily\bfseries\scriptsize,anchor=north west,cBlue] at (10.2,-4.1) {Metadata};
+  \node[font=\ttfamily\scriptsize,anchor=north west] at (10.2,-4.5) {shelfie:payout-123};
+  \node[font=\sffamily\scriptsize,anchor=north west,cGrey] at (0.3,-6.2) {Check: 10.000000 = 4.000000 + 5.830000 + 0.170000};
+\end{tikzpicture}
+\caption{A mock-up (not a real screenshot) of what a Cardanoscan transaction page shows. All values are invented.}
+\end{figure}
+
+\subsection{How to read it, field by field}
+\begin{enumerate}
+  \item \textbf{Hash:} the transaction's ID. Copy it to share or to search.
+  \item \textbf{Status / confirmations:} ``Success'' and a growing confirmation count tell you the transaction is in the chain and how deep. Wait for several before treating a payment as final.
+  \item \textbf{Inputs:} the UTXOs that were consumed and who owned them.
+  \item \textbf{Outputs:} the new UTXOs: look for the \emph{recipient's address} and the amount. The other output is usually the change going back to the sender.
+  \item \textbf{Fee:} what the network took.
+  \item \textbf{Metadata:} optional tags such as our payout tag.
+  \item Check the arithmetic: inputs $=$ outputs $+$ fee.
+\end{enumerate}
+
+\begin{warningbox}{Pending is not failed}
+After an HTTP~402 or a dropped connection, a payment may still settle (runbook). Look at the buyer address on Cardanoscan before retrying, so that you do not pay twice.
+\end{warningbox}
+
+\begin{shelfiebox}{Receipts for judges}
+For every payout and verifier fee, the Shelfie ledger stores the tx hash and a Cardanoscan URL, so each statement in our demo (``worker paid'') can be verified by clicking a link.
+\end{shelfiebox}
+
+\section{Wallet setup for the team}
+
+Each teammate who sends or receives funds needs a Cardano wallet on preprod.
+
+\begin{enumerate}
+  \item \textbf{Generate a wallet.} The x402 template has a command (\code{npm run wallet}) that prints a fresh 24-word \textbf{mnemonic} and an \textbf{address} once. Copy them at once; they are shown only one time.
+  \item \textbf{Store the mnemonic safely.} Put it in a private \code{.env} (listed in \code{.gitignore}), never in chat or Git. Use throwaway wallets only (Chapter~1).
+  \item \textbf{Note the address.} It starts with \code{addr\_test1...} on preprod.
+  \item \textbf{Fund it} from the faucet or the Masumi dispenser. Roughly 10~tADA covers many 2-tADA calls plus about 0.17 ADA fee each; the Masumi seller wallet needs about 20 tADA for registration (runbook).
+  \item \textbf{Wait 1--2 minutes}, then check the address on Cardanoscan.
+\end{enumerate}
+
+Browser wallets (CIP-30 wallets that sign in a web page) are only needed for the demo UIs in the templates; our headless backend uses the mnemonic-based signer.
+
+\begin{warningbox}{Two kinds of mnemonic prints}
+The Masumi Payment Service seed command also prints mnemonics. The runbook says: operator only, no recording or screen sharing.
+\end{warningbox}
+
+\section{Cardano in our project}
+
+Here is the map of what the team actually touches, and where.
+
+\subsection{Concepts at a glance}
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}X@{}}
+\toprule
+\textbf{Item} & \textbf{How Shelfie uses it}\\
+\midrule
+Network: \textbf{preprod} & every wallet, payment and explorer link; no mainnet anywhere\\
+\textbf{tADA payouts} & verifier fee (default 1 tADA per check) and worker payouts, as plain transfers\\
+\textbf{Blockfrost key} & one free preprod project; used by the x402 SDK, the facilitator fallback, and the Masumi Payment Service\\
+\textbf{Cardanoscan links} & saved with each payout/fee as proof; shown on the worker page and in the pitch\\
+\textbf{Metadata tag} & \code{shelfie:<payoutId>} on payouts, for crash-safe reconciliation\\
+\textbf{Escrow} & Masumi's contract holds the brand's fee until the result is delivered; we do not write a validator\\
+\textbf{Native tokens} & optional: tUSDM exists in the Masumi quote path, but our own prices are tADA\\
+\textbf{Mnemonics} & stored only in private \code{.env} files; never in Git, chat or screen shares\\
+\bottomrule
+\end{tabularx}
+\caption{Cardano concepts and their role in Shelfie.}
+\end{table}
+
+\subsection{The four wallets}
+The design names wallets by purpose. Keeping them separate avoids UTXO contention and makes money flows easy to read.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.1cm}p{4.5cm}X@{}}
+\toprule
+\textbf{Wallet} & \textbf{Role} & \textbf{Explanation}\\
+\midrule
+\code{W-SELL} & verifier income & receives the x402 fee each time the engine buys a photo check from the verifier\\
+\code{W-VBUY} & verifier buyer & the engine pays the verifier from here; one payment at a time (serial queue)\\
+\code{W-PAY} & worker payouts & the engine pays workers from here after a photo passes; plain transfer, idempotent queue\\
+\code{W-MPS} & Masumi seller wallet & used by the Masumi Payment Service (the seller side of the escrow); needs tADA and optional 5 ADA collateral\\
+\bottomrule
+\end{tabularx}
+\caption{The named wallets from the design.}
+\end{table}
+
+Workers use their own preprod addresses (we do not hold their keys).
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[human] (brand) at (0,2.4) {Brand\\(pays credits\\on Sokosumi)};
+  \node[agent,minimum width=3cm] (eng) at (5.2,2.4) {Shelfie engine\\(lead agent)};
+  \node[chain] (wm) at (0,0) {W-MPS\\Masumi seller};
+  \node[chain] (wv) at (5.2,0) {W-VBUY\\verifier buyer};
+  \node[chain] (ws) at (10.4,0) {W-SELL\\verifier income};
+  \node[chain] (wp) at (5.2,-2.3) {W-PAY\\worker payouts};
+  \node[good] (wk) at (10.4,-2.3) {Worker's own\\preprod address};
+  \draw[pay] (brand) -- node[lbl]{fee in escrow} (eng);
+  \draw[pay] (eng) -- node[lbl]{escrow settles to} (wm.north east);
+  \draw[pay] (wv) -- node[lbl]{1 tADA per check} (ws);
+  \draw[pay] (wp) -- node[lbl]{payout tADA} (wk);
+  \draw[flow] (eng) -- (wv);
+  \draw[flow,bend right=30] (eng) to (wp);
+\end{tikzpicture}
+\caption{Simplified view of money flows between the named wallets. Blue/gold arrows are payments. The exact flow is explained in the architecture chapters.}
+\end{figure}
+
+\subsection{What stays unverified}
+\begin{itemize}
+  \item Whether the x402 template's SDK can send plain transfers with metadata (verify Friday, Task B, first 90 minutes). Fallbacks: Lucid or Mesh isolated behind a payout adapter; or manual payout flagged in the demo.
+  \item Whether the hosted facilitator accepts a 1-tADA price (else 2 tADA).
+  \item Faucet and dispenser per-claim limits.
+  \item Which explorer judges prefer (Cexplorer preprod URL form not confirmed).
+\end{itemize}
+
+\begin{keypoints}
+\begin{itemize}
+  \item \textbf{ADA} is the coin; \textbf{1 ADA = 1{,}000{,}000 lovelace}. On the test network the coin is \textbf{tADA}.
+  \item Cardano uses \textbf{Ouroboros} (Proof of Stake); holders may \textbf{delegate} to stake pools; irrelevant for the hackathon.
+  \item \textbf{eUTXO:} the ledger holds unspent outputs; a transaction consumes inputs and creates outputs; inputs $=$ outputs $+$ fee.
+  \item A \textbf{change output} sends the rest back to the sender; one wallet cannot make two parallel payments reliably, so we use separate wallets and serial queues.
+  \item A \textbf{validator} decides whether a locked UTXO may be spent, using the \textbf{datum} (state) and the \textbf{redeemer} (action); languages: Plutus, Aiken.
+  \item \textbf{Native tokens} need no smart contract; tUSDM has two incompatible versions, so we price in tADA.
+  \item Fees are about 0.17 ADA; every output needs about 1 ADA \textbf{min-ADA}; \textbf{metadata} lets us tag payouts.
+  \item We use \textbf{preprod}; test funds come from the faucet or the Masumi dispenser.
+  \item \textbf{Blockfrost} lets us read and submit without a node; \textbf{Cardanoscan} shows the receipt (hash, inputs, outputs, fee, confirmations).
+  \item Team wallets: \code{W-SELL}, \code{W-VBUY}, \code{W-PAY}, \code{W-MPS}; mnemonics stay in private \code{.env} files.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item How many lovelace is 0.17 ADA? How many ADA is 3{,}500{,}000 lovelace?
+  \item Mia owns UTXOs of 8 ADA and 3 ADA. She pays Noor 5 ADA with a fee of 0.2 ADA. Which input does the wallet probably pick, and what is the change output?
+  \item In an escrow, what is the datum and what is the redeemer?
+  \item Why can't a Shelfie payout of 0.3 tADA be sent?
+  \item What does Blockfrost replace, and why must its key not be placed in browser code?
+  \item Name the four wallets in our design and one purpose each.
+\end{enumerate}
+{\footnotesize\color{cGrey}\textbf{Answers.} (1) 170{,}000 lovelace; 3.5 ADA. (2) The 8-ADA UTXO; change $=8-5-0.2=2.8$ ADA (the 3-ADA UTXO stays untouched). (3) The datum is the stored agreement (buyer, seller, deadline); the redeemer is the spender's action (Release or Refund). (4) It is below the minimum ADA of an output (about 1 ADA). (5) Running your own full node; browser code is visible to everybody, so the key could be stolen. (6) W-SELL receives verifier fees, W-VBUY pays the verifier, W-PAY pays workers, W-MPS is the Masumi seller wallet.}
+\end{quizbox}

@@ -1,0 +1,458 @@
+\chapter{AI agents, agentic commerce, Masumi and Sokosumi}
+
+\section*{Why this matters for us}
+The Cardano track is called \emph{Agentic Commerce on Cardano}. Its whole point is an \term{AI agent} that does a useful job and gets paid for it on Cardano. To enter, we must be able to explain what an agent is, why it needs money, and how two tools called \term{Masumi} and \term{Sokosumi} let an agent be hired, paid and refunded. This chapter builds those ideas from zero, reads the official track brief line by line, and ends with how each piece appears in Shelfie. HTTP~402 and x402 are only mentioned briefly here (Chapter~3 covers them); what ``on-chain'' really means is in Chapter~5.
+
+\section{Large language models in one page}
+
+A \term{large language model} (LLM) is a program trained on huge amounts of text to predict what text comes next. If you give it a question, it writes the most plausible answer, one small piece (a \term{token}) at a time. Well-known examples are the models behind ChatGPT, Claude and Gemini. An LLM has no memory of its own between calls, it does not browse the web by itself, and it can be confidently wrong.
+
+\subsection{Prompts}
+The text you send to the model is the \term{prompt}. It usually has two parts: a \emph{system prompt} (the standing instructions: ``You are a careful research assistant, always cite sources'') and the \emph{user message} (the actual request). The model's reply is the \term{completion}. Good prompts are specific, give the output format, and state what to do when information is missing.
+
+\begin{examplebox}{A tiny prompt}
+\textbf{System:} You extract prices from shelf photos. Answer only as JSON with the keys \code{product}, \code{price}, \code{code}. If a value is not visible, use \code{null}.\\
+\textbf{User:} (a photo) \\
+\textbf{Reply:} \code{\{"product":"Oat drink 1 l","price":"1.89","code":"K7Q2"\}}
+\end{examplebox}
+
+\subsection{Tool calling}
+On its own an LLM can only produce text. \term{Tool calling} (also called function calling) lets it \emph{ask} for an action: the developer describes tools such as \code{search\_web(query)} or \code{send\_payment(address, amount)}; the model answers with a structured request like ``call \code{search\_web} with \emph{bike shops Munich}''; the surrounding program runs the tool and feeds the result back; the model continues. The model never runs anything itself, the program around it does.
+
+\begin{center}
+\begin{tikzpicture}[node distance=7mm and 12mm,scale=0.95,transform shape]
+  \node[actor] (app) {Your program};
+  \node[agent,right=34mm of app] (llm) {LLM};
+  \node[service,below=12mm of $(app)!0.5!(llm)$] (tool) {Tool\\(search, payment, \dots)};
+  \draw[flow] ([yshift=3mm]app.east) -- node[lbl,above=1mm] {1. prompt + tool list} ([yshift=3mm]llm.west);
+  \draw[flow] ([yshift=-3mm]llm.west) -- node[lbl,below=1mm] {2. ``call tool X with args''} ([yshift=-3mm]app.east);
+  \draw[flow] (app.south) -- node[lbl,left=1mm] {3. run it} (tool.west);
+  \draw[data] (tool.east) -- node[lbl,right=1mm] {4. result goes back to the LLM} (llm.south);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Vision models}
+A \term{vision model} is an LLM that can also take images as input. You send a photo plus a question and receive text. This is how a program can ``read'' a price tag, a receipt or a shop shelf. Vision models can misread blurry or small text, so a careful design lets the model only \emph{read} and lets ordinary code \emph{decide}. Shelfie follows this rule (Chapter~8).
+
+\section{From model to agent}
+
+An \term{AI agent} is a program that uses an LLM to pursue a \emph{goal} over several steps, choosing and using tools on its own. Instead of one question and one answer, it runs a loop.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95,transform shape]
+  \node[actor] (goal) at (0,0) {1. Goal\\{\scriptsize ``Compare shop prices''}};
+  \node[agent] (plan) at (5,1.6) {2. Plan\\{\scriptsize next step?}};
+  \node[service] (act) at (10,0) {3. Tool call\\{\scriptsize search, pay, read}};
+  \node[chain] (obs) at (5,-1.8) {4. Observe\\{\scriptsize read the result}};
+  \draw[flow] (goal) to[bend left=20] (plan);
+  \draw[flow] (plan) to[bend left=20] (act);
+  \draw[flow] (act) to[bend left=20] (obs);
+  \draw[flow] (obs) to[bend left=20] node[lbl,pos=0.5,xshift=-14mm] {not done: repeat} (plan);
+  \node[good] (done) at (0,-3.2) {Done: return result};
+  \draw[flow,dashed] (obs) to[bend left=10] node[lbl,above] {goal reached} (done);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Agent, chatbot or script?}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.1cm}XXX@{}}
+\toprule
+ & \textbf{Plain script} & \textbf{Chatbot} & \textbf{AI agent} \\
+\midrule
+Who decides the steps? & The programmer, fixed in advance & A human, one message at a time & The model, at run time \\
+Uses tools? & Yes, hard-coded & Usually no & Yes, chosen by the model \\
+Handles surprises? & No, it breaks & Answers in text only & Can retry or change plan \\
+Loops until done? & Only if coded & No, waits for the user & Yes \\
+Predictable? & Very & Medium & Least; needs guard rails \\
+Example & Nightly price scraper & Support chat window & Research bot that searches, reads, pays for data and writes a report \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warningbox}{``Agent'' is a loose word}
+In marketing almost anything is called an agent. For this guide: an agent has a goal, a loop, and tools with real effects (spending money, sending messages). The more real effects, the more guard rails it needs. The best agent design is often a mix: the model handles the fuzzy part, plain code handles the checks and the money.
+\end{warningbox}
+
+\section{Agentic commerce}
+
+\term{Agentic commerce} means software agents taking part in buying and selling: an agent \emph{sells} a service (writes a report, answers a data query), an agent \emph{buys} a service (pays for a dataset or a specialist), and sometimes an agent buys from or sells to humans. The track's own description is an agent, service or developer tool that does useful work and \emph{charges for it on Cardano}.
+
+\subsection{Three patterns}
+\begin{center}
+\begin{tikzpicture}[scale=0.92,transform shape,node distance=6mm]
+  % pattern A
+  \node[human] (a1) at (0,0) {Human\\client};
+  \node[agent] (a2) at (4,0) {Agent};
+  \draw[pay] (a1) -- node[lbl,above] {pays for job} (a2);
+  \node[font=\sffamily\small\bfseries,color=cBlue] at (2,1.1) {A. Human hires agent};
+  % pattern B
+  \node[agent] (b1) at (6.5,0) {Lead\\agent};
+  \node[agent] (b2) at (10.7,0) {Specialist\\agent};
+  \draw[pay] (b1) -- node[lbl,above] {pays per request} (b2);
+  \node[font=\sffamily\small\bfseries,color=cBlue] at (8.6,1.1) {B. Agent hires agent};
+  % pattern C
+  \node[agent] (c1) at (0,-3) {Agent};
+  \node[human] (c2) at (4,-3) {Human\\worker};
+  \draw[pay] (c1) -- node[lbl,above] {pays for real-world task} (c2);
+  \node[font=\sffamily\small\bfseries,color=cBlue] at (2,-1.9) {C. Agent hires human};
+  \node[good,text width=6cm] at (8.6,-3) {Shelfie uses all three in one product (see the end of this chapter).};
+\end{tikzpicture}
+\end{center}
+
+Pattern C is the unusual one: a software agent can pay a person to do something it cannot, such as photographing a shelf in a physical shop. Cardano's brief explicitly mentions agents that ``act in the real world by buying, publishing or booking''.
+
+\subsection{Why an agent needs its own money, identity and receipts}
+A human pays with a bank card tied to a name and a monthly statement. An agent has none of that, and sharing a person's card with a program is dangerous. So an agent economy needs:
+\begin{itemize}
+  \item \textbf{Its own wallet.} A cryptographic account the agent controls, funded with a small budget. No bank account or sign-up is needed.
+  \item \textbf{An identity.} Others must know \emph{which} agent they are dealing with, so that reputation and responsibility attach to something. Masumi stores agent registrations on-chain (below).
+  \item \textbf{Receipts.} A payment that anyone can verify later: who paid whom, how much, for which job. On a blockchain every payment is automatically such a receipt.
+  \item \textbf{Spending limits.} The agent should never be able to spend more than a cap per payment and per job.
+  \item \textbf{Conditional payment.} For a job that takes time, money should be held until the work is delivered (\emph{escrow}, explained below).
+\end{itemize}
+
+\begin{analogybox}{Company credit card with a limit}
+Give an intern a company card with a 50 EUR limit and receipts required. The intern can buy supplies without asking you each time, and the worst case is 50 EUR. A wallet with a spending cap works the same way for an agent.
+\end{analogybox}
+
+\subsection{Risks}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.2cm}XX@{}}
+\toprule
+\textbf{Risk} & \textbf{What can go wrong} & \textbf{Typical countermeasure} \\
+\midrule
+Runaway spending & A loop keeps buying data; a bug or a prompt trick drains the wallet & Per-payment cap, small throw-away wallet, job budget \\
+Fraud & A seller takes money and returns junk; a buyer claims non-delivery & Escrow with refund; automatic checks before release \\
+Accountability & Nobody knows who is responsible for a bad action by an agent & Registered identity, recorded decisions and hashes \\
+Prompt injection & Text on a web page tells the agent to pay someone & Code-level limits that the model cannot override \\
+Bad output accepted as good & The LLM judges its own work too generously & Deterministic pass/fail rules, not model opinion \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{The track brief, explained}
+
+Source: the official prize page of the hackathon, copied into the team's research file of 29 October 2026. The table below restates it.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.4cm}X@{}}
+\toprule
+\textbf{Item} & \textbf{What the brief says} \\
+\midrule
+Challenge & An agent, service or developer tool that does a useful job and \emph{charges for it on Cardano}. \\
+Prizes & Total 6,000 EUR: 1st \textbf{3,000 EUR}, 2nd \textbf{2,000 EUR}, 3rd \textbf{1,000 EUR}. \\
+Two payment routes (may be combined) & \textbf{Per job: Masumi on Sokosumi.} The agent becomes a hireable ``Coworker''; the payment waits in escrow until delivery, with a refund if nothing is delivered.\newline \textbf{Per request: x402.} HTTP~402, no accounts or API keys; called ``the fastest way to a first payment''. \\
+\textbf{Hard requirement} & A working agent or service that completes \textbf{at least one paid job or payment on Cardano preprod}, via Masumi or x402. (Preprod is the free test network; see Chapter~2.) \\
+Extra to hand in & The \textbf{transaction hash} of that preprod payment; a video of at most 2.5 minutes saying who it is for, the problem, the \textbf{business case}, and one paid job from start to finish; a description of how it works, which Cardano tools it uses and how it could run in real life. \\
+Judging criteria & Original use case; complete paid workflow; technical execution with Cardano tools; creativity; user experience; pitch and demo; real-world impact and continuity after the hackathon. \\
+What Cardano especially wants to see & (1) A clear \textbf{customer and their journey}; (2) \textbf{payment tied to the result}: escrow, refunds, or paying only for work that passed a check; (3) \textbf{agents hiring other agents}, or agents acting in the real world; (4) a \textbf{live demo} with the transaction visible on a preprod explorer. \\
+Judges & Bora Oben (Cardano) and Vladislav Kudrin (Cardano Foundation). \\
+Timing & Hacking starts Fri 30 Oct, 09:00; submission deadline Sat 31 Oct, 15:00; live judging 15:00--17:00; winners 17:30. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95,transform shape]
+  \node[good,minimum width=3.3cm,minimum height=2.4cm] (p1) at (0,0) {\textbf{1st}\\3,000 EUR};
+  \node[actor,minimum width=3.3cm,minimum height=1.8cm] (p2) at (-4,-0.3) {\textbf{2nd}\\2,000 EUR};
+  \node[human,minimum width=3.3cm,minimum height=1.3cm] (p3) at (4,-0.55) {\textbf{3rd}\\1,000 EUR};
+  \node[font=\sffamily\scriptsize,color=cGrey] at (0,-1.7) {Cardano track prize pool: 6,000 EUR};
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}{A completed task is not a payment}
+The Masumi guide warns that a Sokosumi task showing \code{COMPLETED} does \emph{not} prove that a payment happened. We must show the seller's receipt and the transaction hash. Without the hash we have not met the hard requirement.
+\end{warningbox}
+
+\begin{shelfiebox}{Our route to the requirement}
+The team's plan treats x402 as the fast, low-risk way to qualify (one paid request) and Masumi escrow as the heavier second layer that earns the ``pay on result'' points. If the escrow is not working by Friday 22:00 it is frozen and shown as roadmap; the x402 payment still satisfies the requirement.
+\end{shelfiebox}
+
+\section{Masumi Network}
+
+\term{Masumi} is a network for agent payments and agent identity on Cardano. It gives agent developers the pieces that are hard to build alone: a way to get paid per job, hold payment in escrow, register an agent publicly, and keep tamper-proof records of what an agent did. Think of it as the payment and trust layer, while \term{Sokosumi} (next section) is the marketplace on top where people hire agents.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95,transform shape]
+  \node[human] (buyer) at (0,0) {Buyer\\(client)};
+  \node[service] (soko) at (4.2,0) {Sokosumi\\marketplace};
+  \node[agent] (agent) at (8.4,0) {Seller agent\\(our shell)};
+  \node[service,minimum width=4.3cm] (mps) at (8.4,-2.7) {Masumi Payment\\Service (self-hosted)};
+  \node[chain,minimum width=11cm,minimum height=1.1cm] (cardano) at (4.2,-5.2) {Cardano preprod: escrow contract, agent registry, payments};
+  \draw[flow] (buyer) -- node[lbl,above] {hires} (soko);
+  \draw[flow] (soko) -- node[lbl,above] {task} (agent);
+  \draw[flow] (agent) -- node[lbl,right] {paid-task calls} (mps);
+  \draw[pay] (mps) -- node[lbl,right] {signs and sends} (8.4,-4.65);
+  \draw[pay] (buyer) |- node[lbl,pos=0.2,right] {credits $\rightarrow$ escrow lock} (cardano.west);
+\end{tikzpicture}
+\end{center}
+
+\subsection{The Masumi Payment Service}
+The \term{Masumi Payment Service} (MPS) is the software that talks to the blockchain for an agent: it holds the seller wallet, registers the agent, watches for a buyer's escrow payment, submits result hashes and withdraws the earnings. The hackathon requires us to \emph{run our own copy}; it is not a hosted service. According to the runbook:
+\begin{itemize}
+  \item \textbf{Node.js} at least 24.22.1 and below 25 (Node 26 is not supported).
+  \item \textbf{pnpm} version 10.30.2 (the package manager the project is pinned to).
+  \item \textbf{PostgreSQL} 13 or newer (15 recommended) as its database; on a laptop with only the \code{psql} client, run Postgres in Docker.
+  \item \textbf{Seeded wallets}: a seed script creates wallets and prints their secret recovery phrases once. Only the operator may see them; never record or commit them.
+  \item A free \textbf{Blockfrost} preprod API key (the service that reads the chain) and secrets in a private \code{.env} file (database URL, encryption key of at least 32 characters, admin key).
+  \item Default port 38127, with an admin page and API docs on the same address.
+\end{itemize}
+Test money comes from the Masumi dispenser (tADA and test dollar tokens). The runbook also mentions a quote of 1 test USDM for the sample task and a separate optional 5~ADA collateral from the dispenser; both are things to confirm on Friday.
+
+\subsection{Agent registry and decision logging}
+Before an agent can sell on Masumi it is \term{registered on-chain}. The registration creates a public record (an NFT, according to the research notes) that ties together the agent's identifier, its owner wallet (the seller verification key) and its payment settings. A buyer, a marketplace or a judge can look it up; nobody can quietly swap the identity. In the starter, a script registers the agent and you repeat a status read until it says \code{RegistrationConfirmed}; the confirmed identifier then goes into a state file.
+
+\term{Decision logging} is the companion idea: instead of storing a whole report on the chain (expensive), the agent records a \term{hash} (a fixed-length fingerprint, Chapter~1) of its result. Anyone who later holds the report can recompute the hash and compare. If one character changed, the hashes differ. This gives an audit trail of ``what this agent delivered'' without putting the content on-chain.
+
+\subsection{Escrow and its lifecycle}
+\term{Escrow} means a neutral holder keeps the buyer's money until the seller delivers. On Masumi the neutral holder is a smart contract on Cardano. The buyer locks funds (\code{FundsLocked}); the seller does the work and submits a result hash (\code{ResultSubmitted}); after a waiting period the seller can withdraw. If the seller submits nothing before the deadline, the buyer can get the money back.
+
+\begin{analogybox}{Holding a deposit with a notary}
+You hire a photographer. You hand the fee to a notary. When the photos arrive, the notary pays the photographer; if they never arrive, the notary returns your money. Neither side has to trust the other, only the notary. Here the notary is code that nobody can bribe.
+\end{analogybox}
+
+The contract uses several deadlines. The runbook gives these offsets (all \emph{estimates} derived from reading the code, counted from the start of the job): pay by $+5$~min, submit the result by $+20$~min, unlock at $+36$~min, an external-dispute unlock at $+52$~min. Automatic seller withdrawal needs a result hash plus ten more minutes after unlock (about $+46$), and an automatic buyer refund applies if no hash exists ten minutes after the submit deadline (about $+30$). A complete paid cycle takes \textbf{at least 60 minutes} including on-chain confirmations.
+
+\begin{center}
+\begin{tikzpicture}[x=0.152cm,y=1cm,font=\sffamily\scriptsize]
+  % axis 0..60 minutes
+  \draw[thick,->,draw=cGrey] (0,0) -- (62,0) node[right] {min};
+  \foreach \x in {0,10,20,30,36,46,52,60}{\draw[draw=cGrey] (\x,0.1) -- (\x,-0.1);}
+  \foreach \x in {0,10,20,30,36,46,52,60}{\node[below=1mm,color=cGrey] at (\x,-0.1) {\x};}
+  % phases
+  \fill[cSky!25] (0,0.15) rectangle (5,0.55);
+  \fill[cPurple!25] (5,0.15) rectangle (20,0.55);
+  \fill[cGold!30] (20,0.15) rectangle (36,0.55);
+  \fill[cGreen!25] (36,0.15) rectangle (52,0.55);
+  \node at (2.5,0.35) {pay};
+  \node at (12.5,0.35) {work + submit};
+  \node at (28,0.35) {locked window};
+  \node at (44,0.35) {unlocked};
+  % milestones above
+  \draw[thick,draw=cSky] (5,0.55) -- (5,1.4) node[above,align=center,color=cBlue] {pay-by\\$+5$};
+  \draw[thick,draw=cPurple] (20,0.55) -- (20,2.3) node[above,align=center,color=cPurple] {submit deadline\\$+20$};
+  \draw[thick,draw=cGreen!60!black] (36,0.55) -- (36,1.4) node[above,align=center,color=cGreen!60!black] {unlock\\$+36$};
+  \draw[thick,draw=cGrey] (52,0.55) -- (52,2.3) node[above,align=center,color=cGrey] {dispute unlock\\$+52$};
+  % estimates below
+  \draw[thick,draw=cRed] (30,-0.8) -- (30,-1.8) node[below,align=center,color=cRed] {refund queue\\$\approx +30$ (no hash)};
+  \draw[thick,draw=cGreen!60!black] (46,-0.8) -- (46,-1.8) node[below,align=center,color=cGreen!60!black] {payout queue\\$\approx +46$ (hash sent)};
+  \draw[thick,draw=cGold!90!black] (60,-0.8) -- (60,-1.8) node[below,align=center,color=cGold!90!black] {paid cycle\\$\geq 60$ with confirmations};
+\end{tikzpicture}
+\end{center}
+{\footnotesize\textcolor{cGrey}{All offsets are estimates from the runbook (counted from the start of the job). The exact reference point and whether the buyer-side refund runs automatically must be confirmed Friday with the Masumi engineer.}}
+
+\begin{warningbox}{The crucial rule: any submitted hash pays the seller}
+The escrow cannot judge quality. If the seller submits \emph{any} result hash, even for a text that says ``failed'', the contract treats the job as delivered and the seller can be paid. Marking the Sokosumi task as failed does \emph{not} trigger a refund. To refund the buyer after a failed job, the seller must \textbf{withhold the result}: persist the failure locally, submit no hash, do not complete the task, and explain the reason in the task text. The buyer's no-result timeout then returns the money. The alternative, a manual refund request followed by the seller's authorisation, also exists but needs the buyer's side.
+\end{warningbox}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95,transform shape,node distance=8mm and 10mm]
+  \node[agent] (job) {Job runs};
+  \node[service,right=14mm of job] (gate) {Quality gate\\(deterministic)};
+  \node[good,above right=4mm and 22mm of gate] (pass) {PASS: submit hash\\$\rightarrow$ seller paid};
+  \node[bad,below right=4mm and 22mm of gate] (fail) {FAIL: submit nothing\\$\rightarrow$ buyer refunded};
+  \draw[flow] (job) -- (gate);
+  \draw[flow] (gate) |- node[lbl,pos=0.75,above] {passes} (pass);
+  \draw[flow] (gate) |- node[lbl,pos=0.75,below] {fails} (fail);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Seeing a Masumi job as a state machine}
+A \term{state machine} is a diagram of the states a thing can be in and the events that move it between them. This is a simplified view of one paid job. State names with a monospaced font appear in the runbook; the others are our plain-language labels.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.88,transform shape,
+  st/.style={box,minimum width=2.6cm,fill=cBlue!8,draw=cBlue},
+  stg/.style={box,minimum width=2.6cm,fill=cGreen!12,draw=cGreen},
+  str/.style={box,minimum width=2.6cm,fill=cRed!10,draw=cRed},
+  stp/.style={box,minimum width=2.6cm,fill=cPurple!10,draw=cPurple}]
+  \node[st] (req) at (0,0) {Task created\\by buyer};
+  \node[st] (await) at (4.2,0) {Awaiting\\payment};
+  \node[stp] (locked) at (8.4,0) {\code{FundsLocked}};
+  \node[stp] (sub) at (12.4,1.5) {\code{ResultSubmitted}};
+  \node[stg] (comp) at (12.4,-0.4) {Task \code{COMPLETED}\\(result shown)};
+  \node[stg] (paid) at (12.4,-2.4) {Seller withdrawal\\(paid)};
+  \node[str] (ref) at (8.4,-3.2) {Refund queue};
+  \node[str] (refd) at (4.2,-3.2) {Buyer refunded};
+  \node[str] (disp) at (4.2,1.8) {\code{Disputed} /\\\code{RefundRequested}};
+  \draw[flow] (req) -- (await);
+  \draw[flow] (await) -- node[lbl,above] {buyer pays} (locked);
+  \draw[flow] (locked) -- node[lbl,above,sloped] {hash sent} (sub);
+  \draw[flow] (sub) -- (comp);
+  \draw[flow] (comp) -- node[lbl,right] {after unlock} (paid);
+  \draw[flow] (locked) -- node[lbl,right] {no hash by deadline} (ref);
+  \draw[flow] (ref) -- (refd);
+  \draw[flow,dashed] (locked) to[bend right=15] node[lbl,above,sloped] {buyer asks} (disp);
+  \draw[flow,dashed] (disp) to[bend right=15] node[lbl,left] {seller authorises} (refd);
+\end{tikzpicture}
+\end{center}
+{\footnotesize\textcolor{cGrey}{Simplified: the real contract has more intermediate and error states (for example \code{Withdrawn}, pending confirmations, cooldowns).}}
+
+\subsection{The x402 path inside Masumi}
+Besides the Sokosumi credit route, the team's open questions list a variant where a headless agent pays \emph{into} a Masumi escrow using x402, through a \code{/x402/start\_job} path. We have not verified how it works; it is on the list of questions for the Masumi engineer on Friday. The design decision records note it as a 4+ hour option to attempt only if time remains. Treat it as unconfirmed.
+
+\section{Sokosumi}
+
+\term{Sokosumi} is the agent marketplace in the Masumi world: a web app where people hire AI ``coworkers'' for tasks and pay in credits. It was launched by Serviceplan Group with NMKR; the public page lists eight coworkers (for example a research coworker and a coding coworker), mostly generic roles. For the hackathon there is a free test version at \code{preprod.sokosumi.com} and a shared team space called the \textbf{TUM Workspace} that every participant must join.
+
+\subsection{Vendor, Coworker, worker}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.8cm}X@{}}
+\toprule
+\textbf{Concept} & \textbf{Meaning} \\
+\midrule
+\term{Vendor} & The company-like account that offers agents. One per account; it needs organisation membership first. In our plan it is our team's seller identity. \\
+\term{Coworker} & The agent as it appears to customers: a name, a description, and the kinds of tasks it accepts. Ours is a \emph{private} Coworker during development. \\
+\term{Worker process} & The program running on a laptop that \emph{polls} Sokosumi every few seconds for new tasks for the Coworker, runs the agent and posts the result. Start it with \code{npm run worker}. \\
+\term{Task} & One request from a buyer to a Coworker. It moves through statuses such as \code{READY} and \code{COMPLETED}. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.95,transform shape]
+  \node[service,minimum width=3.4cm,minimum height=2cm] (soko) at (0,0) {Sokosumi\\(cloud)\\{\scriptsize tasks, credits}};
+  \node[agent,minimum width=3.6cm,minimum height=2cm] (laptop) at (7,0) {Our laptop (awake!)\\{\scriptsize worker process}\\{\scriptsize + agent code}};
+  \draw[flow] ([yshift=4mm]laptop.west) -- node[lbl,above] {polls every ~5 s} ([yshift=4mm]soko.east);
+  \draw[data] ([yshift=-4mm]soko.east) -- node[lbl,below] {new task} ([yshift=-4mm]laptop.west);
+  \draw[flow] (laptop.south) -- ++(0,-1) node[below,font=\sffamily\scriptsize] {result + hash back to Sokosumi};
+  \node[bad,text width=6.8cm,font=\sffamily\scriptsize] at (3.5,-3.4) {Only \textbf{one} worker per Coworker, and the machine must stay awake. No inbound connection is needed, because the laptop calls out.};
+\end{tikzpicture}
+\end{center}
+
+\subsection{The \code{sokosumi} command-line tool}
+Each team member installs the official command-line tool, package \code{@masumi\_network/sokosumi} version \textbf{1.0.4}, under Node 24. Typical first commands (preprod flag, as in the runbook):
+\begin{lstlisting}
+sokosumi --preprod auth login
+sokosumi --preprod auth whoami --json
+sokosumi --preprod workspaces list --json
+\end{lstlisting}
+Logging in opens the browser. On Linux the tool stores its credentials in the operating system's secret store, so a keyring service (for example GNOME Keyring) must be running. A human login is different from the key the running agent uses (the runtime key is stored separately).
+
+\subsection{Credits versus on-chain payments}
+\begin{conceptbox}{Sokosumi credits are not x402}
+Buyers on Sokosumi pay with \term{credits}, an account balance inside the platform. When a paid Masumi job runs, the platform converts credits into the escrow lock on-chain. But if our lead agent hires \emph{another} Sokosumi agent through the platform, it again pays in credits, which gives us no transaction hash we control. For the track we want a real on-chain payment between agents, so we use \textbf{x402} for that leg. The runbook states this directly: Sokosumi credits $\neq$ x402.
+\end{conceptbox}
+
+\subsection{The starter and model keys}
+The organisers provide a starter repository called \code{tum-hackathon-quickstart}, pinned in the runbook to a specific commit. It contains the agent definition, the worker, the paid-task adapter and a settlement checker. Its agent needs access to an LLM provider, configured through environment variables: \code{ZAI\_API\_KEY}, \code{ZAI\_BASE\_URL}, \code{ZAI\_MODEL} and optionally \code{ZAI\_CONTEXT\_WINDOW\_TOKENS}. The guide suggests Z.ai or Vercel AI Gateway; another provider means adapting the agent code. Two terminals are used: \code{npm start} (the agent runtime) and \code{npm run worker}, until the log says ``Continuous worker running''.
+
+\begin{examplebox}{From clone to first paid task (runbook order)}
+\begin{enumerate}[nosep]
+  \item Install Node 24 and the Sokosumi CLI; sign up on preprod Sokosumi; join the TUM Workspace.
+  \item Create Vendor and private Coworker; connect it; import its key into the OS vault.
+  \item Run the agent and worker; create a smoke task; see \code{COMPLETED} (\emph{no payment yet}, 5--15 min).
+  \item Start the Masumi Payment Service, fund the seller wallet from the dispenser (15--30 min), register the agent until \code{RegistrationConfirmed}.
+  \item Set \code{PAID\_TASKS\_ENABLED=true}, restart the worker. If registration is not ready it silently falls back to an \emph{unpaid} task, so verify.
+  \item Run a fresh task: credits $\rightarrow$ \code{FundsLocked} $\rightarrow$ result hash $\rightarrow$ \code{ResultSubmitted} $\rightarrow$ \code{COMPLETED}, then fetch the receipt. Allow at least 60 min.
+  \item Paste the receipt's transaction hash into the preprod Cardanoscan explorer and save the URL.
+\end{enumerate}
+\end{examplebox}
+
+\section{What already exists: the competitive landscape}
+
+The team's research (public sources only, some pages unreachable) found this picture.
+\begin{itemize}
+  \item \textbf{On the marketplace:} generic research, marketing and coding agents. The hackathon template and the track's own example (a research report for a shop) push every team towards a generic research agent, so this is the most crowded space. Likely empty (an inference, unverified): agents doing a checkable real-world task for a small customer, and agents that buy from other agents with a proof-of-result gate.
+  \item \textbf{Past hackathons:} winners were infrastructure or a clear new commerce primitive (pay per tool call, getting past paywalls, guest checkout), showed a \emph{real} transaction rather than a mock, and told a concrete story for a specific audience.
+  \item \textbf{The x402 on Cardano path} is new: the Cardano Foundation contributed the Cardano support, and its hosted test facilitator has run only on preprod. Critics note there is little evidence of agents paying for real services in ADA at volume, so a visible real-commerce example is valuable.
+\end{itemize}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}XX@{}}
+\toprule
+\textbf{Most teams will} & \textbf{How we can stand out (inference)} \\
+\midrule
+Build a generic research/summary agent on the template & Named customer with real pain and a price that fits \\
+Show a ``pay'' button without a transaction hash & Outcome-gated payment with a recorded refund \\
+Show only the happy path & A deterministic checker (rules) decides pass/fail \\
+Pitch ``the agent economy'' in general & One agent hiring another with a spend cap, visible in a live ledger; explorer links in the demo \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{conceptbox}{The lesson we took}
+\textbf{Lesson:} escrow-with-refund works best when a \emph{deterministic pass/fail gate} decides, not an LLM opinion.
+\end{conceptbox}
+
+\section{How Shelfie uses each piece}
+
+\begin{shelfiebox}{The lead agent: a Sokosumi Coworker with Masumi escrow}
+A brand manager hires Shelfie on Sokosumi (``check this product in N stores, at least K must pass''). The fee is locked in Masumi escrow. Our \emph{shell} (a thin fork of the quickstart) runs the worker, receives the paid task and hands it to our engine. When the engine decides, the shell either submits the report hash (seller paid) or, on a failed K-of-N result, \textbf{withholds the result} so the brand is refunded after the timeout. The shell holds no business logic; it is one bridge file.
+\end{shelfiebox}
+
+\begin{shelfiebox}{The verifier agent: paid via x402}
+The verifier is a separate service that sells \code{POST /v1/verify} behind x402 at 1~tADA per check. Our engine pays it from a dedicated buyer wallet (with a per-payment spending cap) every time a worker submits a photo. Every check, pass or fail, is therefore a visible on-chain payment: agent pays agent. Sokosumi credits were rejected for this leg because they give no hash we control.
+\end{shelfiebox}
+
+\begin{shelfiebox}{Humans: paid by plain transfer}
+When the verifier passes a photo, the engine pays the human worker a bounty by an ordinary Cardano transfer from a payout wallet. Escrow per worker would take at least an hour and x402 would need a seller on every phone, so a plain transfer is the decision (with fallbacks if the library cannot build the transfer: to verify Friday).
+\end{shelfiebox}
+
+\begin{center}
+\begin{tikzpicture}[scale=0.88,transform shape]
+  \node[human] (brand) at (0,3) {Brand\\manager};
+  \node[service] (soko) at (3.6,3) {Sokosumi +\\Masumi escrow};
+  \node[agent] (shell) at (7.4,3) {Lead agent\\(shell)};
+  \node[actor] (engine) at (7.4,0.6) {Engine};
+  \node[agent] (ver) at (11.4,0.6) {Verifier\\(x402 seller)};
+  \node[human] (work) at (3.6,0.6) {Human worker\\(phone)};
+  \node[chain,minimum width=11cm] (ch) at (5.7,-3.2) {Cardano preprod};
+  \draw[pay] (brand) -- node[lbl,above] {fee (credits)} (soko);
+  \draw[flow] (soko) -- node[lbl,above] {task} (shell);
+  \draw[flow] (shell) -- (engine);
+  \draw[pay] (engine) -- node[lbl,above] {1 tADA per check} (ver);
+  \draw[pay] ([yshift=-2mm]engine.west) -- node[lbl,below] {bounty on PASS} ([yshift=-2mm]work.east);
+  \draw[data] ([yshift=2mm]work.east) -- node[lbl,above] {photo} ([yshift=2mm]engine.west);
+  \draw[flow,dashed] (brand.south) -- node[lbl,left] {escrow lock} (brand.south |- ch.north);
+  \draw[flow,dashed] (ver.south) -- ++(0,-1.6) -| (ch.north east);
+\end{tikzpicture}
+\end{center}
+{\footnotesize\textcolor{cGrey}{Simplified overview: the photo actually goes from the worker page to the engine (Chapter~7 shows the exact flows). Pattern A = brand hires agent, B = engine/lead agent pays verifier, C = agent pays human.}}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.2cm}p{3.8cm}X@{}}
+\toprule
+\textbf{Payment} & \textbf{Mechanism} & \textbf{Why} \\
+\midrule
+Brand $\rightarrow$ Shelfie & Sokosumi credits into Masumi escrow & Pay on result; refund if K-of-N fails \\
+Engine $\rightarrow$ verifier & x402, 1 tADA per check & Agent-to-agent payment with a tx hash we control \\
+Engine $\rightarrow$ worker & Plain Cardano transfer & Fast, cheap, no extra protocol \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warningbox}{Be honest about the limits}
+Escrow settlement takes an hour or more, so on stage we show the live x402 and payout legs and present settlement and refund from earlier recorded runs, clearly labelled. No code is built yet; everything above is the plan.
+\end{warningbox}
+
+\begin{keypoints}
+\begin{itemize}[nosep]
+\item An AI agent is an LLM in a loop (goal, plan, tool call, observe, repeat) with tools that have real effects; it needs its own wallet, identity, receipts and spending limits.
+\item The Cardano track pays 3,000 / 2,000 / 1,000 EUR and has one hard requirement: at least one paid job or payment on \textbf{preprod}, via Masumi or x402, proven by a transaction hash.
+\item Masumi = payment and identity layer (self-hosted Payment Service, on-chain registry, escrow); Sokosumi = the marketplace where Coworkers are hired with credits.
+\item Escrow cannot judge quality: \textbf{any submitted result hash pays the seller}. A failed job must withhold the result so the buyer is refunded after the timeout.
+\item A paid Masumi cycle takes at least 60 minutes; plan for it and record refund and settlement runs before the demo.
+\item Sokosumi credits are not x402. Shelfie uses escrow for the brand, x402 for the verifier and plain transfers for humans.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}[nosep]
+  \item What are the four steps of the agent loop, and what makes an agent different from a script?
+  \item What is the single hard requirement of the Cardano track, and what must be handed in as proof?
+  \item In escrow, what happens if the seller submits a result hash for a failed job? How must a failed job be handled to refund the buyer?
+  \item Name the three things you need to run the Masumi Payment Service besides its code.
+  \item Why does Shelfie pay its verifier with x402 rather than with Sokosumi credits?
+  \item Why can the escrow settlement not be shown live on stage?
+\end{enumerate}
+\medskip
+{\footnotesize\color{cGrey}\textbf{Answers.} 1: goal/plan, tool call, observe, repeat; the model chooses the steps at run time. 2: at least one paid job or payment on Cardano preprod (Masumi or x402); the transaction hash. 3: the seller is paid; withhold the result (no hash, no completion) and let the no-result timeout refund. 4: Node 24.22.x with pnpm 10.30.2, a PostgreSQL database, seeded wallets (plus a Blockfrost preprod key). 5: credits give no transaction hash we control; x402 gives an on-chain payment between agents. 6: a paid cycle takes at least 60 minutes, so we show recorded runs with explorer links.}
+\end{quizbox}

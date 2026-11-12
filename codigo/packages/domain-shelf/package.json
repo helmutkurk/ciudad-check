@@ -1,0 +1,22 @@
+{
+  "name": "@shelfie/domain-shelf",
+  "license": "BUSL-1.1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shelf-check domain pack: pack config, catalog loader, parsers, prompts, labels.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "echo 'library, no dev server'"
+  },
+  "dependencies": {
+    "@shelfie/core": "*",
+    "zod": "4.6.7"
+  }
+}

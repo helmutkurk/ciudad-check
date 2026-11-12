@@ -1,0 +1,251 @@
+\chapter{Hackathon day}
+
+\section*{Why this matters for us}
+We have roughly 30 hours between Friday 09:00 and Saturday 15:00. In that time four people must build, test, record a video and submit, while sleeping a little. A shared mental map of the schedule, of what ``done'' means at each step, and of the few sentences everyone repeats on stage prevents the usual chaos. This chapter is that map. All times are \emph{targets} from the team's runbooks unless marked official. Nothing has been built yet.
+
+\section{Official key times and the no-code rule}
+The organisers publish these times (source: the official track page, saved in \texttt{investigacion/}). The rest of the schedule is our own plan.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\draw[very thick,cGrey] (0,0) -- (17,0);
+\foreach \x/\t/\d/\c in {0/Fri 09:00/Hacking starts/cGreen, 2.0/Fri 10:30/Cardano workshop/cBlue, 5.6/Fri 22:00/Escrow go or no-go (ours)/cOrange, 9.6/Sat 11:00/Feature freeze (ours)/cOrange, 11.4/Sat $\sim$13:00/Last escrow cycle (ours)/cOrange, 13.4/Sat 14:30/Submit (our target)/cOrange, 14.9/Sat 15:00/Devfolio deadline/cRed, 16.6/Sat 17:30/Winners/cGreen}{
+  \fill[\c] (\x,0) circle (3pt);
+}
+\foreach \x/\t/\d in {0/Fri 09:00/Hacking starts, 5.6/Fri 22:00/Escrow go or no-go, 11.4/Sat $\sim$13:00/Last escrow cycle, 14.9/Sat 15:00/Devfolio deadline}{
+  \node[font=\sffamily\scriptsize\bfseries,anchor=south] at (\x,0.2) {\t};
+  \node[font=\sffamily\tiny,anchor=south,align=center] at (\x,0.6) {\d};
+}
+\foreach \x/\t/\d in {2.0/Fri 10:30/Cardano workshop, 9.6/Sat 11:00/Feature freeze, 13.4/Sat 14:30/Submit target, 16.6/Sat 17:30/Winners}{
+  \node[font=\sffamily\scriptsize\bfseries,anchor=north] at (\x,-0.2) {\t};
+  \node[font=\sffamily\tiny,anchor=north,align=center] at (\x,-0.6) {\d};
+}
+\draw[decorate,decoration={brace,amplitude=4pt,mirror},cRed] (14.9,-1.4) -- (16.6,-1.4) node[midway,below=3pt,font=\sffamily\tiny,text=cRed,align=center] {live judging\\15:00--17:00};
+\end{tikzpicture}}
+\caption{Key times (not to scale). Green and red are official; blue is an official workshop; orange are our own targets.}
+\end{figure}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}X@{}}
+\toprule
+\textbf{Time} & \textbf{What happens}\\
+\midrule
+Fri 09:00 & Hacking starts. Starter templates are allowed.\\
+Fri 10:30--11:00 & Cardano workshop (11:00 API3, 11:30 BSV, which we skip).\\
+Fri 22:00 & \emph{Our} escrow go/no-go checkpoint.\\
+Sat $\sim$13:00 & \emph{Our} last paid escrow cycle must have started (settlement takes about an hour).\\
+Sat 14:30 & \emph{Our} target to submit. Do not wait for 14:59.\\
+Sat 15:00 & \textbf{Official} Devfolio deadline (tum.devfolio.co). Editable until then.\\
+Sat 15:00--17:00 & Live judging at each track's table.\\
+Sat 17:30 & Winners announced.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warningbox}{The rule: no project code before Friday 09:00}
+The FAQ says the core build must happen during the hackathon. Until Friday 09:00 we do accounts, tools, reading, design, planning, demo props and pitch material. \textbf{No project code.} The \texttt{codigo/} folder stays empty. Starter templates (\code{tum-hackathon-quickstart}, \code{x402-express}) are allowed; whether their code may sit in our public repository is an open question to confirm with the organisers (placeholder \texttt{[CONFIRM\_TEMPLATE\_RULE]}).
+\end{warningbox}
+
+\section{The milestone ladder M1 to M6}
+A \term{milestone} is a checkpoint with a concrete, testable result and saved evidence. The ladder is built so that \textbf{we can stop at any rung and still have a valid submission}. The Cardano track's only hard requirement is one job or payment on preprod, which M1 already delivers.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\def\w{2.7}\def\h{1.15}
+\foreach \i/\m/\t/\d/\c in {0/M1/Fri 11:30/{x402 paid request}/cBlue,1/M2/Fri 15:00/{Agent pays agent,\\and agent pays human}/cTeal,2/M3/Fri 13:00/{Hired via Sokosumi\\(unpaid)}/cPurple,3/M4/Fri 20:00/{Paid escrow\\for a job}/cGold,4/M5/Fri night/{Pay only on result:\\withheld + refund}/cOrange,5/M6/Sat 11:00/{Front end +\\live ledger}/cGreen}{
+  \fill[\c!25,draw=\c,thick] (\i*\w,\i*\h) rectangle (\i*\w+\w,\i*\h+\h);
+  \node[font=\sffamily\bfseries\large,text=\c!70!black,anchor=west] at (\i*\w+0.15,\i*\h+0.82) {\m};
+  \node[font=\sffamily\scriptsize,anchor=west] at (\i*\w+0.9,\i*\h+0.82) {\t};
+  \node[font=\sffamily\tiny,align=left,anchor=west] at (\i*\w+0.15,\i*\h+0.35) {\d};
+  \fill[\c!25,draw=\c,thick] (\i*\w,0) rectangle (\i*\w+\w,\i*\h) ;
+}
+\end{tikzpicture}}
+\caption{The milestone staircase. Each step stands on the previous ones; the time shown is the target. Note that M3 (13:00) falls before M2 (15:00): the numbers show the ladder of ambition, not strict time order.}
+\end{figure}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.9cm}p{1.8cm}Xp{4.1cm}@{}}
+\toprule
+\textbf{Step} & \textbf{Target} & \textbf{Result} & \textbf{Evidence to save}\\
+\midrule
+M1 & Fri 11:30 & x402-express buyer and seller run; one paid request on preprod; receipt with tx hash. Track qualified. & Tx hash, explorer screenshot, wallet addresses (public), versions used.\\
+M2 & Fri 15:00 & From the API, one canned submission produces a verify tx (x402), a pass that triggers a payout tx, and a wrong-code photo that gets FAIL with only the verify tx. Resending does not pay twice. & 2 or 3 tx hashes with screenshots, ledger excerpt, first 20-photo report.\\
+M3 & Fri 13:00 & Unpaid Sokosumi task reaches COMPLETED with our report text, job created idempotently by the bridge. & Task id, screenshot.\\
+M4 & Fri 20:00 & Masumi paid cycle with real engine and a real shot; \code{settled: true} receipt with tx hash. Needs at least 60 minutes, so start by 18:00. & Lock tx, settlement tx, receipt JSON (private fields removed).\\
+M5 & Fri night (recorded) & Fewer than $K$ tasks pass; result withheld; refund tx on the explorer; job reaches REFUNDED. & Job id, dashboard screenshot, refund tx, observed timing.\\
+M6 & Sat 11:00 & On two phones: claim, photo, PASS or FAIL with reasons, payout hash; dashboard updates within 3 s; cheat rejected on screen; works on iOS Safari and Android Chrome. & Screen recording, screenshots, final \code{tx-hashes.md}.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{conceptbox}{Go/no-go checkpoints}
+\textbf{11:30} no first x402 payment: B asks the Cardano mentor, others continue. \textbf{13:00} no unpaid Coworker task: A uses the Masumi 1:1 early. \textbf{15:00} M2 missing: demo the payment from a script and explain. \textbf{17:00} state check: if M2 is missing, M4 pauses and all hands go to M2. \textbf{22:00} escrow go/no-go: settled or a cycle expected to settle? Go. Otherwise freeze escrow, show the lock tx and earlier-run evidence, present settlement and refund as roadmap. \textbf{Sat 11:00} feature freeze; only bug fixes.
+\end{conceptbox}
+
+\subsection{The Friday timeline in one picture}
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\foreach \y/\r/\c in {0/{A shell and engine}/cBlue,-1.2/{B payments, x402, wallets}/cTeal,-2.4/{C verifier, vision, pack}/cPurple,-3.6/{D web, evidence, pitch}/cOrange}{
+  \node[font=\sffamily\scriptsize\bfseries,anchor=east,text=\c] at (-0.1,\y) {\r};
+}
+\foreach \x/\t in {0/09:00,2.75/11:30,4.4/13:00,6.6/15:00,8.8/17:00,9.9/18:00,12.1/20:00,14.3/22:00,17.6/01:00}{
+  \draw[gray!50] (\x,0.6) -- (\x,-4.2);
+  \node[font=\sffamily\tiny,anchor=south] at (\x,0.6) {\t};
+}
+\def\bar#1#2#3#4#5{\fill[#1,rounded corners=2pt] (#2,#5+0.3) rectangle (#3,#5-0.3) node[midway,font=\sffamily\tiny]{#4};}
+\bar{cBlue!40}{0}{4.4}{fork starter, M3}{0}
+\bar{cBlue!25}{4.4}{6.6}{engine, MPS help}{0}
+\bar{cBlue!40}{9.9}{14.3}{M4 cycle, watch}{0}
+\bar{cTeal!40}{0}{2.75}{M1 first x402}{-1.2}
+\bar{cTeal!25}{2.75}{6.6}{wrapper, MPS, payout: M2}{-1.2}
+\bar{cPurple!40}{0}{4.4}{20 photos, gates G1--G7}{-2.4}
+\bar{cPurple!25}{4.4}{6.6}{evaluate, vision}{-2.4}
+\bar{cPurple!40}{9.9}{14.3}{M5 failing run}{-2.4}
+\bar{cOrange!40}{0}{4.4}{skeleton, worker page}{-3.6}
+\bar{cOrange!25}{4.4}{8.8}{dashboard, ledger}{-3.6}
+\bar{cOrange!40}{9.9}{14.3}{rehearsal, takes}{-3.6}
+\fill[cRed!12,draw=cRed] (14.3,-4.2) rectangle (17.6,0.6);
+\node[font=\sffamily\scriptsize,text=cRed,align=center] at (15.95,-1.8) {after 22:00:\\stabilise or\\freeze escrow;\\stop coding\\by 01:00};
+\end{tikzpicture}}
+\caption{Friday in outline (simplified from the runbook; gaps are lunch, workshops and slack). Stop coding by 01:00 at the latest and sleep in turns.}
+\end{figure}
+
+\section{Top risks}
+The register has 15 risks. These are the ones most likely to hurt, with the mitigation and the fallback. L means likelihood, I impact.
+
+\begin{center}
+\small
+\begin{longtable}{@{}p{0.8cm}p{3.6cm}p{1.0cm}p{9.2cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Risk} & \textbf{L/I} & \textbf{Mitigation and fallback}\\
+\midrule
+\endhead
+R1 & Masumi escrow cycle takes 60 min or more and slips past the deadline & H/H & Start first cycle Friday 18:00, last by Saturday $\sim$13:00. Fallback: show lock tx and earlier-run evidence; escrow as roadmap.\\
+R2 & Masumi Payment Service setup fails (Postgres, seed, registration) & M/H & Test Docker Postgres Thursday; use the 1:1. Fallback: demo M1--M3 and M6.\\
+R3 & Human payout is a plain transfer; SDK usage unclear & M/M & Verify Friday morning. Fallback order in ADR-04.\\
+R4 & Vision model misreads printed tags & M/H & Large high-contrast tags; test Friday. Fallback: labelled manual override.\\
+R5 & Facilitator or Blockfrost down during judging & M/H & Local facilitator ready; earlier tx hashes in ledger; replay recording.\\
+R6 & Double payment or stuck 402 retry & M/M & Check the address on Cardanoscan before retrying; idempotent handlers.\\
+R8 & Worker process stops (two workers, sleep) & M/H & One owner, PC awake and plugged in; do not auto-retry pending writes.\\
+R11 & Secret or mnemonic leaks into the public repo & L/H & \code{.gitignore} first; secret scan Saturday 13:30; rotate keys and rewrite history if hit.\\
+R13 & Judges question location spoofing & M/M & Say plainly: freshness, not location; show the cheat rejection.\\
+R14 & Fatigue and scope creep & H/M & Freeze Saturday 11:00; checkpoint 17:00. M1--M3 plus M6 suffice.\\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\begin{warningbox}{Never debug payments by blind retry}
+A 402 timeout may still have settled. First look up the address on Cardanoscan; only then decide. One wallet cannot pay concurrently, so verifier calls are serialised or use separate wallets.
+\end{warningbox}
+
+\section{The evidence log}
+Judges and our own submission need \textbf{proof}: a transaction hash is that proof. Record every one \emph{immediately}, never later. Each row says what the hash proves; rows that are mock or override must be marked.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.6cm}p{1.2cm}X p{3.8cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Step} & \textbf{What happened} & \textbf{What it proves}\\
+\midrule
+1 & M1 & x402 paid request (buyer $\rightarrow$ \code{W-SELL}) & A Cardano payment on preprod\\
+2 & M2 & Engine (\code{W-VBUY}) pays the verifier via x402 & Agent pays agent\\
+3 & M3 & Coworker task COMPLETED (no tx) & Hired through Sokosumi\\
+4 & M4 & Escrow lock & Fee held in escrow\\
+5 & M4 & Result submitted, receipt \code{settled:true} & Payment tied to result\\
+6 & M2 & Payout to worker after verifier pass (\code{W-PAY}) & Human paid on pass\\
+7 & M2 & Rejected cheat attempt (verify tx only) & The gate works\\
+8 & M5 & Refund after withheld result & Refund path\\
+\bottomrule
+\end{tabularx}
+\end{center}
+Columns in the real template: weekday and time, milestone, tx hash, task or job ID, explorer URL, screenshot path, who recorded it. Explorer links point to the transaction page of the preprod Cardanoscan site. Never write mnemonics or keys in the log. A lock or registration hash alone does \emph{not} prove settlement; keep the Sokosumi receipt JSON next to row 5.
+
+\section{Submission checklist: the essentials}
+\begin{itemize}
+  \item \textbf{Devfolio:} create the project early Saturday (around 08:00), add all four members, select Cardano (TUM Blockchain is automatic).
+  \item \textbf{Video} of at most 2:30 that opens logged out: who it is for, the problem, the business case, and one paid job end to end.
+  \item \textbf{Description:} problem, what was built, how it works, Cardano tools used (Masumi, Sokosumi, x402, Blockfrost), tx hashes with explorer links, the limits (code proves freshness, not location; override labelled).
+  \item \textbf{Public repository} before the deadline with README (install, run, env variable \emph{names} only, \code{.env.example}). Check from a logged-out browser. No secrets (run the scan).
+  \item \textbf{Cardano requirement:} at least one job or payment on preprod, with the tx hash in the description.
+  \item \textbf{Shown:} pay tied to the result (pass $\rightarrow$ payout; K-of-N fail $\rightarrow$ refund); agent hires agent; agent acts in the world.
+  \item \textbf{Live demo} ready for 15:00 to 17:00 with a backup recording on a second device.
+  \item Submit by \textbf{14:30}; screenshot the confirmation; a second person checks every link.
+\end{itemize}
+
+\section{Pitch phrases, verbatim}
+The storyline rule: three phrases appear \textbf{word for word} in the video, the live pitch and the Devfolio text. Do not paraphrase them.
+
+\begin{center}
+\begin{tcolorbox}[colback=cPurple!6,colframe=cPurple,boxrule=0.8pt,arc=2mm,width=0.94\textwidth]
+\sffamily
+\textbf{1.}\; \textit{``Paid only when the photo is true.''}\hfill the product in one breath\\[3pt]
+\textbf{2.}\; \textit{``The code in the photo.''}\hfill the memorable mechanism\\[3pt]
+\textbf{3.}\; \textit{``Agents hire people, and the blockchain pays the bill.''}\hfill agents in the real world, with a receipt
+\end{tcolorbox}
+\end{center}
+
+Other lines to know:
+\begin{itemize}
+  \item \textbf{Hook (first 10 seconds):} ``An AI can write a report about a supermarket shelf. It cannot see the shelf. So we taught an agent to hire someone who can, and to pay only if the photo is true.''
+  \item \textbf{Reveal:} ``Shelfie: an agent that hires people to look, and pays them only if the photo is true.''
+  \item \textbf{One-sentence business case:} ``A verified check costs about five euros and you pay only for checks that pass.'' (illustrative pricing)
+  \item \textbf{Positioning:} ``Shelfie is retail-execution proof for small brands: the speed of an app, the audit trail of an escrow, and a payment that only happens when the evidence checks out.''
+  \item \textbf{Vision:} ``Anything an AI needs to know about the physical world can be bought this way: proof first, payment second.''
+\end{itemize}
+
+Tone rules: neutral and concrete, no hype words; numbers marked as estimates; always say what is real (preprod, our printed tags, teammates as shoppers) and what is roadmap (mainnet, location proof, onboarding strangers). \textbf{Say ``preprod'' out loud at least once}; the Foundation judges will check. The pitch is about 3 minutes including the live moment, then Q\&A (format unconfirmed).
+
+\section{Top Q\&A to know by heart}
+The full list has 20 questions. Rule: lead with the honest limit, then the mitigation. Eight to rehearse:
+
+\begin{enumerate}
+  \item \textbf{Can a worker fake a photo?} Partly. The code is issued only after claiming, so an old image cannot contain it; capture is in-app over HTTPS with no gallery pick, and the code expires in minutes. A live-made fake is possible in theory. We do not claim zero fraud; we claim cheating costs more than the payout.
+  \item \textbf{Does it prove the person was in the store?} No. The code proves freshness and task binding, not location. Roadmap: store-owned QR codes. A worker could photograph the same product in another shop; we do not detect that.
+  \item \textbf{Why blockchain? A database and Stripe would do.} For the brand leg: escrow with automatic refund and a public receipt per check. For the agent and human legs: small payments to strangers and agents without accounts. A database can show a ledger but cannot make two untrusting parties rely on it. Not every part needs a chain; the payment gate does.
+  \item \textbf{Why Cardano instead of Stripe Connect?} Stripe needs KYC onboarding of every payee, has minimums that make EUR 2.50 payouts costly, and cannot be called by an agent without an account. x402 on Cardano pays per request with no account; Masumi gives escrow plus the Sokosumi marketplace. Caveat: the Cardano x402 facilitator is preprod-only today.
+  \item \textbf{Is x402 on Cardano mature?} It is early. We use it only for the per-check payment to the verifier; the human payout is a plain preprod transfer. The README says so.
+  \item \textbf{GDPR in stores?} Tasks say shelf and tag only, no people. The verifier flags visible people as an advisory warning; it does not block (automatic rejection is roadmap). Images are kept only as long as needed; we store a wallet address and task logs. Whether stores allow photographs is open.
+  \item \textbf{Unit economics?} Illustrative: EUR 5 per verified check, EUR 2.50 to 3.00 to the worker, well under EUR 0.10 verifier cost, about 5\% escrow fee: margin about EUR 1.65 to 2.15 before support, disputes and verifier fees on rejected photos. These are hypotheses, separate from the 1 tADA and 3 tADA test amounts. Demand is not validated.
+  \item \textbf{What was built and what is mocked?} Built (to be updated to match the final README): lead agent and task splitter, phone page with one-time codes, verifier with rules, x402 payment to the verifier, preprod payout, Sokosumi/Masumi job with escrow (settlement and refund shown from earlier runs). Started from the organisers' templates. Mocked or manual: store list, our printed tags, teammates as workers, no identity checks, no location proof, no mainnet.
+\end{enumerate}
+
+\begin{warningbox}{Update answer 8 before the table}
+Question~8 describes the \emph{plan}. On Saturday it must match what the final README and the evidence log truly show. If escrow was frozen, say so.
+\end{warningbox}
+
+\begin{keypoints}
+\begin{itemize}
+  \item Official: hacking starts Fri 09:00, Cardano workshop 10:30, deadline Sat 15:00, judging 15:00--17:00, winners 17:30. \textbf{No project code before Friday 09:00.}
+  \item Our targets: M1 11:30, M3 13:00, M2 15:00, M4 20:00 (start by 18:00), M5 Friday night, M6 Saturday 11:00; escrow go/no-go 22:00; freeze Sat 11:00; last cycle $\sim$13:00; submit 14:30.
+  \item Stop at any rung and still have a valid submission; M1 alone satisfies the Cardano requirement.
+  \item Log every tx hash the moment it exists; mock or override rows are marked.
+  \item Repeat the three phrases verbatim; say ``preprod'' aloud; state the limits yourself.
+  \item Before judging: wallets funded, tunnel up, QR scanned, no fakes, override off, cheat photos ready, backup recording.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item What is the official submission deadline and where is it submitted?
+  \item Why must the last paid escrow cycle start by about 13:00 on Saturday?
+  \item Which milestone alone already meets the Cardano track's minimum requirement?
+  \item What happens at the 22:00 go/no-go if escrow is not working?
+  \item Recite the three verbatim pitch phrases.
+  \item What must you do before retrying a payment that timed out?
+\end{enumerate}
+{\small\color{cGrey}\textbf{Answers.}
+(1) Saturday 15:00 on Devfolio (tum.devfolio.co); our target is 14:30.
+(2) A cycle needs at least about an hour to settle.
+(3) M1: one x402 payment with a tx hash on preprod.
+(4) Freeze escrow: show the lock tx and any earlier evidence, present settlement and refund as roadmap, keep M1 to M3 and M6.
+(5) ``Paid only when the photo is true.'' / ``The code in the photo.'' / ``Agents hire people, and the blockchain pays the bill.''
+(6) Check the address on Cardanoscan, because the payment may have settled.}
+\end{quizbox}

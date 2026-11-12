@@ -1,0 +1,25 @@
+\begin{frame}{How it works}
+  \centering
+  \begin{tikzpicture}[scale=1.0,transform shape,
+      node distance=9mm and 11mm, font=\small,
+      box/.style={draw=cardano,fill=cardanolight,rounded corners=3pt,thick,minimum height=11mm,minimum width=24mm,align=center},
+      hot/.style={box,fill=cardano,text=white},
+      warmb/.style={box,draw=warm,fill=warm!20},
+      arr/.style={-{Stealth},thick,cardano},
+      lab/.style={font=\scriptsize,fill=paper,inner sep=1pt}]
+    \node[box] (brand) {Brand\\{\scriptsize hires on Sokosumi}};
+    \node[hot,right=of brand] (lead) {Lead agent\\{\scriptsize Masumi escrow}};
+    \node[box,right=of lead,yshift=13mm] (human) {Humans\\{\scriptsize photo in store}};
+    \node[warmb,right=of lead,yshift=-13mm] (ver) {Verifier agent\\{\scriptsize x402 per check}};
+    \node[box,below=20mm of lead,xshift=36mm,draw=okgreen,fill=okgreen!15] (pay) {Payout\\{\scriptsize human, instant}};
+    \node[box,below=20mm of lead,xshift=3mm,draw=okgreen,fill=okgreen!15] (rep) {Report\\{\scriptsize photo passes}};
+    \node[box,below=20mm of lead,xshift=-30mm,draw=nogo,fill=nogo!12] (ref) {Refund\\{\scriptsize else}};
+    \draw[arr] (brand)--(lead);
+    \draw[arr] (lead)--node[lab,above,sloped]{task}(human);
+    \draw[arr] (human.east) -- ++(8mm,0) |- node[lab,pos=.2,right]{photo via lead}(ver.east);
+    \draw[arr] (lead)--node[lab,below,sloped]{pays}(ver);
+    \draw[arr] (ver.south)--++(0,-6mm)-|node[lab,pos=.2,above]{pass}(pay.north);
+    \draw[arr] (lead.south)--(rep.north);
+    \draw[arr,nogo] (lead.south east)--(ref.north);
+  \end{tikzpicture}
+\end{frame}

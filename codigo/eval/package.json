@@ -1,0 +1,30 @@
+{
+  "name": "@shelfie/eval",
+  "license": "BUSL-1.1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Evaluation runner: labelled photos through evaluate(), results and markdown summary.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "tsx --env-file-if-exists=../.env src/cli.ts",
+    "eval": "tsx --env-file-if-exists=../.env src/cli.ts"
+  },
+  "dependencies": {
+    "@shelfie/core": "*",
+    "@shelfie/domain-shelf": "*",
+    "@shelfie/vision": "*",
+    "@shelfie/verifier": "*",
+    "zod": "4.6.7",
+    "sharp": "0.35.5"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15"
+  }
+}

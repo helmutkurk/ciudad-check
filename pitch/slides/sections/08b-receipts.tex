@@ -1,0 +1,25 @@
+% Live slide 4. Hashes and URLs in facts.tex; fill from codigo/docs/evidence/tx-hashes.md, never from memory.
+\begin{frame}{Every step is a receipt on Cardano}
+  \centering\scriptsize
+  \begin{columns}[T]
+    \begin{column}{0.19\textwidth}\centering
+      {\bfseries Lock}\\{\color{cardano}earlier run}\\[0.3em]\qrcode[height=1.6cm]{\UrlLock}\\[0.2em]\TxLock
+    \end{column}
+    \begin{column}{0.19\textwidth}\centering
+      {\bfseries Verifier fee}\\{\color{okgreen}live, x402}\\[0.3em]\qrcode[height=1.6cm]{\UrlFee}\\[0.2em]\TxFee
+    \end{column}
+    \begin{column}{0.19\textwidth}\centering
+      {\bfseries Payout}\\{\color{okgreen}live}\\[0.3em]\qrcode[height=1.6cm]{\UrlPayout}\\[0.2em]\TxPayout
+    \end{column}
+    \begin{column}{0.19\textwidth}\centering
+      {\bfseries Settle}\\{\color{cardano}earlier test run}\\[0.3em]\qrcode[height=1.6cm]{\UrlSettle}\\[0.2em]\TxSettle
+    \end{column}
+    \begin{column}{0.19\textwidth}\centering
+      {\bfseries Refund}\\{\color{cardano}earlier test run}\\[0.3em]\qrcode[height=1.6cm]{\UrlRefund}\\[0.2em]\TxRefund
+    \end{column}
+  \end{columns}
+  \vspace{1em}
+  {\small No true photo, no payment: Masumi escrow refunds automatically.\\
+  The verifier is a separate paid endpoint, swappable by config.}\\[0.4em]
+  Cardano preprod. Scan to open in the explorer.
+\end{frame}

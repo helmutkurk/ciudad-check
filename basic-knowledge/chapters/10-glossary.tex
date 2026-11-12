@@ -1,0 +1,118 @@
+\chapter{Glossary}
+
+Alphabetical list of the terms used in this guide. The last column gives the chapter where the term is explained (Ch.~1 blockchain basics, 2 Cardano, 3 HTTP~402 and x402, 4 agents, Masumi and Sokosumi, 5 on-chain versus off-chain, 6 to 9 Shelfie). Terms marked \emph{(Shelfie)} are our own design names; none of them exists as code yet.
+
+{\small
+\renewcommand{\arraystretch}{1.12}
+\begin{longtable}{@{}p{3.4cm}p{10.6cm}p{1.2cm}@{}}
+\toprule
+\textbf{Term} & \textbf{Definition} & \textbf{Ch.}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Term} & \textbf{Definition} & \textbf{Ch.}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Address & A public string that identifies a wallet on the chain; payments are sent to it. Preprod addresses start with \texttt{addr\_test1}. & 1, 2\\
+ADA / tADA & ADA is Cardano's coin; tADA are the worthless test coins on the preprod network. 1 ADA = 1,000,000 lovelace. & 2\\
+ADR & Architecture decision record: a short note with the decision, rejected alternatives and consequences (Shelfie has 15). & 7\\
+Agent & A program driven by an AI model that pursues a goal, uses tools and can act on its own. & 4\\
+Agentic commerce & Agents buying and selling services from each other, with payment built into the exchange. The name of the Cardano track. & 3, 4\\
+Alphabet (code) & The 31 characters allowed in challenge codes: letters and digits without 0, O, 1, I, L. & 8\\
+Block & A bundle of transactions added to the chain at once. & 1\\
+Blockchain & A shared ledger kept by many computers in a chain of blocks, hard to alter after the fact. & 1\\
+Blockfrost & A hosted service that gives programs access to Cardano data and transaction submission through an API key. & 2, 5\\
+Bounty & The reward offered for a task; in Shelfie, 3 tADA per accepted photo in the demo. & 6, 7\\
+Brand manager & Shelfie's customer type; our fictional example is Katharina Brandl of Isarquell. & 6\\
+Card-pool mode & Challenge-code mode with pre-printed cards; used for the stage demo. \emph{(Shelfie)} & 8\\
+Cardano & A proof-of-stake blockchain using the eUTXO model; host of the track. & 2\\
+Cardanoscan & A public block explorer; we use the preprod version to show transaction hashes. & 2, 5\\
+Challenge code & Random single-use code (format \texttt{XXX-XXX}) that must appear in the photo; proves freshness, not location. \emph{(Shelfie)} & 8\\
+Claim & A worker's short reservation of a task (default 300 s), which issues the code. ID prefix \texttt{clm\_}. \emph{(Shelfie)} & 7\\
+Confirmation & A block that includes your transaction; more blocks on top means more certainty. & 1, 2\\
+Coworker & In Sokosumi, an agent that can be hired for tasks; Shelfie's lead agent is a Coworker. & 4\\
+Custody & Holding someone else's funds; the reason we use Masumi escrow instead of building our own. & 5\\
+Datum & Data attached to a UTxO that a script can read. & 2\\
+Deterministic & Always gives the same output for the same input; the verifier's rules are deterministic. & 8\\
+Devfolio & The platform where the hackathon project is submitted (deadline Saturday 15:00). & 9\\
+Domain pack & Replaceable bundle (task template, rules, prompts, payout, report) that gives the generic engine its subject; ours is \texttt{shelf-check}. \emph{(Shelfie)} & 7\\
+Edit distance & Number of character changes between two strings; G2 allows 0. & 8\\
+Engine & Shelfie's core service: state machines, challenge codes, K-of-N decision, payout orchestration. \emph{(Shelfie)} & 7\\
+Escrow & Funds held by a neutral mechanism until delivery, then released to the seller or refunded to the buyer. & 4, 5\\
+Evidence ledger & Append-only, hash-chained record of every tx hash, verdict and override. ID prefix \texttt{evd\_}. \emph{(Shelfie)} & 7, 9\\
+eUTXO & Extended UTXO: Cardano's accounting model; coins are spent whole and can carry data and scripts. & 2\\
+Explorer & A website for looking up transactions and addresses (for example Cardanoscan). & 2\\
+Facilitator & An x402 helper service that verifies and settles payments for a seller; the Cardano one is preprod-only. & 3\\
+Fakes & Stand-in payment and verifier components (\texttt{FAKE\_PAYMENTS=1}) so the team can build in parallel; marked by a red banner. \emph{(Shelfie)} & 7\\
+Fallback (gate) & The third payment gate: result withheld, brand refunded. \emph{(Shelfie)} & 6\\
+False accept / reject & A bad photo that passes versus a good photo that fails; false accepts are the safety failure. & 8\\
+Field marketing & Sending people to stores to check, restock or promote products. & 6\\
+Freshness & Proof that something was created recently; what the challenge code proves. & 6, 8\\
+Gate (G1--G7) & One of seven verifier checks: image\_ok, code\_match, readable, product\_match, price\_sanity, timing, not\_duplicate. & 8\\
+Hash & A fixed-size fingerprint of data; any change gives a different hash. Transactions are identified by their hash. & 1\\
+Hub laptop & The one machine that runs everything during the demo. \emph{(Shelfie)} & 7\\
+HTTP 402 & ``Payment Required'': a web status code reserved for payments, activated by x402. & 3\\
+Idempotency (key) & Property that repeating an operation has no extra effect; a key identifies the intention (for example \texttt{payout:tsk\_07}). & 7\\
+Job & One hired engagement (for example ``Isarquell in 10 stores''). ID prefix \texttt{job\_}. \emph{(Shelfie)} & 6, 7\\
+K-of-N & Job rule: at least K of N tasks must pass; default $K=\lceil 0.6N\rceil$ (N=5: 3; N=10: 6). \emph{(Shelfie)} & 6\\
+Ledger & A record of who owns what or who paid whom. & 1\\
+Lovelace & Smallest unit of ADA; 1 ADA = 1,000,000 lovelace. All amounts in contracts are lovelace strings. & 2\\
+Margin & Price minus direct costs; illustratively EUR 1.65 to 2.15 per check. & 6\\
+Masumi & Cardano network for agent payments: escrow, identity and a payment service. & 4\\
+Masumi Payment Service (MPS) & Self-run service (with Postgres) that handles escrowed payments for a registered agent. & 4, 7\\
+Mnemonic & The list of words that encodes a wallet's secret key; never committed to a repo. & 1, 2\\
+Metadata (tx) & Small data attached to a transaction; Shelfie tags payouts as \texttt{shelfie:<payoutId>} to find them later. & 2, 7\\
+Milestone (M1--M6) & A checkpoint with testable result and saved evidence; the ladder lets us stop anywhere. \emph{(Shelfie)} & 9\\
+Mystery shopping & A person visits a store as a normal customer and reports what they see. & 6\\
+Network (preprod) & The Cardano test network with free coins; where all demo payments happen. & 2\\
+Node & A computer that runs the blockchain software and keeps a copy of the ledger. & 1\\
+Oracle & A service that brings off-chain data on-chain (or into a decision); in Shelfie the verifier plays an oracle-like role for photos. & 5\\
+Off-chain / on-chain & On-chain: recorded in blockchain transactions; off-chain: everything else (databases, photos, AI). & 5\\
+Override (demo) & Admin-only manual pass/fail used as a stage rescue; red badge, off in evidence runs. \emph{(Shelfie)} & 8\\
+Payload (402) & The payment requirements a seller returns in a 402 response (price, asset, pay-to address). & 3\\
+Payment gate & One of three rules that decide payment: photo gate, job gate, fallback. \emph{(Shelfie)} & 6\\
+Payout (queue) & Payment of 3 tADA to a worker; sent through a serial per-wallet queue with write-ahead and reconcile. ID prefix \texttt{pay\_}. \emph{(Shelfie)} & 7\\
+People visible & Vision-model flag that a person is in the photo; advisory, does not block. & 8\\
+Perceptual hash & A fingerprint of what an image looks like, used to detect near-duplicate photos. & 8\\
+Plan B & Behörde Brief Decoder: same engine with a letter-decoder pack and OCR worker. & 6, 7\\
+Preprod & See Network. & 2\\
+Reconcile & Checking the chain for an earlier payout before resending, to avoid double payment. & 7\\
+Redeemer & Data a spender supplies to unlock a script-protected UTxO. & 2\\
+Refund & Return of the escrowed fee to the buyer when no result is delivered. & 4, 6\\
+Retail execution & Making sure the agreed product, price and placement appear in stores. & 6\\
+Role (A--D) & Build roles: A shell and engine, B payments and x402, C verifier and pack, D web, evidence, pitch. \emph{(Shelfie)} & 7\\
+Settlement & The money outcome: escrow pays the seller (DELIVER) or refunds the buyer (WITHHOLD). ID prefix \texttt{stl\_}. & 4, 7\\
+Shell (agent) & Fork of the Masumi starter (JavaScript) that connects Sokosumi to the engine. \emph{(Shelfie)} & 7\\
+Signature & Cryptographic proof that the owner of a key approved a transaction. & 1\\
+Smart contract / script & Code that decides whether a UTxO may be spent; on Cardano, validators. & 2\\
+Sokosumi & Marketplace where agents (Coworkers) are hired and paid, built on Masumi. & 4\\
+State machine & A list of states and allowed moves between them (Job, Task, Payout, Claim). & 7\\
+Submission & One photo upload for a claim. ID prefix \texttt{sub\_}. \emph{(Shelfie)} & 7\\
+Task & One unit of work, for Shelfie one store. ID prefix \texttt{tsk\_}. & 7\\
+Threshold & A limit inside a gate (for example confidence at least 0.7); stored in the pack config. & 8\\
+Transaction (tx) & A signed instruction that moves value on the chain; identified by its hash. & 1, 2\\
+Tunnel & A tool that gives a laptop a temporary public HTTPS address, so phones can reach the engine. & 7\\
+UTxO & Unspent transaction output: a coin-like record that can be spent once. & 2\\
+Vendor / Coworker (Sokosumi) & Account that publishes agents and the agent itself, in Sokosumi terms. & 4\\
+Verdict & The verifier's answer: pass only if all seven gates pass. ID prefix \texttt{vdt\_}. & 8\\
+Verifier & Separate service that sells checks via x402 (1 tADA) and applies the gates around one vision call. \emph{(Shelfie)} & 7, 8\\
+Vision model & AI model that reads images; in Shelfie it only extracts text, it does not decide. & 8\\
+W-MPS & Seller wallet of the Masumi Payment Service. & 7\\
+W-PAY & Engine wallet that pays workers by plain transfer (3 tADA per pass). & 7\\
+W-SELL & Verifier's income address; receives the 1 tADA fees. & 7\\
+W-VBUY & Engine wallet that buys verification via x402, with a spend cap. & 7\\
+Wallet & Software holding keys that can sign payments and show balances. & 1, 2\\
+Worker & Someone (human or agent) who performs a task. & 7\\
+Write-ahead record & Saving ``about to send'' to disk before acting, so a crash can be recovered safely. & 7\\
+x402 & Protocol that uses HTTP 402 so a client pays per request with a signed payment, no account needed. & 3\\
+\end{longtable}}
+
+\begin{keypoints}
+\begin{itemize}
+  \item Do not mix up two uses of ``gate'': the three payment gates (photo, job, fallback) versus the seven verifier gates G1 to G7.
+  \item Four wallets: \texttt{W-VBUY} pays the verifier, \texttt{W-SELL} receives, \texttt{W-PAY} pays workers, \texttt{W-MPS} is Masumi's.
+  \item Everything marked \emph{(Shelfie)} is our own design vocabulary.
+\end{itemize}
+\end{keypoints}

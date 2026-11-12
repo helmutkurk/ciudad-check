@@ -1,0 +1,458 @@
+{
+  "version": 1,
+  "description": "Human labels by Codex for Helmut (D), 2026-10-31, attachment order 1-14. Photos stay at absolute external paths, never in git. Team reports REWE; EDEKA Sued tags in #8-11/#13-14 conflict, so provenance remains unconfirmed. Prices are EUR base shelf prices, exclude Pfand. Gesture truth records visible counts (including invalid one-finger signs); expectedGesture is a hypothetical legal challenge, not recovered issuance except #3 UI. Null truth is unknown/absent, explained per label. OOS path used for intended empty Fuze spot (#1,#2,#12), O5 unknown because facing boundary is ambiguous. OBSERVED does not prove stock for tag-only closeups. Notes enumerate every applicable gate; unknown gates are not asserted by expect.failedGates. G6 uses synthetic request timing; G7 uses independent empty history (no duplicateOf). This is dry evaluation material, never payment/location/freshness evidence.",
+  "labels": [
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.08 (1).jpeg",
+      "outcome": "OUT_OF_STOCK",
+      "case": "wrong_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Fuze Tea Lemongrass ohne Zucker 1.25 l",
+        "ean": "",
+        "aliases": ["TEE LEMONGRAS O. Z", "TEE LEMONGRAS O. Z EW L FUZE TEA"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": {
+          "fingers": 1,
+          "side": "left"
+        },
+        "priceValue": 1.29
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_mismatch"]
+      },
+      "notes": "Attachment #1. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. One raised thumb left of label; 1 is outside the issued 2-5 range. 2-left is an explicit negative-test challenge, not the original issued sign. Tag prints 1.29, 1 l = 1.03 EUR, + Pfand 0.25. Empty area above label on right; Fuze bottles remain at left, so exact OOS facing boundary needs review. Similar frames are not replays without prior accepted-image context. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; O3=PASS; O4=PASS; O5=UNKNOWN (slot boundary/adjacent bottles ambiguous); G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: O5. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.08 (2).jpeg",
+      "outcome": "OUT_OF_STOCK",
+      "case": "wrong_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Fuze Tea Lemongrass ohne Zucker 1.25 l",
+        "ean": "",
+        "aliases": ["TEE LEMONGRAS O. Z", "TEE LEMONGRAS O. Z EW L FUZE TEA"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": {
+          "fingers": 1,
+          "side": "left"
+        },
+        "priceValue": 1.29
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_mismatch"]
+      },
+      "notes": "Attachment #2. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. One raised thumb left of label; 1 is outside the issued 2-5 range. 2-left is an explicit negative-test challenge, not the original issued sign. Tag prints 1.29, 1 l = 1.03 EUR, + Pfand 0.25. Empty area above label on right; Fuze bottles remain at left, so exact OOS facing boundary needs review. Similar frames are not replays without prior accepted-image context. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; O3=PASS; O4=PASS; O5=UNKNOWN (slot boundary/adjacent bottles ambiguous); G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: O5. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.08.jpeg",
+      "outcome": "OBSERVED",
+      "case": "screen_photo",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 3,
+        "side": "right"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": {
+          "fingers": 3,
+          "side": "right"
+        },
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["not_screen"],
+        "reasonCodes": ["screen_recapture"]
+      },
+      "notes": "Attachment #3. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. Safari/app screenshot with browser chrome and Sending state. Three extended digits including thumb on right; on-screen challenge explicitly says 3 fingers right. Tag prints 1.49, 1 l = 5.96 EUR, + Pfand 0.25. Negative screen-content material, not proof of camera recapture or completed verification. Gate expectations: G1=PASS (decoded locally, within size limits); G2=PASS; G8=FAIL; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (1).jpeg",
+      "outcome": "OBSERVED",
+      "case": "unreadable_tag",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 3,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Winter Edition Pistachio & Berries Sugarfree 250 ml",
+        "ean": "",
+        "aliases": ["PISTACHIO & BERRIES SF", "PISTACHIO & BERRIES SF DS L RED BULL"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": null
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["readable", "price_sanity"],
+        "reasonCodes": ["price_unreadable", "price_format"]
+      },
+      "notes": "Attachment #4. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. Foreground finger covers most of frame and target price display. At least three extended digits at left; total gesture cannot be established confidently, so truth.gesture=null. 3-left is a hypothetical challenge only. Target Winter tag partly covered; do not borrow 1.49 from lower Green Edition tag or related frames. Variant inferred from visible Winter cans and sharper related frames; G4 ambiguous. Gate expectations: G1=PASS (decoded locally, within size limits); G2=UNKNOWN; G8=PASS; G3=FAIL; G4=UNKNOWN; G5=FAIL; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: G2, G4. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (2).jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid_hard",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 4,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Winter Edition Pistachio & Berries Sugarfree 250 ml",
+        "ean": "",
+        "aliases": ["PISTACHIO & BERRIES SF", "PISTACHIO & BERRIES SF DS L RED BULL"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": {
+          "fingers": 4,
+          "side": "left"
+        },
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": true,
+        "failedGates": [],
+        "reasonCodes": []
+      },
+      "notes": "Attachment #5. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. Four extended fingers left of price panel, including the low horizontal digit; thumb folded. Hand overlaps product-text portion of tag. Winter Pistachio & Berries SF cans, 250 ml; tag prints 1.49, 1 l = 5.96 EUR, + Pfand 0.25. Exact variant is absent from catalog; do not reuse original Red Bull EAN. Gate expectations: G1=PASS (decoded locally, within size limits); G2=PASS; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (3).jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid_hard",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Coca-Cola 0.85 l (variant unconfirmed on tag)",
+        "ean": "",
+        "aliases": ["COCA-COLA", "COCA-COLA EW L CC"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": {
+          "fingers": 2,
+          "side": "left"
+        },
+        "priceValue": 1.45
+      },
+      "expect": {
+        "pass": true,
+        "failedGates": [],
+        "reasonCodes": []
+      },
+      "notes": "Attachment #6. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. Two fingers left of tag. Tag reads COCA-COLA, 0.85 l, 1.45, 1 l = 1.71 EUR, + Pfand 0.25. Bottles show Coke Zero Sugar; tag does not state Zero, so target is the generic tag identity and exact variant is unconfirmed. Catalog Original Taste 1.5 l is a different pack/variant; do not reuse its EAN. G4 PASS means text match to this generic tag only. Gate expectations: G1=PASS (decoded locally, within size limits); G2=PASS; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (4).jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 4,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Winter Edition Pistachio & Berries Sugarfree 250 ml",
+        "ean": "",
+        "aliases": ["PISTACHIO & BERRIES SF", "PISTACHIO & BERRIES SF DS L RED BULL"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": {
+          "fingers": 4,
+          "side": "left"
+        },
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": true,
+        "failedGates": [],
+        "reasonCodes": []
+      },
+      "notes": "Attachment #7. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. Four extended fingers clearly left of tag; thumb folded. Readable PISTACHIO & BERRIES SF / DS L RED BULL / 0.25 l tag, Winter cans; 1.49, 1 l = 5.96 EUR, + Pfand 0.25. Similar to #5 but no prior-image replay is asserted. Gate expectations: G1=PASS (decoded locally, within size limits); G2=PASS; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (5).jpeg",
+      "outcome": "OBSERVED",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #8. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. No hand or code. 2-left is a hypothetical valid challenge to test absence. Selected target is original Red Bull 0.25 l at left, stocked, with left tag 1.49; adjacent right sugarfree slot appears empty and has a different O.Zucker tag (also 1.49). Do not call original product OOS because neighbouring variant is empty. + Pfand 0.25, 1 l = 5.96 EUR. EDEKA Sued is printed on tags, contradicting team-reported REWE provenance; branch/date unverified. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (6).jpeg",
+      "outcome": "OBSERVED",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #9. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. No hand or code. 2-left is a hypothetical valid challenge to test absence. Tag close-up: Red Bull 0.25 l, 1.49, EINWEG, + Pfand 0.25, 1 l = 5.96 EUR. OBSERVED is a price-tag reading only; facing is outside frame, so stock status is unknown, not OOS evidence. EDEKA Sued printed on tag contradicts team-reported REWE provenance. Printed internal tag identifiers are not a verified EAN. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (7).jpeg",
+      "outcome": "OBSERVED",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #10. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. No hand or code. 2-left is a hypothetical valid challenge to test absence. Selected target is original Red Bull 0.25 l at left, stocked, with left tag 1.49; adjacent right sugarfree slot appears empty and has a different O.Zucker tag (also 1.49). Do not call original product OOS because neighbouring variant is empty. + Pfand 0.25, 1 l = 5.96 EUR. EDEKA Sued is printed on tags, contradicting team-reported REWE provenance; branch/date unverified. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09 (8).jpeg",
+      "outcome": "OBSERVED",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #11. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. No hand or code. 2-left is a hypothetical valid challenge to test absence. Tag close-up: Red Bull 0.25 l, 1.49, EINWEG, + Pfand 0.25, 1 l = 5.96 EUR. OBSERVED is a price-tag reading only; facing is outside frame, so stock status is unknown, not OOS evidence. EDEKA Sued printed on tag contradicts team-reported REWE provenance. Printed internal tag identifiers are not a verified EAN. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.09.jpeg",
+      "outcome": "OUT_OF_STOCK",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Fuze Tea Lemongrass ohne Zucker 1.25 l",
+        "ean": "",
+        "aliases": ["TEE LEMONGRAS O. Z", "TEE LEMONGRAS O. Z EW L FUZE TEA"]
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.29
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #12. not-in-catalog: exact variant/pack absent from products.json; empty EAN means unknown. No hand or code; 2-left is a hypothetical valid challenge to test absence. Tag TEE LEMONGRAS O. Z / EW L FUZE TEA, 1.25 l, 1.29, 1 l = 1.03 EUR, + Pfand 0.25. Empty area above label on right; adjacent Fuze bottles remain at left. Exact facing boundary ambiguous; OOS intent does not prove the whole labelled slot empty. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; O3=PASS; O4=PASS; O5=UNKNOWN (slot boundary/adjacent bottles ambiguous); G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: O5. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.10 (1).jpeg",
+      "outcome": "OBSERVED",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #13. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. No hand or code. 2-left is a hypothetical valid challenge to test absence. Selected target is original Red Bull 0.25 l at left, stocked, with left tag 1.49; adjacent right sugarfree slot appears empty and has a different O.Zucker tag (also 1.49). Do not call original product OOS because neighbouring variant is empty. + Pfand 0.25, 1 l = 5.96 EUR. EDEKA Sued is printed on tags, contradicting team-reported REWE provenance; branch/date unverified. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    },
+    {
+      "file": "/home/hks/borrar/shelfie-eval-photos-2026-10-31/WhatsApp Image 2026-10-31 at 01.20.10.jpeg",
+      "outcome": "OBSERVED",
+      "case": "no_gesture",
+      "expectedCode": "GESTURE-EVAL",
+      "expectedGesture": {
+        "fingers": 2,
+        "side": "left"
+      },
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-whatsapp-store-unconfirmed",
+        "name": "Team-reported REWE, Munich; branch unconfirmed"
+      },
+      "truth": {
+        "code": null,
+        "gesture": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["gesture_missing"]
+      },
+      "notes": "Attachment #14. Catalog EAN 9002490100070 identifies original 250 ml; not read from these photos. No hand or code. 2-left is a hypothetical valid challenge to test absence. Tag close-up: Red Bull 0.25 l, 1.49, EINWEG, + Pfand 0.25, 1 l = 5.96 EUR. OBSERVED is a price-tag reading only; facing is outside frame, so stock status is unknown, not OOS evidence. EDEKA Sued printed on tag contradicts team-reported REWE provenance. Printed internal tag identifiers are not a verified EAN. Gate expectations: G1=PASS (decoded locally, within size limits); G2=FAIL; G8=PASS; G3=PASS; G4=PASS; G5=PASS; G6=PASS with runner timing fixture; G7=PASS with empty prior-image history. Unknown gates: none. Expected failedGates are mandatory failures only; unknown gates are not asserted."
+    }
+  ]
+}

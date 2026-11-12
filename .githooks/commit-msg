@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# If the commit touches purpose-defining files, the message needs a trailer:
+#   Purpose-impact: ADR-<id>            (decision recorded in docs/adr/ or diseno/decisions.md)
+#   Purpose-impact: minor: <reason>     (wording/typo/config fix, purpose unchanged; >= 10 chars)
+# "none" is not accepted for these files. Commits that touch no purpose file need no trailer.
+root=$(git rev-parse --show-toplevel)
+[[ -f "$root/.git/MERGE_HEAD" ]] && exit 0
+hit=$(git diff --cached --name-only | bash "$root/scripts/purpose-files.sh")
+[[ -z "$hit" ]] && exit 0
+val=$(git interpret-trailers --parse "$1" 2>/dev/null | sed -n 's/^Purpose-impact:[[:space:]]*//p' | tail -n1)
+if [[ "$val" =~ ^ADR-?[0-9A-Za-z-]+$ ]] || [[ "$val" =~ ^minor:[[:space:]]*.{10,}$ ]]; then exit 0; fi
+{
+  echo "Commit refused: it touches purpose-defining files:"; echo "$hit" | sed 's/^/  /'
+  echo "Add a trailer (last paragraph of the message):"
+  echo "  Purpose-impact: ADR-<id>   or   Purpose-impact: minor: <reason, >= 10 chars>"
+} >&2
+exit 1

@@ -1,0 +1,311 @@
+\chapter{On-chain versus off-chain}
+
+\section*{Why this matters for us}
+A common mistake in blockchain projects is to put everything on the chain, or nothing. Shelfie does neither on purpose. Photos, verdicts, the database and the vision model stay on our own servers; money movements and the escrow that protects the customer live on the Cardano chain. Judges will ask ``what is actually on-chain?'' and ``who do I have to trust?''. This chapter gives you the vocabulary and the honest answers, including the escrow timing facts that decide how we design the demo.
+
+\section{Two zones}
+\begin{conceptbox}{On-chain and off-chain}
+\term{On-chain} means recorded in the blockchain itself: every node stores it and anyone can read and check it. \term{Off-chain} means kept anywhere else: our servers, our laptops, a model provider's cloud. Off-chain data is controlled by whoever runs the machine.
+\end{conceptbox}
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\scriptsize,
+    on/.style={draw=cTeal,fill=cTeal!12,rounded corners=2pt,align=center,minimum width=2.6cm,minimum height=8mm},
+    off/.style={draw=cOrange,fill=cOrange!12,rounded corners=2pt,align=center,minimum width=2.6cm,minimum height=8mm}]
+  \foreach \t [count=\i from 0] in {Escrow lock\\(customer's fee),Settlement or\\refund transaction,Worker payouts\\(tx hashes)}
+    \node[on] at (0,-\i*1.1) {\t};
+  \foreach \t [count=\i from 0] in {Result hash\\(fingerprint),x402 fee payments\\(1 tADA per check),Agent registration\\(identity)}
+    \node[on] at (3,-\i*1.1) {\t};
+  \foreach \t [count=\i from 0] in {Worker photos\\(images),Database and\\evidence ledger,Task queue and\\challenge codes}
+    \node[off] at (7.6,-\i*1.1) {\t};
+  \foreach \t [count=\i from 0] in {Verdicts and\\reports,Vision model\\and gate rules,Web pages and\\dashboard}
+    \node[off] at (10.6,-\i*1.1) {\t};
+  \begin{scope}[on background layer]
+    \node[draw=cTeal,thick,rounded corners=4pt,fit={(-1.5,0.9) (4.5,-2.9)},label={[text=cTeal,font=\sffamily\bfseries\scriptsize,anchor=north]north:ON-CHAIN: public, permanent, checkable}] (L) {};
+    \node[draw=cOrange,thick,rounded corners=4pt,fit={(6.1,0.9) (12.1,-2.9)},label={[text=cOrange,font=\sffamily\bfseries\scriptsize,anchor=north]north:OFF-CHAIN: fast, private, must be trusted}] (R) {};
+  \end{scope}
+  \draw[<->,dashed,thick,cSky] (L.east|-0,-1.1) -- node[below=2pt,align=center,text=black] {tx hashes\\link the two} (R.west|-0,-1.1);
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Properties side by side}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+ & \textbf{On-chain} & \textbf{Off-chain}\\
+\midrule
+Who can read it & Everyone (public chain) & Only those with access\\
+Can it be changed later & \no\ (append-only history) & \yes\ (the owner can edit or delete)\\
+Can a third party verify it without trusting us & \yes & \no\ (they must trust the operator)\\
+Cost & Network fee per transaction (about 0.17~ADA on preprod) & Almost free\\
+Speed & Seconds to minutes until confirmed; escrow flows take an hour or more & Milliseconds\\
+Privacy & Poor: never put personal data or photos on a public chain & Good, if we protect it\\
+Storage size & Tiny and expensive & Large and cheap\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{analogybox}{a courtroom ledger versus your notebook}
+The chain is the official court ledger in a public hall. Everything written there is permanent, anyone may inspect it, but each entry costs a stamp fee and takes a while. Your notebook (off-chain) is fast, free and private, but nobody else can be sure you did not rewrite a page. Sensible people keep their drafts in the notebook and enter only the important, disputable facts in the ledger.
+\end{analogybox}
+
+\section{Hash commitments: proving without publishing}
+Often we want the permanence of the chain but not the size or privacy cost of the data. The standard tool is a \term{hash}: a function that turns any data into a short fixed-length fingerprint (for example 64 hexadecimal characters for SHA-256). Three properties matter:
+\begin{itemize}
+  \item the same input always gives the same hash;
+  \item changing even one character of the input changes the hash completely;
+  \item you cannot recover the input from the hash.
+\end{itemize}
+A \term{hash commitment} puts only the hash on-chain. Later, anybody who holds the original data can recompute the hash and compare. If they match, the data is exactly what was committed at that time.
+
+\begin{center}
+\begin{tikzpicture}[font=\sffamily\scriptsize,node distance=6mm and 14mm]
+  \node[box,fill=cOrange!12,draw=cOrange] (r) {Report (large,\\possibly private)\\``Store A: 2.49 EUR \ldots''};
+  \node[box,fill=cGold!20,draw=cGold!80!black,right=of r] (h) {SHA-256};
+  \node[chain,right=of h] (c) {On-chain:\\\texttt{9f3a...c71e}\\(32 bytes)};
+  \node[good,below=of c] (l) {Later: recompute hash\\of the report you hold};
+  \draw[flow] (r) -- (h);
+  \draw[pay] (h) -- node[lbl,above] {commit} (c);
+  \draw[flow] (c) -- node[lbl,right] {compare} (l);
+  \node[left=4mm of l,text=cGreen!60!black] {equal $\Rightarrow$ report unchanged};
+\end{tikzpicture}
+\end{center}
+
+\begin{examplebox}{a tampered report}
+Shelfie delivers a report saying ``lowest price 2.49 EUR'' and commits its hash \code{9f3a\ldots} on-chain. Next week someone alters the file to say ``2.19 EUR''. The hash of the altered file is completely different, so the comparison with the on-chain value fails and the change is exposed. The report itself never had to be public.
+\end{examplebox}
+
+\begin{shelfiebox}{where hashes appear}
+Our evidence ledger is a hash-chained, append-only file: each line stores the hash of the previous line, so editing history breaks the chain. Photos are identified by their SHA-256, which also catches the same photo being uploaded twice. In the Masumi flow the seller submits a \emph{result hash} to the escrow; the full result text stays off-chain. Chapter~4 covers the Masumi side.
+\end{shelfiebox}
+
+\section{Escrow from zero}
+\subsection{The problem}
+Customer and provider do not trust each other. If the customer pays first, the provider may disappear. If the provider works first, the customer may refuse to pay. An \term{escrow} solves this with a neutral holder: the customer deposits the money with the holder, the provider does the work, and the holder pays out only when the agreed condition is met.
+
+\begin{analogybox}{notary and Treuhand}
+When you buy a flat in Germany, the buyer does not hand the price to the seller directly. A \emph{Notar} (or a \emph{Treuhandkonto}, a trust account) holds the money until the ownership is registered. Escrow is that, only the notary is replaced by a small program on the blockchain.
+\end{analogybox}
+
+\subsection{Smart-contract escrow}
+A \term{smart contract} is a program stored on the chain that holds funds and releases them only under coded rules, which nobody (not even the provider) can override. Such an escrow has a small state machine with deadlines (``timeouts''):
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,st/.style={box,minimum width=2.9cm,minimum height=1.2cm}]
+  \node[st,fill=cLight,draw=cGrey] (a) at (0,0) {\textbf{Created}\\agreement made};
+  \node[st,fill=cGold!15,draw=cGold!80!black] (b) at (4.8,0) {\textbf{Funds locked}\\customer pays in};
+  \node[st,fill=cSky!15,draw=cSky] (c) at (9.6,0) {\textbf{Result submitted}\\hash on-chain};
+  \node[st,fill=cGreen!12,draw=cGreen] (d) at (14.4,0) {\textbf{Unlocked}\\seller may withdraw};
+  \node[st,fill=cRed!10,draw=cRed] (e) at (4.8,-2.8) {\textbf{Refund}\\customer gets money back};
+  \draw[flow] (a)--(b) node[lbl,midway,above=1mm,fill=none] {pay by};
+  \draw[flow] (b)--(c) node[lbl,midway,above=1mm,fill=none] {submit by};
+  \draw[flow] (c)--(d) node[lbl,midway,above=1mm,fill=none] {wait};
+  \draw[flow,draw=cRed] (b)--(e) node[lbl,midway,right=1mm,fill=none] {submit deadline passes, no result};
+\end{tikzpicture}}
+\end{center}
+
+Three deadlines drive everything:
+\begin{enumerate}
+  \item \textbf{Pay-by:} until when the customer must lock the funds.
+  \item \textbf{Submit-by:} until when the provider must submit a result (its hash).
+  \item \textbf{Unlock:} after a waiting period following the submission, the provider can withdraw the money. The waiting period gives the customer time to complain.
+\end{enumerate}
+If the provider misses the submit deadline, the customer can get a \term{refund}. That refund path is what makes the customer comfortable paying before delivery.
+
+\subsection{The timing facts for Masumi (from the team's runbook)}
+These are estimates from the research notes (\code{investigacion/cardano/masumi-runbook.md}) and must be confirmed with the Masumi mentors on Friday.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Fact} & \textbf{Value}\\
+\midrule
+A full paid cycle (lock, result, settlement) & at least about 60 minutes\\
+Provider payout eligible & about $+46$ min counted from the start of the job: unlock at $+36$ plus about 10 min queue (runbook inference; needs a result hash)\\
+Refund eligible if no result hash & about $+30$ min from the start: submit deadline at $+20$ plus about 10 min (estimate; buyer automation to verify)\\
+Official docs mention longer defaults & Up to about 12 hours in some documentation; the hackathon setup is shorter. Verify.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[x=0.25cm,y=1cm,font=\sffamily\scriptsize]
+  \draw[thick,->,draw=cGrey] (0,0) -- (63,0) node[right] {min};
+  \foreach \x in {0,10,20,30,40,50,60}{\draw[cGrey] (\x,0.08)--(\x,-0.08); \node[below,text=cGrey] at (\x,-0.08) {\x};}
+  \foreach \x/\t/\c in {0/job start\\(lock)/cGold!80!black,5/pay by/cGold!80!black,20/submit\\deadline/cBlue,36/unlock/cSky}{
+    \fill[\c] (\x,0) circle (1.6mm); \node[above=3mm,text=\c,align=center] at (\x,0) {\t};}
+  \fill[cRed] (30,-1.2) circle (1.6mm); \node[right=2mm,text=cRed,align=left] at (30,-1.2) {$\approx$+30: refund if \emph{no} result hash};
+  \draw[cRed,dashed] (20,-0.4) -- (30,-1.2);
+  \fill[cGreen] (46,-1.9) circle (1.6mm); \node[right=2mm,text=cGreen!60!black,align=left] at (46,-1.9) {$\approx$+46: payout\\if a hash was sent};
+  \draw[cGreen,dashed] (36,-0.4) -- (46,-1.9);
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}{any result hash pays the seller}
+The escrow cannot judge quality. If the provider submits \emph{any} result hash, even for a report saying ``failed'', the seller is paid after the unlock period. Marking the Sokosumi task as failed does \emph{not} refund. To trigger the refund, the provider must \textbf{withhold} the result: submit no hash at all and let the deadline pass.
+\end{warningbox}
+
+\begin{shelfiebox}{the K-of-N rule and withholding}
+A brand hires Shelfie to check a product in $N$ stores and requires at least $K$ verified photos. The engine decides. If at least $K$ pass, the shell submits the report hash and the seller is paid. If fewer than $K$ pass, the shell submits \emph{nothing} (ADR-11), so the brand's money flows back automatically after the timeout. Workers whose individual photos passed are still paid (ADR-09), which Shelfie bears as a stated cost.
+\end{shelfiebox}
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[human,minimum width=2.8cm] (b) at (0,0) {Brand pays\\into escrow};
+  \node[agent,minimum width=2.8cm] (e) at (4.6,0) {Engine decides\\K of N?};
+  \node[good,minimum width=3.2cm] (p) at (10.2,1.2) {$\ge K$: submit hash\\$\Rightarrow$ Shelfie paid};
+  \node[bad,minimum width=3.2cm] (r) at (10.2,-1.2) {$<K$: withhold\\$\Rightarrow$ brand refunded};
+  \draw[flow] (b)--(e); \draw[flow] (e)--(p); \draw[flow,draw=cRed] (e)--(r);
+  \node[font=\sffamily\scriptsize,text=cGrey,align=center] at (13.9,1.2) {on stage: shown\\from a recorded run};
+\end{tikzpicture}
+\end{center}
+This is why ADR-05 starts the first paid cycle on Friday afternoon, runs the failure/refund job on Friday night, and completes the last paid cycle by 13:00 on Saturday: the live stage can only show the verify and payout legs; settlement and refund are shown from recordings with explorer links, labelled as such.
+
+\section{Oracles and the oracle problem}
+A blockchain only knows what is inside it. It cannot look at a shelf, read a price on a website, or check the weather. An \term{oracle} is a bridge that brings real-world facts onto the chain. The \term{oracle problem} is that this bridge is a trust problem: if the chain accepts a fact, someone had to report it, and that someone could be wrong or lying. Decentralisation of the ledger does not decentralise the truth about the outside world.
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[human,minimum width=3cm] (w) at (0,0) {Real world\\(shelf, price, weather)};
+  \node[service,minimum width=3cm] (o) at (5.2,0) {Reporter / oracle\\(observes, signs)};
+  \node[chain,minimum width=3cm] (c) at (10.4,0) {Chain / contract\\(checks signature)};
+  \draw[flow] (w)--(o) node[lbl,midway,above=1mm,fill=none] {observe};
+  \draw[pay] (o)--(c) node[lbl,midway,above=1mm,fill=none] {signed fact};
+  \node[font=\sffamily\scriptsize,text=cRed,align=center] at (5.2,-1.5) {Weak link: is the reporter honest and correct?};
+\end{tikzpicture}
+\end{center}
+
+\begin{conceptbox}{approaches to the problem}
+(1) Trust one named reporter and make it accountable (reputation, deposits, contracts). (2) Use signed data from the original source, so the contract verifies the signer, the request and the freshness instead of trusting a middleman. (3) Combine several independent reporters. None removes trust completely; they only make it explicit and checkable.
+\end{conceptbox}
+
+\begin{examplebox}{the API3 hackathon track}
+This hackathon has another partner track, \emph{API3 -- Any API in your contract}. There the central feature must depend on authenticated data from AirnodeHub: a user brings the signed response on-chain and the contract verifies the expected signer, the intended request and the freshness before acting. Judges run a ``tamper test'' with one valid and four rejected responses (edited value, too old, wrong request, wrong key's signature). That is the oracle problem solved with signed data. We do not depend on it; entering API3 as a secondary track is undecided (\code{diseno/decisions.md}).
+\end{examplebox}
+
+\begin{shelfiebox}{Shelfie is a small oracle}
+The fact ``this product was on this shelf at this time'' is a real-world fact that the chain cannot see. Our verifier is the reporter. We do not claim to remove the trust; we make it small and inspectable: a random single-use challenge code in the photo shows freshness (not location, an honest limit stated in ADR-12), deterministic gate rules decide instead of a model's opinion, and an append-only evidence ledger plus payment hashes make each decision auditable.
+\end{shelfiebox}
+
+\section{Trust model: who must trust whom?}
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[human,minimum width=2.8cm] (br) at (0,0) {Brand\\(customer)};
+  \node[agent,minimum width=3.6cm] (sh) at (5.8,0) {Shelfie: engine,\\verifier, vision};
+  \node[chain,minimum width=3.0cm] (ch) at (11.8,0) {Cardano + escrow\\+ facilitator};
+  \node[human,minimum width=2.8cm] (wk) at (5.8,-3.2) {Worker\\(phone)};
+  \draw[flow,<->] (br)--(sh) node[lbl,midway,above=1mm,fill=none] {trusts report};
+  \draw[flow,<->] (sh)--(ch) node[lbl,midway,above=1mm,fill=none] {pays, reads};
+  \draw[flow,<->] (wk)--(sh) node[lbl,midway,right=1mm,fill=none] {trusts payout};
+  \draw[data,<->] (br) -- (ch) node[lbl,pos=0.5,below=3mm,fill=none] {escrow protects money};
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X X X@{}}
+\toprule
+\textbf{Party} & \textbf{Must trust} & \textbf{Why / protection} & \textbf{Residual risk}\\
+\midrule
+Brand (customer) & The verifier and engine to judge photos honestly; the chain & Escrow refunds if no result; rules are deterministic; ledger and hashes are auditable & We could still be wrong or biased; freshness is proven, location is not\\
+Worker & The engine to pay verified photos & Payout appears as a tx hash on Cardanoscan; visible and permanent & A failed payout needs the queue and reconcile logic\\
+Shelfie engine & The verifier's verdicts and the facilitator & Verifier is ours; payments are checkable on-chain & Vision model errors; provider outage (a flagged demo override exists)\\
+Verifier seller & The facilitator to settle correctly & Facilitator is non-custodial; hashes can be checked on-chain & If down, no paid checks (fallback: local facilitator)\\
+Everyone & Cardano preprod itself & Public ledger, many nodes & It is a test network; tADA has no value, and resets or outages are possible\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+
+\section{What can go wrong: failure scenarios}
+Understanding the trust model is easiest by walking through bad days. The table lists what happens, what protects us, and what we still have to build or check.
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}X X X@{}}
+\toprule
+\textbf{Scenario} & \textbf{What the design does} & \textbf{Status / to verify}\\
+\midrule
+Brand pays but Shelfie never delivers & No result hash is submitted, so the escrow refunds the brand after the timeout & Timing is an estimate; verify with Masumi mentors\\
+Job fails K-of-N but the shell submits a ``failed'' text & Seller is paid anyway (any hash pays) & Prevented by design: withhold the result\\
+Verifier is paid but the vision model is down & Error returned before settlement where possible; engine retries with the same idempotency key & Exact order in the template to be verified Friday\\
+Payout transaction times out & Queue marks it unknown, searches the chain for the metadata tag, pays again only if absent & Metadata support in the SDK is unverified\\
+Worker uploads an old photo & Challenge code and timing checks reject it; the check still costs 1~tADA & Honest limit: freshness, not location\\
+Hosted facilitator unreachable & Seller answers 500; fall back to a local facilitator (\code{npm run facilitator}) & Test before the demo\\
+Preprod network is slow & Stage shows recorded settlement; the live part is verify and payout & Decided in ADR-05\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Finality: when is ``on-chain'' really final?}
+A transaction is not final the instant it is submitted. It is first accepted into a block and then becomes harder and harder to reverse as more blocks follow. The x402 default is one confirmation before the facilitator reports success; a faster mode with zero confirmations exists and hosted facilitators accept it, at the price of a small risk that the payment does not end up in the chain. For the demo this explains why one verify payment takes 20 to 60 seconds, and why a ``timed out'' call must be checked on the explorer before retrying.
+
+\begin{analogybox}{a cheque versus cash in hand}
+Submitting a transaction is like handing over a cheque; the confirmation is the bank clearing it. You may deliver the goods when the bank says it is cleared, or earlier if you accept a little risk. Escrow adds a third option: the cheque is already deposited with the notary before you start work.
+\end{analogybox}
+
+\section{What is on-chain and off-chain in Shelfie}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l c c X@{}}
+\toprule
+\textbf{Item} & \textbf{On-chain} & \textbf{Off-chain} & \textbf{Notes}\\
+\midrule
+Brand's fee in escrow (lock) & \yes & & Masumi escrow; tx hash\\
+Settlement or refund & \yes & & After the timing window; shown from a recording on stage\\
+Result hash & \yes & & Fingerprint only; report text is off-chain\\
+x402 verify fee, 1 tADA & \yes & & One transaction per check, pass or fail\\
+Worker payout, 3 tADA (planned) & \yes & & Plain transfer, tx hash on Cardanoscan; metadata tag \code{shelfie:<payoutId>} planned (verify Friday)\\
+Worker photos & & \yes & Large, personal; only SHA-256 hashes are used\\
+Verdicts, gate results, reports & & \yes & Kept in the engine and ledger\\
+Task queue, claims, challenge codes & & \yes & In-memory state plus event log on disk\\
+Evidence ledger (\code{evidence.jsonl}) & & \yes & Hash-chained and append-only; links to tx hashes\\
+Vision model and rules & & \yes & Provider is configuration (ADR-07)\\
+Dashboard and worker page & & \yes & Served through an HTTPS tunnel\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[human,minimum width=2.6cm] (ph) at (0,0) {Photo\\(off-chain)};
+  \node[agent,minimum width=2.6cm] (vd) at (4.2,0) {Verdict\\(off-chain)};
+  \node[chain,minimum width=2.8cm] (fee) at (8.4,1.0) {x402 fee tx\\\code{tx\_verify}};
+  \node[chain,minimum width=2.8cm] (pay) at (8.4,-1.0) {Payout tx\\\code{tx\_payout}};
+  \node[box,fill=cLight,draw=cGrey,minimum width=2.8cm] (led) at (13.2,0) {Evidence ledger\\links all hashes};
+  \draw[flow] (ph)--(vd); \draw[pay] (vd)--(fee); \draw[pay] (vd)--(pay);
+  \draw[data] (fee)--(led); \draw[data] (pay)--(led);
+  \node[font=\sffamily\scriptsize,text=cGrey] at (6.5,-2.4) {Each photo leaves a trail: off-chain evidence plus on-chain proof of payment};
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}{do not oversell ``on-chain''}
+Do not tell judges that the verdicts are on a blockchain. The honest claim: money movements and the escrow are on-chain and independently checkable; the judgement itself is off-chain and is made auditable through rules, a hash-chained ledger and payment hashes. Also say clearly that settlement and refund on stage are from earlier recorded runs.
+\end{warningbox}
+
+\begin{keypoints}
+\begin{itemize}
+\item On-chain = public, permanent and checkable but costly and slow; off-chain = fast, private and cheap but requires trust in the operator.
+\item A hash commitment puts a fingerprint on-chain and keeps the data elsewhere; any later change is detectable.
+\item Escrow holds money until a condition is met; with deadlines (pay-by, submit-by, unlock) and a refund path it protects the customer without a human notary.
+\item Masumi timing (estimates): paid cycle at least 60 min, payout eligible at about $+46$ min and refund at about $+30$ min, both counted from the start of the job.
+\item Submitting any result hash pays the seller, so a failed job must withhold the result to trigger a refund.
+\item An oracle brings real-world facts on-chain, but trust moves rather than disappears. Shelfie is a small oracle for shelf facts and makes its trust explicit.
+\item Shelfie on-chain: escrow, x402 fees, payouts. Off-chain: photos, verdicts, database, ledger, vision model.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item Why should photos not be stored on a public blockchain?
+  \item What does a hash commitment prove, and what does it not reveal?
+  \item List the three deadlines of a timeout-based escrow and say what each protects.
+  \item A job fails the K-of-N rule. Which action leads to a refund and which action would wrongly pay the seller?
+  \item What is the oracle problem, and how is Shelfie an example of it?
+  \item Name two things Shelfie records on-chain and two that stay off-chain.
+\end{enumerate}
+{\footnotesize\color{cGrey}\textbf{Answers.} (1) Public, permanent, size-limited and expensive; privacy would be lost. (2) That data existing now matches the committed fingerprint, so later changes are detected; it does not reveal the data. (3) Pay-by (customer must fund), submit-by (provider must deliver), unlock (waiting period before the provider withdraws; time to complain). (4) Withholding the result triggers the refund; submitting any hash, even ``failed'', pays the seller. (5) The chain cannot see the real world, so someone must report facts and be trusted; Shelfie reports ``product was on the shelf''. (6) On-chain: escrow, x402 fee, payouts; off-chain: photos, verdicts, ledger, vision model.\par}
+\end{quizbox}

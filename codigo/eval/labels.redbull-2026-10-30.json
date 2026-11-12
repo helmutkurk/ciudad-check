@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "description": "Red Bull 0,25 l at an EDEKA Sued shelf, photographed 2026-10-30 by Lorenz (C). No challenge code in any photo: G2 must fail code_missing; G1 and G3-G6 should pass, so the set checks extraction of product and price. Files in file order matter for G7 near-duplicate memory. Photos are git-ignored in eval/photos/.",
+  "labels": [
+    {
+      "file": "redbull-149-shelf-1.jpg",
+      "outcome": "OBSERVED",
+      "case": "no_code",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-edeka-sued",
+        "name": "EDEKA Sued, Munich (branch not recorded)"
+      },
+      "truth": {
+        "code": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["code_missing"]
+      },
+      "notes": "Shelf with two tags: Red Bull 0,25l 1.49 and R.Bull O.Zucker 250ml 1.49 (both +Pfand 0.25). No challenge code."
+    },
+    {
+      "file": "redbull-149-shelf-2.jpg",
+      "outcome": "OBSERVED",
+      "case": "no_code",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-edeka-sued",
+        "name": "EDEKA Sued, Munich (branch not recorded)"
+      },
+      "truth": {
+        "code": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["code_missing"]
+      },
+      "notes": "Same shelf, slightly different framing (aHash distance 16 to shelf-1). No challenge code."
+    },
+    {
+      "file": "redbull-149-shelf-3.jpg",
+      "outcome": "OBSERVED",
+      "case": "duplicate",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-edeka-sued",
+        "name": "EDEKA Sued, Munich (branch not recorded)"
+      },
+      "truth": {
+        "code": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match", "not_duplicate"],
+        "reasonCodes": ["code_missing", "near_duplicate_image"]
+      },
+      "notes": "Near-duplicate of shelf-1 (aHash distance 3 <= 6). No challenge code.",
+      "duplicateOf": "redbull-149-shelf-1.jpg"
+    },
+    {
+      "file": "redbull-149-tag-closeup-1.jpg",
+      "outcome": "OBSERVED",
+      "case": "no_code",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-edeka-sued",
+        "name": "EDEKA Sued, Munich (branch not recorded)"
+      },
+      "truth": {
+        "code": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["code_missing"]
+      },
+      "notes": "Tag close-up: Red Bull 0,25l, 1.49 EINWEG, +Pfand 0.25, 1l = 5.96. No challenge code."
+    },
+    {
+      "file": "redbull-149-tag-closeup-2.jpg",
+      "outcome": "OBSERVED",
+      "case": "no_code",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-edeka-sued",
+        "name": "EDEKA Sued, Munich (branch not recorded)"
+      },
+      "truth": {
+        "code": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match"],
+        "reasonCodes": ["code_missing"]
+      },
+      "notes": "Same tag (aHash distance 7 to closeup-1, above the threshold). No challenge code."
+    },
+    {
+      "file": "redbull-149-tag-closeup-3.jpg",
+      "outcome": "OBSERVED",
+      "case": "duplicate",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Red Bull Energy Drink 250 ml",
+        "ean": "9002490100070",
+        "aliases": ["Red Bull Energy Drink", "Red Bull 0,25 l Dose", "Red Bull 250ml"],
+        "priceMinEur": 0.88,
+        "priceMaxEur": 1.99
+      },
+      "store": {
+        "id": "eval-edeka-sued",
+        "name": "EDEKA Sued, Munich (branch not recorded)"
+      },
+      "truth": {
+        "code": null,
+        "priceValue": 1.49
+      },
+      "expect": {
+        "pass": false,
+        "failedGates": ["code_match", "not_duplicate"],
+        "reasonCodes": ["code_missing", "near_duplicate_image"]
+      },
+      "notes": "Near-duplicate of closeup-2 (aHash distance 3). No challenge code.",
+      "duplicateOf": "redbull-149-tag-closeup-2.jpg"
+    }
+  ]
+}

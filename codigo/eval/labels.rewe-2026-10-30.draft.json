@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "description": "Draft by Codex for Helmut (D), 2026-10-30; reviewer: Lorenz (C). Training-set note: no photo contains a challenge code, so G2 has no challenge evidence (no_challenge_in_training_set). Expected verdicts below assume G2 is stubbed or ignored so the set can tune G3-G5. expectedCode is the schema-required placeholder EVAL-STUB-NO-CHALLENGE, not a code observed in any photo.",
+  "labels": [
+    {
+      "file": "rewe-01.jpeg",
+      "outcome": "OBSERVED",
+      "case": "unreadable_tag",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": null },
+      "expect": {
+        "pass": false,
+        "failedGates": ["readable"],
+        "reasonCodes": ["price_unreadable"]
+      },
+      "notes": "photoQuality=blurry; intent=negative_blur. Cropped, blurred Adelholzener water and Giesinger bottles; no single target product or price can be assigned. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-02.jpeg",
+      "outcome": "OBSERVED",
+      "case": "unreadable_tag",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": null },
+      "expect": {
+        "pass": false,
+        "failedGates": ["readable"],
+        "reasonCodes": ["price_unreadable"]
+      },
+      "notes": "photoQuality=blurry; intent=negative_blur. Severe motion blur beneath the GETRÄNKE sign; no single target product or price can be assigned. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-03.jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid_hard",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "Giesinger bestie 0.5 l", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 1.05 },
+      "expect": { "pass": true, "failedGates": [], "reasonCodes": [] },
+      "notes": "photoQuality=sharp; intent=borderline. Giesinger bestie bottle and €1.05 shelf tag are visible, but their exact association is uncertain. Provisional PASS reflects that tag-to-slot association is not a verifier gate in the current design; reviewer should confirm or change the label. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-04.jpeg",
+      "outcome": "OBSERVED",
+      "case": "unreadable_tag",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": null },
+      "expect": {
+        "pass": false,
+        "failedGates": ["readable"],
+        "reasonCodes": ["price_unreadable"]
+      },
+      "notes": "photoQuality=blurry; intent=negative_blur. Strong motion blur across lemonade bottles and shelf tags; specific product identity and price are not reliably readable. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-05.jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "Giesinger Erhellung 0.5 l", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 1.69 },
+      "expect": { "pass": true, "failedGates": [], "reasonCodes": [] },
+      "notes": "photoQuality=sharp; intent=positive. Shelf tag reads €1.69 for 0.5 l, unit price €3.38/l, plus €0.08 Pfand. Base price excludes Pfand. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-06.jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "Bad Brambacher Garten-Limonade Zitrone 0.5 l", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 0.95 },
+      "expect": { "pass": true, "failedGates": [], "reasonCodes": [] },
+      "notes": "photoQuality=sharp; intent=positive. The Zitrone and Pink Grapefruit variants are both visible with separate €0.95 tags; this label targets Zitrone. Unit price is €1.90/l and the tag shows +€0.15 Pfand. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-07.jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid_hard",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "Bad Brambacher Garten-Limonade Zitrone 0.5 l", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 0.95 },
+      "expect": { "pass": true, "failedGates": [], "reasonCodes": [] },
+      "notes": "photoQuality=sharp; intent=positive. Wider view contains both Zitrone and Pink Grapefruit products and their separate €0.95 tags; this label targets Zitrone. Unit price €1.90/l and +€0.15 Pfand are visible. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-08.jpeg",
+      "outcome": "OBSERVED",
+      "case": "unreadable_tag",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "Little Lunch Protein Bowl Protein-licious 350 g", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 3.79 },
+      "expect": {
+        "pass": false,
+        "failedGates": ["readable"],
+        "reasonCodes": ["price_unreadable"]
+      },
+      "notes": "photoQuality=blurry; intent=negative_blur. Motion blur makes the Protein Bowl shelf label insufficiently reliable for a price check; €3.79 is a provisional human read for comparison with rewe-09. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-09.jpeg",
+      "outcome": "OBSERVED",
+      "case": "valid",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": {
+        "name": "Little Lunch Protein Bowl Protein-licious 350 g",
+        "ean": "4260614720343"
+      },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 3.79 },
+      "expect": { "pass": true, "failedGates": [], "reasonCodes": [] },
+      "notes": "photoQuality=sharp; intent=positive. Tag shows Protein Bowl, 350 g, €3.79, €10.83/kg and EAN 4260614720343. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    },
+    {
+      "file": "rewe-10.jpeg",
+      "outcome": "OBSERVED",
+      "case": "unreadable_tag",
+      "expectedCode": "EVAL-STUB-NO-CHALLENGE",
+      "product": { "name": "Bad Brambacher Garten-Limonade Zitrone 0.5 l", "ean": "" },
+      "store": {
+        "id": "rewe-81671-august-everding-strasse-20",
+        "name": "REWE August-Everding-Straße 20 (verify)"
+      },
+      "truth": { "code": null, "priceValue": 0.95 },
+      "expect": {
+        "pass": false,
+        "failedGates": ["readable"],
+        "reasonCodesAnyOf": ["price_unreadable", "low_confidence"]
+      },
+      "notes": "photoQuality=partial; intent=borderline. Garten-Limonade and €0.95 are partly readable through motion blur; conservative expected FAIL on readability, with the exact G3 reason depending on extraction confidence. G2: no_challenge_in_training_set; expected verdict ignores G2 (stubbed) for G3-G5 tuning."
+    }
+  ]
+}

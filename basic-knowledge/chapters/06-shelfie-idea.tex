@@ -1,0 +1,333 @@
+\chapter{Shelfie: the idea}
+
+\section*{Why this matters for us}
+The first five chapters gave you the tools: blockchain, Cardano, HTTP~402 and x402, agents with Masumi and Sokosumi, and the difference between on-chain and off-chain. This chapter is the first time we put them to work on \emph{our} product. If you can explain Shelfie in two minutes to a stranger, to a judge, and to a friend who has never heard of blockchains, you have understood the project. Everything in chapters 7 to 9 (engine, verifier, hackathon day) builds on the story told here.
+
+\section{The problem: nobody can see the shelf}
+
+\subsection{Retail execution in plain words}
+A small drinks brand sells its bottles to a supermarket chain. The contract is signed, the pallets are delivered to the warehouse. But does the bottle actually stand on the shelf in store number 7 in Munich? At which price? Is the shelf tag correct, or is the product hidden behind a competitor's? The work of making sure that a product arrives on the shelf as agreed is called \term{retail execution}. The people who do it for brands are called field-sales or merchandising staff, and many brands hire external companies for it.
+
+Three words that you will meet again:
+\begin{itemize}
+  \item \term{Retail execution}: making sure the agreed product, price and placement really appear in the store.
+  \item \term{Field marketing} (or merchandising): sending people into stores to check, restock or promote products.
+  \item \term{Mystery shopping}: a person visits a store, pretends to be a normal customer and reports what they see.
+\end{itemize}
+
+\begin{analogybox}{The restaurant delivery photo}
+You order food and the app says ``delivered''. You would like a photo of the parcel at your door, taken \emph{now}, not last week. A brand ordering a shelf check has the same wish: ``show me the shelf as it is today''. Shelfie sells exactly that photo, and pays the photographer only if the photo is real.
+\end{analogybox}
+
+\subsection{What the options cost today (marked as inference)}
+Today a brand has three choices, none of them good:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.4cm}XX@{}}
+\toprule
+\textbf{Option} & \textbf{Problem} & \textbf{Status of the claim}\\
+\midrule
+Drive around yourself & An afternoon for 10 stores, and it does not scale. & Plain logic.\\
+Field-marketing agency or mystery-shopping panel & Booked days ahead; paid per visit whether or not the photo is usable. & \emph{Inference.} Price per visit and lead time still need two public sources.\\
+Trust the chain's own sales data & It tells you what was sold, not what stands on the shelf. & Plain logic.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warningbox}{Do not state numbers we have not sourced}
+The team's notes carry the placeholder \texttt{[SOURCE NEEDED]} for the price of an agency visit, the typical lead time and the share of sales lost to missing products. In the pitch we only say ``booked days ahead, paid per visit'' unless we find sources. A made-up number can sink credibility with judges.
+\end{warningbox}
+
+\section{Our fictional customer: Katharina Brandl}
+Every pitch needs one concrete person. Ours is \textbf{fictional} and we say so whenever asked:
+
+\begin{shelfiebox}{Persona (invented for the story)}
+\textbf{Katharina Brandl}, field-sales manager at \textbf{Isarquell}, a small Bavarian craft-lemonade brand (invented, no real company). There are four people in sales. Last month Katharina sold a new 0.33~l bottle to a regional supermarket chain. Today she needs to know: \emph{is it on the shelf in 10 Munich stores, and at which price, right now?}
+\end{shelfiebox}
+
+Why a persona at all? The Cardano track judges explicitly want to see a \emph{clear customer and journey}. A name, a job and a concrete question turn an abstract protocol into a story that people remember.
+
+\subsection{The job: ``check product X in N stores''}
+Katharina does not want to learn about blockchains. She wants one sentence to work:
+
+\begin{center}
+\fbox{\parbox{0.88\textwidth}{\centering\sffamily\textbf{``Check Isarquell 0.33~l in 10 Munich stores.''}}}
+\end{center}
+
+She posts this job on Sokosumi (the marketplace from Chapter~4) to the \emph{Shelfie lead agent}. The fee for the job is locked in Masumi escrow (Chapter~4). From her side that is all. What happens next is Shelfie's work, and it is the subject of the rest of this guide.
+
+\section{The three payment gates}
+Here is the heart of the product. Money moves in three places, and each place has a rule that must be satisfied first. The team's pitch calls them the \term{three payment gates}:
+
+\begin{enumerate}
+  \item \textbf{Photo gate: pays the human.} The verifier agent checks one photo. If it passes, the person who took it receives a payout on Cardano preprod right away. If it fails, nothing is paid and the task reopens.
+  \item \textbf{Job gate: settles the escrow.} When all stores are done or the time window closes, the engine counts passed stores. If at least $K$ of $N$ passed, the report is delivered and the escrow settles.
+  \item \textbf{Fallback: refund.} If fewer than $K$ passed, the report is withheld and the brand is refunded automatically.
+\end{enumerate}
+
+\begin{warningbox}{Two kinds of ``gates''}
+Do not confuse the three \emph{payment gates} above with the seven \emph{verifier checks} G1 to G7 (Chapter~8). The photo gate is \emph{made of} G1 to G7. The pitch says ``three gates''; the verifier spec says ``G1 to G7''.
+\end{warningbox}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=6mm,
+  band/.style={rounded corners=6pt,thick,inner sep=7pt},
+  dec/.style={diamond,aspect=2.2,draw,thick,align=center,font=\sffamily\scriptsize,inner sep=1pt}]
+% Row 0: hiring
+\node[actor] (brand) at (0,0) {Brand\\(Katharina)};
+\node[chain] (esc) at (4.2,0) {Masumi escrow\\fee locked};
+\node[agent] (lead) at (8.4,0) {Lead agent\\splits into $N$ tasks};
+\node[human] (wk) at (12.6,0) {Person in store\\gets a one-time code};
+\draw[flow] (brand) -- node[lbl]{hires, pays} (esc);
+\draw[flow] (esc) -- node[lbl]{paid task} (lead);
+\draw[flow] (lead) -- node[lbl]{task + code} (wk);
+% Band 1
+\node[human] (ph) at (0,-4) {Photo with\\code and tag};
+\node[service] (ver) at (4.2,-4) {Verifier agent\\1 tADA per check};
+\node[dec,fill=cGold!20,draw=cGold!90!black] (g1) at (8.4,-4) {PHOTO GATE\\all checks\\pass?};
+\node[good] (pay) at (13,-3.1) {Pay person\\3 tADA (demo)};
+\node[bad] (no) at (13,-4.9) {No payment\\task reopens};
+\draw[flow] (wk.south) -- ++(0,-0.9) -| node[lbl,pos=0.25]{shoots} (ph.north);
+\draw[flow] (ph) -- node[lbl]{upload} (ver);
+\draw[flow] (ver) -- node[lbl]{verdict} (g1);
+\draw[pay] (g1.east) |- node[lbl,pos=0.75]{yes} (pay.west);
+\draw[flow,draw=cRed] (g1.east) |- node[lbl,pos=0.75]{no} (no.west);
+\begin{scope}[on background layer]
+\node[band,fill=cGold!10,draw=cGold!70,fit=(ph)(ver)(g1)(pay)(no)] (b1) {};
+\end{scope}
+\node[font=\sffamily\bfseries\footnotesize,text=cGold!60!black,anchor=north west] at (b1.north west) {1  Photo gate};
+% Band 2
+\node[service] (cnt) at (0,-8.3) {Count passed\\stores (window\\closed / all done)};
+\node[dec,fill=cGreen!15,draw=cGreen] (g2) at (6.4,-8.3) {JOB GATE\\passed $\ge K$?};
+\node[good] (del) at (12.2,-7.5) {Deliver report\\escrow settles\\(seller is paid)};
+\node[bad] (ref) at (12.2,-9.2) {FALLBACK\\withhold result\\brand is refunded};
+\draw[flow] (cnt) -- node[lbl]{decide} (g2);
+\draw[pay] (g2.east) |- node[lbl,pos=0.75]{yes} (del.west);
+\draw[flow,draw=cRed] (g2.east) |- node[lbl,pos=0.75]{no} (ref.west);
+\begin{scope}[on background layer]
+\node[band,fill=cGreen!8,draw=cGreen!70,fit=(cnt)(g2)(del)(ref)] (b2) {};
+\end{scope}
+\node[font=\sffamily\bfseries\footnotesize,text=cGreen!60!black,anchor=north west] at (b2.north west) {2 and 3  Job gate and fallback};
+\draw[flow] (b1.south) ++(-4.3,0) -- ++(0,-0.55) node[lbl,right,xshift=2pt]{repeat for every store} -- (cnt.north |- b2.north);
+\end{tikzpicture}}
+\caption{The three payment gates. Gate~1 pays one person per accepted photo. Gate~2 and the fallback decide the whole job: either the escrow settles or the brand gets the money back.}
+\end{figure}
+
+\subsection{K of N, with numbers}
+The job gate uses a simple rule: the brand pays for the job if at least $K$ stores pass out of $N$. We call this \term{K-of-N}. The default is
+\[
+K = \lceil 0.6\, N \rceil
+\]
+where $\lceil x\rceil$ means ``round up to the next whole number''. The 0.6 comes from the design files (\code{kDefault: ceil(0.6*n)}); an earlier draft said 0.7 and was corrected.
+
+\begin{examplebox}{Worked examples}
+\begin{itemize}
+  \item $N=5$: $0.6\cdot 5 = 3.0$, so $K=3$. Three good photos are enough.
+  \item $N=10$: $0.6\cdot 10 = 6.0$, so $K=6$. Katharina's real job.
+  \item $N=7$: $0.6\cdot 7 = 4.2$, rounded up $K=5$. Rounding up makes the rule stricter, never looser.
+  \item $N=3$ (our smoke test): $0.6\cdot 3=1.8$, so $K=2$.
+\end{itemize}
+\end{examplebox}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[st/.style={minimum width=1.05cm,minimum height=0.95cm,draw,thick,rounded corners=2pt,font=\sffamily\small\bfseries,align=center}]
+\node[font=\sffamily\small\bfseries,anchor=west] at (0,1.5) {$N=5$, $K=3$: job passes (escrow settles)};
+\foreach \i/\c/\t in {0/good/\yes,1/good/\yes,2/good/\yes,3/bad/\no,4/bad/\no}
+  \node[st,\c] at (\i*1.3,0.5) {\t};
+\node[font=\sffamily\scriptsize,anchor=west] at (7,0.5) {3 passed $\ge$ 3 needed};
+\node[font=\sffamily\small\bfseries,anchor=west] at (0,-0.7) {$N=5$, $K=3$: job fails (brand is refunded)};
+\foreach \i/\c/\t in {0/good/\yes,1/good/\yes,2/bad/\no,3/bad/\no,4/bad/\no}
+  \node[st,\c] at (\i*1.3,-1.7) {\t};
+\node[font=\sffamily\scriptsize,anchor=west] at (7,-1.7) {2 passed $<$ 3 needed};
+\node[font=\sffamily\small\bfseries,anchor=west] at (0,-2.9) {$N=10$, $K=6$: job passes};
+\foreach \i/\c/\t in {0/good/\yes,1/good/\yes,2/good/\yes,3/good/\yes,4/good/\yes,5/good/\yes,6/bad/\no,7/good/\yes,8/bad/\no,9/bad/\no}
+  \node[st,\c,minimum width=0.85cm] at (\i*1.05,-3.9) {\t};
+\node[font=\sffamily\scriptsize,anchor=west] at (10.6,-3.9) {7 $\ge$ 6};
+\end{tikzpicture}
+\caption{Each square is one store. Green means the verifier accepted the photo. Whether the job passes depends only on the count of green squares.}
+\end{figure}
+
+\subsection{Who bears the cost of a failed job?}
+Workers whose photo was accepted are paid immediately, even if the job later fails the K-of-N rule and the brand is refunded (decision ADR-09 in the design files). Reason: paying at verification keeps the live ``photo goes green, payout appears'' moment, and workers should not wait an hour for money. Consequence: on a failed job \emph{Shelfie} bears the cost of workers already paid. The ledger records this as \code{COST\_BORNE}, and the pitch says it openly: ``we pay workers for verified work, regardless of the brand's threshold.''
+
+\begin{conceptbox}{Why can a failed job still produce payouts?}
+The two decisions are independent. The \emph{photo gate} asks: ``is this photo true?'' The \emph{job gate} asks: ``did the brand receive enough true photos?'' A true photo deserves its payout even when the other stores failed.
+\end{conceptbox}
+
+\section{The demo moment}
+Judges remember one moment, not twelve slides. Ours is designed in advance:
+
+\begin{enumerate}
+  \item One teammate stands up holding a product with a printed price tag.
+  \item The worker page on the phone shows a \textbf{challenge code} such as \code{K7Q-4XM}. The phone that shoots cannot show its own screen, so the code is written on paper (or a printed card from our card pool is used) and held next to the tag.
+  \item The teammate takes the photo in the page's camera. The verifier highlights price and product; the row turns \textbf{green}.
+  \item A payout transaction appears on the dashboard and, a few seconds later, on Cardanoscan (the preprod explorer).
+  \item Then the \textbf{cheat attempt}: an old photo of the same tag, without the right code. The verifier rejects it live: red, reason ``code missing'', no payment. The verification fee is still spent (the verifier is paid per check), and we say so.
+  \item Optional: invite a judge to take a photo themselves.
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[human,minimum width=3.3cm] (a) at (0,0) {1  Phone shows code\\\code{K7Q-4XM}};
+\node[human,minimum width=3.3cm] (b) at (4.4,0) {2  Code on paper\\next to the tag};
+\node[agent,minimum width=3.3cm] (c) at (8.8,0) {3  Verifier reads\\price + product};
+\node[good,minimum width=3.3cm] (d) at (13.2,0) {4  GREEN\\payout tx shown};
+\draw[flow] (a)--(b); \draw[flow] (b)--(c); \draw[flow] (c)--(d);
+\node[bad,minimum width=3.3cm] (e) at (0,-2.2) {5  Cheat: old photo\\no valid code};
+\node[bad,minimum width=3.3cm] (f) at (4.4,-2.2) {Verifier: RED\\\code{code\_missing}};
+\node[service,minimum width=3.3cm] (g) at (8.8,-2.2) {No payout\\fee still spent};
+\node[service,minimum width=3.3cm] (h) at (13.2,-2.2) {Dashboard shows\\both rows};
+\draw[flow] (e)--(f); \draw[flow] (f)--(g); \draw[flow] (g)--(h);
+\draw[data] (d.south) -- ++(0,-0.6) -| (e.north);
+\end{tikzpicture}}
+\caption{Live demo choreography: one honest photo, then one cheat attempt.}
+\end{figure}
+
+\begin{warningbox}{How the cheat photo gets in is still open}
+Over the HTTPS tunnel the worker page uses in-app capture and cannot pick a gallery photo. How the team submits the cheat photo live (LAN fallback page, operator-only upload route, or a pre-shot file through the dashboard) is an \emph{open item} in the review report. Decide Friday, rehearse, and say which method was used.
+\end{warningbox}
+
+\section{Why it fits the judging rubric}
+The Cardano track description lists what the judges want to see. The table maps each wish to a feature. The right column is our reading (inference), not an official statement.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.1cm}X@{}}
+\toprule
+\textbf{Judges want} & \textbf{Shelfie answers with}\\
+\midrule
+Clear customer and journey & Brand manager Katharina, one concrete job, a real industry (retail execution).\\
+Payment tied to the result & Three gates: verifier pass pays the human; K-of-N settles the escrow; otherwise refund.\\
+Agents hire agents, or act in the real world & The lead agent hires a verifier agent (x402) \emph{and} humans in physical stores.\\
+Live paid task with transaction in an explorer & A photo on stage turns green and the payout tx shows on Cardanoscan.\\
+Originality & Agents as employers of people; a one-time code as the freshness proof; nothing similar seen on Sokosumi.\\
+Impact and continuation & Retail audits first; later any ``proof of the real world'' task: deliveries, outages, accessibility checks.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The official requirement is modest: a working agent or service that completes at least one job or payment on Cardano \textbf{preprod}. Everything beyond it is about earning the points for the criteria above.
+
+\section{Business model (illustrative pricing)}
+\begin{warningbox}{These euro figures are illustrative}
+The EUR amounts below are \emph{hypotheses for the pitch}. They are not measured and not what the demo moves. The demo uses tADA, which are test coins on preprod and have no market value. Never put a tADA amount next to a EUR amount as if they were equal.
+\end{warningbox}
+
+Target: about \textbf{EUR 5 per verified store check, charged only when it passes}. One check involves five money items. Margin per check, for the bottom of the payout range and for the top:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Item per passed check} & \textbf{Low payout} & \textbf{High payout}\\
+\midrule
+Price to the brand (illustrative) & 5.00 & 5.00\\
+Payout to the person & $-2.50$ & $-3.00$\\
+Verifier cost (model + fee, estimate) & $-0.10$ & $-0.10$\\
+Network/escrow fee (about 5\%, secondary source, verify) & $-0.25$ & $-0.25$\\
+\midrule
+\textbf{Margin before support and disputes (EUR)} & \textbf{2.15} & \textbf{1.65}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Hence the margin range of \textbf{EUR 1.65 to 2.15} that appears in the pitch. Two honesty notes: (1) verifier fees spent on \emph{rejected} photos are not in this table, because rejected photos are not billed to the brand; (2) support, disputes and legal costs are not included.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\def\s{1.15}
+\fill[cBlue!70] (0,0) rectangle (5*\s*1.0,0.9);
+\node[white,font=\sffamily\small\bfseries] at (2.5*\s,0.45) {Brand pays 5.00};
+\fill[cOrange!80] (0,-1.3) rectangle (2.5*\s,-0.4);
+\node[font=\sffamily\scriptsize] at (1.25*\s,-0.85) {Person 2.50};
+\fill[cOrange!50] (2.5*\s,-1.3) rectangle (3.0*\s,-0.4);
+\node[font=\sffamily\tiny] at (2.75*\s,-0.85) {+0.50};
+\fill[cPurple!60] (3.0*\s,-1.3) rectangle (3.1*\s,-0.4);
+\fill[cRed!50] (3.1*\s,-1.3) rectangle (3.35*\s,-0.4);
+\fill[cGreen!70] (3.35*\s,-1.3) rectangle (5.0*\s,-0.4);
+\node[font=\sffamily\scriptsize] at (4.2*\s,-0.85) {margin 1.65};
+\end{tikzpicture}
+\caption{Where one illustrative EUR 5 goes (high-payout case). Orange: payout (2.50 solid, up to 3.00 with the lighter block); purple: verifier 0.10; red: fee 0.25; green: margin.}
+\end{figure}
+
+\subsection{Who pays and why would they switch?}
+Small and mid-size consumer brands without a retail-execution team. They switch for \emph{speed} (same day), \emph{proof} (a code-bound photo with an audit trail) and \emph{pay per passed check}. We have \textbf{not validated demand with interviews}; the hackathon proves a mechanism, not a market. Next step in the roadmap: five brand interviews.
+
+\section{Limits we admit}
+Judges respect honest limits more than hidden ones. The team has agreed on this list and says it plainly:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.2cm}X@{}}
+\toprule
+\textbf{Limit} & \textbf{What is true}\\
+\midrule
+The code proves \textbf{freshness}, not \textbf{location} & A worker could photograph the same product in a different shop. Roadmap: store-owned QR codes or geofenced tasks.\\
+The gate proves ``fresh and readable'', not ``genuine'' & No claim of zero fraud; a fake made live is possible in theory. The cost of cheating should exceed the payout.\\
+No identity checks, no reputation & Only claim time limits, attempt caps and a duplicate-image check exist. Workers are just a wallet address.\\
+Humans need a wallet & The demo uses teammates' preprod wallets. A production onboarding is roadmap.\\
+Preprod only & No mainnet, no real money. The x402 facilitator is preprod-only today.\\
+Settlement is shown from earlier runs & An escrow cycle takes at least 60 minutes, so on stage we show recorded lock, settlement and refund transactions and say so.\\
+Legal questions open & Is per-task pay employment? Tax? Custody? Needs a legal opinion before mainnet.\\
+Demo override exists & An admin-only manual override can rescue a stage demo; it is flagged red and never used in evidence runs (Chapter~8).\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Alternatives we considered}
+The team ran two independent brainstorming rounds with 27 ideas and weighted scoring. Both put the same concept first.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.2cm}p{2.6cm}X@{}}
+\toprule
+\textbf{Idea} & \textbf{Score} & \textbf{Verdict}\\
+\midrule
+\textbf{Shelfie} (``Eyes on Ground'' / ``Ground Truth'') & 4.25 of 5 and 7.95 of 10 & Chosen. Real-world task, deterministic pass/fail, strong live moment.\\
+ShopScout & 3.35 of 5 & Solid but generic; its ``report quality'' gate is a subjective opinion, which escrow handles badly. Its plumbing is reused by Shelfie.\\
+Beh\"orde Brief Decoder & 7.65 of 10 & Safest build; \textbf{Plan B}. Same architecture with an OCR worker instead of humans.\\
+Termin-Sniper / CancelBot & -- & Great business models but bot-protected portals or long latency, so mock-only demos.\\
+Verified Findings & -- & Easiest, least emotional.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{conceptbox}{Plan B is not a separate project}
+Plan B reuses the engine from Chapter~7. If feedback or a workshop forces a change, the team swaps the \emph{domain pack} (task template, verifier rules, report template) and keeps payments, agent shell and UI. A letter is uploaded, an OCR worker extracts deadline, amount and authority, rules check plausibility, and the report explains the letter. Trigger from the risk register: by Friday 17:00 the vision verifier cannot read printed tags reliably \emph{and} the labelled override is not enough.
+\end{conceptbox}
+
+\begin{keypoints}
+\begin{itemize}
+  \item Shelfie sells \textbf{verified shelf checks}: a brand hires an agent, which hires people to photograph shelves; payment is tied to the photo being true.
+  \item Persona: Katharina Brandl at Isarquell (\textbf{fictional}). Job: ``check product X in $N$ stores''.
+  \item Three payment gates: photo gate pays the human; job gate settles the escrow at $K$ of $N$ with $K=\lceil 0.6N\rceil$; fallback refunds the brand.
+  \item Demo: one honest photo turns green and shows a payout tx; one cheat photo is rejected with no payment.
+  \item EUR prices are \textbf{illustrative}; margin range EUR 1.65 to 2.15; the demo uses tADA on preprod.
+  \item Honest limits: the code proves freshness, not location; no identity checks; settlement shown from recorded runs.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item Which of the three payment gates pays a human, and what triggers it?
+  \item Compute $K$ for $N=8$. Show the rounding.
+  \item A job with $N=5$, $K=3$ ends with 2 accepted photos. Who has been paid, and what happens to the brand's fee?
+  \item Why do we say the pricing is ``illustrative''?
+  \item Give two limits of the freshness code that we admit openly.
+  \item What is Plan B and what does it reuse?
+\end{enumerate}
+{\small\color{cGrey}\textbf{Answers.}
+(1) The photo gate: when all verifier checks G1 to G7 pass, the payout is queued immediately.
+(2) $0.6\cdot8=4.8$, rounded up $K=5$.
+(3) The two workers with accepted photos are paid at once; the brand's escrowed fee is refunded because 2 is less than 3; Shelfie bears the worker cost.
+(4) The EUR amounts are unsourced hypotheses; the demo moves tADA without market value.
+(5) It does not prove location, and a live fake is possible in theory (also: no identity checks).
+(6) Behörde Brief Decoder; it reuses the engine, payments, shell and UI, swapping only the domain pack.}
+\end{quizbox}

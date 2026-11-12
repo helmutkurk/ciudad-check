@@ -1,0 +1,11 @@
+[Unit]
+Description=Shelfie pull-based deploy of branch %i
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=PATH=%h/.local/share/mise/shims:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/.local/share/shelfie/bin/auto-update.sh %i
+# Builds are slow on the first run; a hung build must not block the timer forever.
+TimeoutStartSec=20min
+Nice=10

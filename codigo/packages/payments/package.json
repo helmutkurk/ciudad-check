@@ -1,0 +1,26 @@
+{
+  "name": "@shelfie/payments",
+  "license": "BUSL-1.1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "x402 buyer (VerifyClient), plain-transfer payout adapter, payout queue, fakes.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "echo 'library, no dev server'"
+  },
+  "dependencies": {
+    "@shelfie/core": "*",
+    "zod": "4.6.7",
+    "@x402/cardano": "2.26.0",
+    "@x402/core": "2.26.0",
+    "@x402/fetch": "2.26.0",
+    "@evolution-sdk/evolution": "0.5.14"
+  }
+}

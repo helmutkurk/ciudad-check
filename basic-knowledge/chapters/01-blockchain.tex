@@ -1,0 +1,470 @@
+\chapter{Blockchain from zero}
+
+\section*{Why this matters for us}
+Shelfie pays real people (``workers'') for photographing price tags, and the AI agents in our system pay each other for services. All of these payments happen on a blockchain. You do not need to be a cryptography expert to build Shelfie, but you must understand what a blockchain \emph{is}, what a \emph{transaction} is, why a payment is ``final'', and why nobody can secretly change a receipt. This chapter explains the ideas one by one, with no prior knowledge assumed. Chapter~2 then narrows everything down to Cardano.
+
+\section{What is a ledger, and why share it?}
+
+A \term{ledger} is simply a list of records that says who owns what. A bank's database is a ledger: ``Anna has 120~EUR, Ben has 40~EUR.'' Every payment adds a line, for example ``Anna pays Ben 20~EUR''.
+
+Normally one organisation owns the ledger (the bank). You must \emph{trust} that organisation: that it does not lose your line, does not change it, and does not refuse to show it to you.
+
+A \term{distributed ledger} is a ledger that many independent computers keep \emph{at the same time}, each with its own full copy. A \term{blockchain} is the most common kind of distributed ledger. The computers follow shared rules to agree on which new lines are valid, so no single owner is needed.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.95, transform shape]
+  % left: central ledger
+  \node[service] (bank) at (0,0) {Bank\\one database};
+  \foreach \a/\n in {150/Anna,90/Ben,30/Cem}{
+    \node[human] (u\n) at (\a:2.3cm) {\n};
+    \draw[flow,<->] (u\n) -- (bank);
+  }
+  \node[font=\sffamily\bfseries\small,cRed] at (0,-3.1) {Centralised: trust one owner};
+  % right: distributed
+  \begin{scope}[xshift=8.6cm]
+    \foreach \a/\n in {90/N1,162/N2,234/N3,306/N4,18/N5}{
+      \node[chain,minimum width=1.4cm] (n\n) at (\a:1.9cm) {\n};
+    }
+    \foreach \x/\y in {N1/N2,N2/N3,N3/N4,N4/N5,N5/N1,N1/N3,N2/N4,N3/N5,N4/N1,N5/N2}{
+      \draw[flow,<->,draw=cTeal!70] (n\x) -- (n\y);
+    }
+    \node[font=\sffamily\bfseries\small,cGreen] at (0,-3.1) {Distributed: everyone holds a copy};
+  \end{scope}
+\end{tikzpicture}
+\caption{Left: a bank owns the only ledger. Right: many computers (nodes) each keep a full copy of the same ledger.}
+\end{figure}
+
+\begin{analogybox}{The village notebook}
+Imagine a village where every sale is announced in the market square and \emph{every} villager writes it into their own notebook. If one villager tries to cheat by writing a different amount, the other 99 notebooks disagree with him and he is ignored. The ledger is ``true'' because the majority holds the same story, not because a boss says so.
+\end{analogybox}
+
+\subsection{What a shared ledger gives us}
+\begin{itemize}
+  \item \textbf{Transparency:} anyone can read the ledger (on public blockchains).
+  \item \textbf{Tamper resistance:} changing history would require changing most copies at once.
+  \item \textbf{No gatekeeper:} nobody can block you from sending a valid transaction.
+  \item \textbf{Shared truth between strangers:} two parties who do not trust each other can still agree on ``this payment happened''.
+\end{itemize}
+
+\section{Hashes: digital fingerprints}
+
+The most important tool in a blockchain is the \term{hash function}. It takes any data (a word, a photo, a whole book) and produces a fixed-length ``fingerprint'' called a \term{hash} or \term{digest}. The popular function SHA-256 always produces 256 bits, usually written as 64 hexadecimal characters.
+
+A hash function has four properties that matter to us:
+\begin{enumerate}
+  \item \textbf{Deterministic:} the same input always gives the same hash.
+  \item \textbf{Fixed size:} a 3-byte input and a 3-gigabyte input both give 64 hex characters.
+  \item \textbf{One-way:} given a hash, you cannot work backwards to find the input.
+  \item \textbf{Avalanche effect:} changing even one character of the input changes the hash completely and unpredictably.
+\end{enumerate}
+
+\begin{examplebox}{A tiny change, a totally different hash}
+Real SHA-256 values (computed with the standard \code{sha256sum} tool):
+
+\medskip
+\begin{tabular}{@{}ll@{}}
+\textbf{Input} & \textbf{SHA-256 (64 hex characters)}\\
+\midrule
+\texttt{Alice pays Bob 10} & \texttt{\scriptsize 69ad18dfd1ac4b3d711b02ee62caa00a82f0f67cc11ebacdd0c0ede0d8b6eaed}\\[3pt]
+\texttt{Alice pays Bob 11} & \texttt{\scriptsize 83e970b5a467ce2dea0a573ee54380252a1d193b2625e2c29ad43ad6600990aa}\\[3pt]
+\texttt{alice pays bob 10} & \texttt{\scriptsize be26845c48086d4f8edae714f8e48e32d806b4bcd4c054a0c19eb634b1f292a6}\\
+\end{tabular}
+
+\medskip
+We changed one digit (10 to 11) or only the capital letters, and the result shares nothing recognisable with the original. If someone alters an old payment from 10 to 11, its hash no longer matches the one everybody stored, so the fraud is visible immediately.
+\end{examplebox}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[actor,minimum width=3.6cm] (in1) at (0,1.0) {\ttfamily\small Alice pays Bob 10};
+  \node[actor,minimum width=3.6cm] (in2) at (0,-1.0) {\ttfamily\small Alice pays Bob 11};
+  \node[chain,minimum width=2.6cm,minimum height=2.4cm] (h) at (5,0) {SHA-256\\hash function};
+  \node[good,minimum width=3cm] (o1) at (10,1.0) {\ttfamily\scriptsize 69ad18df\ldots 6eaed};
+  \node[good,minimum width=3cm,fill=cOrange!12,draw=cOrange] (o2) at (10,-1.0) {\ttfamily\scriptsize 83e970b5\ldots 990aa};
+  \draw[flow] (in1) -- (h);
+  \draw[flow] (in2) -- (h);
+  \draw[flow] (h) -- (o1);
+  \draw[flow] (h) -- (o2);
+  \node[font=\sffamily\scriptsize,cRed] at (5,-2.3) {one character differs $\rightarrow$ completely different fingerprint};
+\end{tikzpicture}
+\caption{A hash function turns any input into a fixed-size fingerprint. Tiny input change, huge output change.}
+\end{figure}
+
+\begin{analogybox}{The tamper seal}
+A hash works like a tamper-evident seal on a jar: you cannot tell what is inside from the seal, but if anybody opens the jar and closes it again, the seal no longer matches.
+\end{analogybox}
+
+\begin{shelfiebox}{Hashes appear everywhere}
+Every Cardano transaction is identified by a hash (its \emph{tx hash}), which we will paste into an explorer as proof of payment. Shelfie also uses hash-like identifiers (idempotency keys, hashes of photos) to make sure a photo is paid for only once. See the verifier chapters later.
+\end{shelfiebox}
+
+\section{Keys and digital signatures}
+
+\subsection{Public and private keys}
+Hashes alone cannot prove \emph{who} authorised a payment. For that we use \term{public-key cryptography}. You create a pair of mathematically linked numbers:
+
+\begin{itemize}
+  \item the \term{private key} (also called secret key or signing key): kept secret; it is your power to authorise;
+  \item the \term{public key}: can be shared with everybody; it lets others \emph{check} what the private key did.
+\end{itemize}
+
+You can derive the public key from the private key, but not the other way round (similar to the one-way property of hashes).
+
+\begin{analogybox}{Mailbox and master key}
+Your public key is like your mailbox address: everyone may know it and drop mail in. Your private key is the only key that opens the box and, in our case, also the only pen that can create your signature.
+\end{analogybox}
+
+\subsection{Digital signatures}
+A \term{digital signature} is a short piece of data created from (a) a message and (b) your private key. Anybody who has your public key can verify that the signature is genuine and that the message was not changed afterwards. The private key is never revealed.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=1.2cm]
+  % SIGN
+  \node[font=\sffamily\bfseries,cBlue] at (2.5,2.6) {1. Sign (by the owner)};
+  \node[actor] (msg) at (0,1.2) {Message\\``Pay 5 ADA to Bea''};
+  \node[human] (priv) at (0,-0.6) {Private key\\(secret)};
+  \node[chain,minimum width=2.2cm] (sig) at (3.5,0.3) {Sign};
+  \node[good] (s) at (6.8,0.3) {Signature};
+  \draw[flow] (msg) -- (sig);
+  \draw[flow] (priv) -- (sig);
+  \draw[flow] (sig) -- (s);
+  % VERIFY
+  \begin{scope}[yshift=-5cm]
+  \node[font=\sffamily\bfseries,cBlue] at (2.5,2.6) {2. Verify (by anybody)};
+  \node[actor] (msg2) at (0,1.2) {Message\\``Pay 5 ADA to Bea''};
+  \node[actor] (sg2) at (0,-0.6) {Signature};
+  \node[chain,minimum width=2.2cm] (ver) at (3.5,0.3) {Verify};
+  \node[service] (pub) at (3.5,-1.8) {Public key\\(shared)};
+  \node[good] (ok) at (6.8,0.9) {Valid\\\yes};
+  \node[bad] (nok) at (6.8,-0.6) {Invalid\\\no};
+  \draw[flow] (msg2) -- (ver);
+  \draw[flow] (sg2) -- (ver);
+  \draw[flow] (pub) -- (ver);
+  \draw[flow] (ver) -- (ok);
+  \draw[flow,dashed] (ver) -- (nok);
+  \end{scope}
+\end{tikzpicture}
+\caption{Signing needs the private key; verifying needs only the public key. If the message or signature is altered, verification fails.}
+\end{figure}
+
+Why is this powerful? The network does not need to know \emph{you}. It only needs to check that the signature matches the public key that owns the funds. Whoever controls the private key controls the money. This is the reason for the blockchain saying: \emph{``not your keys, not your coins''}.
+
+\begin{warningbox}{Signatures protect the content, not your judgement}
+A valid signature only proves that the key holder approved \emph{exactly this} message. If a bug in our software builds the wrong payment and signs it, the signature is perfectly valid and the money is gone. Blockchain payments cannot be ``called back''. This is why Shelfie validates a photo \emph{before} it triggers a payout.
+\end{warningbox}
+
+\section{Wallets, addresses and the seed phrase}
+
+A \term{wallet} is the software (or device) that stores your private keys, creates signatures, and shows your balance. Strictly speaking, the wallet does not ``contain coins''; the coins live on the blockchain. The wallet contains the \emph{keys} that unlock them.
+
+An \term{address} is the text string others use to send you funds. It is derived from your public key (via hashing), so it is safe to share. On Cardano preprod, test addresses start with \code{addr\_test1...}; on mainnet they start with \code{addr1...} (details in Chapter~2).
+
+\subsection{The seed phrase (mnemonic)}
+Writing down a long random private key is error-prone. Wallets therefore generate a list of normal words, the \term{mnemonic} or \term{seed phrase}, typically 12, 15 or 24 words. From this list the wallet can regenerate \emph{all} your private keys and addresses, on any device.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[human,minimum width=4.4cm,align=left] (seed) at (0,0) {\ttfamily\scriptsize 1 river   2 stone   3 lamp\\\ttfamily\scriptsize 4 orbit   5 frog   6 mist\\\ttfamily\scriptsize \ldots\ (24 words)};
+  \node[chain] (keys) at (5.2,0) {Private keys};
+  \node[actor] (pubs) at (8.8,0.9) {Public keys};
+  \node[good] (addr) at (8.8,-0.9) {Addresses\\\texttt{\scriptsize addr\_test1...}};
+  \draw[flow] (seed) -- node[lbl]{derive} (keys);
+  \draw[flow] (keys) -- node[lbl]{derive} (pubs);
+  \draw[flow] (pubs) -- node[lbl,xshift=-4mm]{hash} (addr);
+  \node[font=\sffamily\scriptsize,cRed] at (0,-1.5) {example words only, never a real seed};
+\end{tikzpicture}
+\caption{One mnemonic generates all keys and addresses. Everything flows one way: you cannot go from an address back to the mnemonic.}
+\end{figure}
+
+\begin{warningbox}{Never share your seed phrase}
+Anyone who sees your seed phrase can recreate your keys and take everything, on every address, forever. No bank can reverse it. Rules for our team:
+\begin{itemize}
+  \item Never paste a mnemonic into chat, a ticket, a screenshot, or a Git commit.
+  \item Keep it only in a local \code{.env} file that is listed in \code{.gitignore}, or in a password manager.
+  \item For the hackathon, use \emph{throwaway test wallets} that hold only worthless test funds.
+  \item Nobody legitimate (not a mentor, not a ``support agent'') will ever ask for it.
+\end{itemize}
+\end{warningbox}
+
+\begin{shelfiebox}{Our wallets are server-side}
+In Shelfie, our backend signs payments itself. The research notes describe a headless signer that reads a 24-word mnemonic from an environment variable (\code{.env}) instead of a browser wallet. That is convenient for agents, and it is exactly why the mnemonic must be a test-only throwaway wallet that never reaches Git.
+\end{shelfiebox}
+
+\section{Transactions}
+
+A \term{transaction} (``tx'') is a signed instruction to change the ledger: ``move these funds from here to there''. It contains who spends what, who receives how much, a fee, and the signature(s) of the owner(s). The network checks the rules and, if valid, accepts it. Then the transaction gets its \term{transaction hash} (tx hash), which acts as its unique ID and receipt.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[node distance=1.6cm]
+  \node[human] (w) {Wallet\\builds + signs};
+  \node[service,right=of w] (node) {Node\\(or API such as\\Blockfrost)};
+  \node[chain,right=of node] (pool) {Waiting room\\(``mempool'')};
+  \node[chain,right=of pool] (blk) {Block\\added to chain};
+  \node[good,below=1.1cm of blk] (conf) {Confirmations\\increase};
+  \draw[flow] (w) -- node[lbl]{submit} (node);
+  \draw[flow] (node) -- node[lbl]{check} (pool);
+  \draw[flow] (pool) -- node[lbl]{picked} (blk);
+  \draw[flow] (blk) -- (conf);
+\end{tikzpicture}
+\caption{Life of a transaction: build and sign, submit, wait, be included in a block, then gain confirmations.}
+\end{figure}
+
+\begin{examplebox}{A simple payment}
+Mia wants to pay worker Noor 4~ADA for a photo. Her wallet builds a transaction: ``Mia's funds $\rightarrow$ 4~ADA to Noor's address, fee $\approx 0.17$~ADA''. Mia's wallet signs it with her private key and sends it. A few seconds later it sits in a block. The tx hash can now be given to Noor, or to a judge, as proof.
+\end{examplebox}
+
+\section{Blocks and the chain}
+
+Transactions are not added to the ledger one by one. Nodes collect many valid transactions and group them into a \term{block}. Each block contains:
+\begin{itemize}
+  \item a list of transactions,
+  \item a timestamp (or slot number),
+  \item the \textbf{hash of the previous block},
+  \item its own hash.
+\end{itemize}
+Because each block includes the previous block's hash, the blocks form a \term{chain}. This is where the name ``blockchain'' comes from.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[blk] (b1) at (0,0) {\textbf{Block 100}\\prev: \ttfamily a1f3\ldots\\txs: 42\\hash: \ttfamily 7c9e\ldots};
+  \node[blk] (b2) at (4.0,0) {\textbf{Block 101}\\prev: \ttfamily 7c9e\ldots\\txs: 37\\hash: \ttfamily 2d40\ldots};
+  \node[blk] (b3) at (8.0,0) {\textbf{Block 102}\\prev: \ttfamily 2d40\ldots\\txs: 51\\hash: \ttfamily e6b8\ldots};
+  \node[blk,dashed,draw=cGrey] (b4) at (12.0,0) {\textbf{Block 103}\\prev: \ttfamily e6b8\ldots\\\textit{next block}};
+  \draw[->,very thick,draw=cTeal] (b2.west) -- (b1.east);
+  \draw[->,very thick,draw=cTeal] (b3.west) -- (b2.east);
+  \draw[->,very thick,draw=cTeal] (b4.west) -- (b3.east);
+  \node[font=\sffamily\scriptsize,cTeal] at (6,-1.4) {each block points back to the hash of its predecessor};
+\end{tikzpicture}
+\caption{A chain of blocks. The hashes shown are shortened examples.}
+\end{figure}
+
+\subsection{Why chaining makes history hard to change}
+Suppose an attacker alters one old payment in Block~101. Block~101's content changes, so its hash changes. But Block~102 stored the \emph{old} hash of 101, so the link breaks. To hide the fraud, the attacker must also recompute Block~102, 103, and every later block, and then convince the majority of the network to accept this alternative history. The more blocks sit on top of a transaction, the more effort that takes.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[blk] (b1) at (0,0) {\textbf{Block 100}\\hash: \ttfamily 7c9e\ldots};
+  \node[blk,fill=cRed!12,draw=cRed] (b2) at (4.2,0) {\textbf{Block 101}\\tx altered!\\hash: \ttfamily 99ab\ldots};
+  \node[blk,fill=cRed!6,draw=cRed,dashed] (b3) at (8.4,0) {\textbf{Block 102}\\prev: \ttfamily 2d40\ldots\\ \textcolor{cRed}{$\neq$ 99ab}};
+  \draw[->,very thick,draw=cTeal] (b2.west) -- (b1.east);
+  \draw[->,very thick,draw=cRed,dashed] (b3.west) -- node[lbl]{link broken} (b2.east);
+  \node[font=\sffamily\scriptsize,cRed] at (4.2,-1.4) {the stored hash no longer matches $\rightarrow$ everyone notices};
+\end{tikzpicture}
+\caption{Tampering with one block breaks the link in the next block.}
+\end{figure}
+
+\section{Consensus: how the network agrees}
+
+If thousands of computers keep a copy, who decides which block comes next? The rules for agreeing are called \term{consensus}. Two major families exist.
+
+\subsection{Proof of Work (PoW)}
+Used by Bitcoin. Miners compete to solve a hard puzzle (guess a number so that the block's hash starts with many zeros). The winner adds the next block and gets a reward. The puzzle needs massive computing power and electricity, which makes cheating expensive.
+
+\subsection{Proof of Stake (PoS)}
+Used by Cardano (and Ethereum today). Instead of burning electricity, participants \emph{lock up} coins as a deposit, their \term{stake}. The protocol selects who creates the next block, with probability proportional to stake. Cheating risks the deposit and reputation, and honest work earns rewards.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{3.2cm}p{5.6cm}p{5.6cm}@{}}
+\toprule
+ & \textbf{Proof of Work} & \textbf{Proof of Stake}\\
+\midrule
+Scarce resource & computing power and electricity & locked coins (stake)\\
+Who adds blocks & miners who win a puzzle & validators chosen by stake\\
+Energy use & very high & low\\
+Entry barrier & special hardware & coins (or delegate to a pool)\\
+Example & Bitcoin & Cardano, Ethereum\\
+Typical block time & Bitcoin: about 10 minutes & Cardano: about 20 seconds\\
+\bottomrule
+\end{tabular}
+\caption{PoW versus PoS in one view. Block times are approximate.}
+\end{table}
+
+\begin{analogybox}{Lottery with deposits}
+PoS is like a raffle where every ticket is a coin you have locked as a deposit. The more tickets you hold, the more often you are drawn to write the next page of the notebook. If you cheat, your deposit is at risk.
+\end{analogybox}
+
+\subsection{Forks}
+Sometimes two valid blocks appear almost at the same time and the chain briefly splits into two branches (a \term{fork}). The protocol's rule (for example, ``follow the longest valid chain'') quickly makes everybody prefer one branch. Transactions only in the abandoned branch go back to the waiting room and are normally included again. This is why a freshly included transaction is not yet ``final''.
+
+\section{Finality and confirmations}
+
+A transaction is \term{confirmed} once it is in a block, and each new block built on top is another \term{confirmation}. The deeper it is buried, the less likely it is that a fork will remove it. \term{Finality} means the point at which reversal is practically impossible.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \foreach \i/\c in {0/cBlue,1/cBlue,2/cBlue,3/cBlue,4/cBlue}{
+    \node[blk,minimum width=1.9cm,minimum height=1.2cm,fill=\c!8,draw=\c] (b\i) at (2.4*\i,0) {};
+  }
+  \node[font=\sffamily\scriptsize,align=center] at (b0) {\textbf{tx is here}\\0 conf.};
+  \node[font=\sffamily\scriptsize] at (b1) {1 conf.};
+  \node[font=\sffamily\scriptsize] at (b2) {2 conf.};
+  \node[font=\sffamily\scriptsize] at (b3) {3 conf.};
+  \node[font=\sffamily\scriptsize] at (b4) {4 conf.};
+  \foreach \i/\j in {1/0,2/1,3/2,4/3}{\draw[->,thick,draw=cTeal] (b\i.west) -- (b\j.east);}
+  \draw[->,thick,draw=cGrey] (-1,-1.2) -- (11,-1.2) node[right,font=\sffamily\scriptsize]{time};
+  \node[font=\sffamily\scriptsize,cOrange] at (1.2,-1.8) {``probably fine''};
+  \node[font=\sffamily\scriptsize,cGreen] at (8.4,-1.8) {``practically final''};
+\end{tikzpicture}
+\caption{Each block added on top of the transaction's block adds one confirmation.}
+\end{figure}
+
+\begin{warningbox}{``Submitted'' is not ``confirmed''}
+A node accepting your transaction only means it entered the waiting room. For a payment you must wait until it is in a block, and ideally a few blocks deep. Our research notes also warn: if a payment call times out or the connection drops after ``sending'', the payment may \emph{still} settle later. Always check the explorer before sending again, otherwise you may pay twice.
+\end{warningbox}
+
+\begin{shelfiebox}{Why our payout queue reconciles}
+The design stores a metadata tag on every payout transaction and, after a crash or timeout, looks the chain up for that tag before ever retrying. Exactly one payout per task is the rule. The mechanism and its states are described in the Shelfie architecture chapters.
+\end{shelfiebox}
+
+\section{Fees}
+
+Using the network costs a small \term{transaction fee}. Fees pay the people who run the infrastructure and discourage spam. On Cardano the fee depends mostly on the transaction's \emph{size in bytes} (plus script execution if scripts are used), and is typically a fraction of an ADA; the team's runbook mentions about 0.17 ADA per payment. The sender pays the fee on top of the amount sent.
+
+Different chains price fees differently: some are almost free, some become very expensive when busy. Predictable, low fees are what makes small machine payments (a few cents) practical.
+
+\section{Tokens and stablecoins}
+
+The chain's own currency (for Cardano: ADA) is the \term{native coin}. Besides it, chains can carry other \term{tokens}: digital items that represent value, points, access rights, or a real-world currency.
+
+A \term{stablecoin} is a token designed to keep a stable value, usually 1 token $\approx$ 1 US dollar. This is important for commerce: a shop does not want its price to move 10\,\% between the order and the payment.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{3.3cm}p{5.4cm}p{5.6cm}@{}}
+\toprule
+ & \textbf{Native coin (ADA)} & \textbf{Stablecoin (e.g.\ USDM)}\\
+\midrule
+Value & floats with the market & aims at a fixed peg (dollar)\\
+Needed for fees & \yes\ always & \no\ fees still need ADA\\
+Good for & fees, staking, security & stable prices\\
+On testnet & tADA, free & test version (tUSDM), free\\
+\bottomrule
+\end{tabular}
+\caption{Coin versus stablecoin.}
+\end{table}
+
+\begin{shelfiebox}{We price in tADA}
+The design decision (ADR-03) is to price the verifier fee and worker payouts in tADA, not in a test stablecoin. The reason is that two incompatible test-stablecoin tokens exist (the SDK one and the one from the Masumi dispenser), so a wallet funded with one cannot pay a route priced in the other. Plain tADA avoids this trap.
+\end{shelfiebox}
+
+\section{Smart contracts (a first look)}
+
+A \term{smart contract} is a program stored on the blockchain that runs automatically when its conditions are met and enforces rules without a middleman. Typical rules: ``release the money only when both parties signed'' or ``refund the buyer if no result arrives within a time limit''. Because the program's code and the ledger are shared, nobody can quietly change the rules afterwards.
+
+\begin{analogybox}{The vending machine}
+A vending machine is a contract: put in the coins, press the button, and the product drops. No cashier is needed, and the machine follows the same rule for everybody. A smart contract is a vending machine for agreements.
+\end{analogybox}
+
+This is only the intro. How Cardano runs contracts (validators, datum, redeemer) is explained in Chapter~2. For Shelfie, an important point: Masumi's \emph{escrow} (money locked until the job result is delivered) is a smart-contract mechanism that we use through the Masumi service; we do not write our own contract for the MVP.
+
+\section{Public explorers}
+
+A \term{block explorer} is a website that lets anyone search the public ledger: by transaction hash, address, or block. It is the ``receipt viewer'' of a blockchain. Because chains are public, anyone (a judge, a worker, a teammate) can open the same page and see the same facts, without having to trust our app.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+  \node[chain,minimum width=3cm,minimum height=2.2cm] (chain) at (0,0) {Blockchain\\(public data)};
+  \node[service,minimum width=3cm] (exp) at (5.2,0) {Explorer\\website};
+  \node[human] (jud) at (10,1.1) {Judge};
+  \node[human] (wk) at (10,-1.1) {Worker};
+  \draw[flow] (chain) -- node[lbl]{reads} (exp);
+  \draw[flow] (exp) -- node[lbl]{shows} (jud);
+  \draw[flow] (exp) -- (wk);
+\end{tikzpicture}
+\caption{An explorer turns raw ledger data into pages anyone can open and share as a link.}
+\end{figure}
+
+On Cardano the explorer we use is Cardanoscan (preprod version); Chapter~2 shows how to read a transaction page.
+
+\section{Testnets and mainnet}
+
+The real network, where coins have real money value, is the \term{mainnet}. A \term{testnet} is a copy of the technology with worthless test coins, built for developers to experiment without risking money. You can get test coins for free from a \term{faucet}, a website that hands them out.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{3.4cm}p{5.5cm}p{5.5cm}@{}}
+\toprule
+ & \textbf{Mainnet} & \textbf{Testnet}\\
+\midrule
+Coins have value & \yes & \no\\
+Mistakes cost money & \yes & \no\\
+Faucet available & \no & \yes\\
+Used for & real products & development, demos, hackathons\\
+Example addresses (Cardano) & \texttt{addr1...} & \texttt{addr\_test1...}\\
+\bottomrule
+\end{tabular}
+\caption{Mainnet versus testnet.}
+\end{table}
+
+\begin{warningbox}{Check which network you are on}
+Mixing networks is a classic mistake: a testnet address cannot receive mainnet money, and tools sometimes default to mainnet. The runbooks warn that the Sokosumi MCP server defaults to mainnet, so always confirm the network is \emph{preprod} before paying. All hackathon money is play money, and we state our amounts as tADA.
+\end{warningbox}
+
+\section{Why use a blockchain for payments between machines?}
+
+Imagine a software agent that needs to buy a service from another agent, at 3 a.m., for 0.2~EUR, with an unknown counterpart across the world. Compare this with normal card or bank payments.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}p{3.6cm}XX@{}}
+\toprule
+ & \textbf{Card or bank transfer} & \textbf{Blockchain payment}\\
+\midrule
+Needs a bank account & \yes\ (a human or company must open it) & \no\ a key pair is enough\\
+Programmable by software & limited, via bank APIs and approvals & \yes\ build, sign, submit by code\\
+Works for tiny amounts & often not (fixed fees) & \yes\ if fees are small\\
+Availability & business hours, borders & 24/7, global\\
+Public receipt & \no\ private to the parties & \yes\ tx hash anybody can verify\\
+Reversible (chargeback) & \yes & \no\ final\\
+Escrow with machine rules & hard & \yes\ via smart contracts\\
+\bottomrule
+\end{tabularx}
+\caption{Why machines (and Shelfie) prefer on-chain payments.}
+\end{table}
+
+The trade-off is real: finality means mistakes cannot be reversed, and tools are younger. But for software agents paying each other, \textbf{no account, programmable, public receipt} is exactly what is needed.
+
+\begin{shelfiebox}{What we gain in the demo}
+Judges will not need to trust our slides. Every verifier fee and every worker payout is a real tADA transaction on Cardano preprod that they can open with a link on Cardanoscan. That public receipt is our strongest piece of evidence.
+\end{shelfiebox}
+
+\begin{keypoints}
+\begin{itemize}
+  \item A \textbf{ledger} lists who owns what; a \textbf{blockchain} is a ledger copied across many computers with no single owner.
+  \item A \textbf{hash} is a fixed-size fingerprint; changing the input by one character changes it completely.
+  \item A \textbf{private key} signs; the matching \textbf{public key} verifies. Whoever has the private key (or the seed phrase) controls the funds.
+  \item \textbf{Never share a seed phrase}; use throwaway wallets with test funds only.
+  \item A \textbf{transaction} is a signed change to the ledger, identified by its tx hash; blocks are linked by hashes, so history is hard to rewrite.
+  \item Consensus is how the network agrees: \textbf{PoW} uses computing power, \textbf{PoS} (Cardano) uses staked coins.
+  \item Confirmations grow with each new block; ``submitted'' does not mean ``final''.
+  \item Fees are small and paid in the native coin; stablecoins keep a steady price; smart contracts enforce rules automatically.
+  \item Explorers make the ledger readable; testnets use free, worthless coins; mainnet is real money.
+  \item Machines like blockchains: no bank account, programmable, public receipts.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item You change a single letter in a message and hash it again. What happens to the hash, and why does this help to detect fraud?
+  \item Who can create a valid signature, and who can verify it?
+  \item Why can a stranger who finds your 24-word mnemonic empty all your addresses?
+  \item Why does altering an old block break all blocks after it?
+  \item Name one advantage of Proof of Stake over Proof of Work, and what Cardano uses.
+  \item Your payout call timed out. Why should you check the explorer before sending again?
+\end{enumerate}
+{\footnotesize\color{cGrey}\textbf{Answers.} (1) It changes completely and unpredictably; stored hashes then no longer match. (2) Only the holder of the private key signs; anybody with the public key verifies. (3) The mnemonic regenerates every private key. (4) The next block stores the old block's hash, so the link no longer matches. (5) Far lower energy use; Cardano uses Proof of Stake. (6) The first payment may still settle, and a retry would pay twice.}
+\end{quizbox}

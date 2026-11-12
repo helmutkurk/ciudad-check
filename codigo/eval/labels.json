@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "description": "Placeholder entries only. Real labels are added after the photo session (verifier-rules.md section 7). Photos go in eval/photos/ and are never committed.",
+  "labels": [
+    {
+      "file": "placeholder-01-valid.jpg",
+      "outcome": "OBSERVED",
+      "case": "valid",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Example Pale Ale 0,33 l",
+        "ean": "4000000000000",
+        "aliases": ["example pale ale"],
+        "priceMinEur": 1,
+        "priceMaxEur": 4
+      },
+      "truth": { "code": "K7Q-4XM", "priceValue": 2.5 },
+      "expect": { "pass": true },
+      "stubScenario": "ok",
+      "notes": "placeholder, no photo"
+    },
+    {
+      "file": "placeholder-02-wrong-code.jpg",
+      "outcome": "OBSERVED",
+      "case": "wrong_code",
+      "expectedCode": "K7Q-4XM",
+      "product": {
+        "name": "Example Pale Ale 0,33 l",
+        "ean": "4000000000000",
+        "aliases": ["example pale ale"],
+        "priceMinEur": 1,
+        "priceMaxEur": 4
+      },
+      "truth": { "code": "K7Q-4XN", "priceValue": 2.5 },
+      "expect": { "pass": false, "failedGates": ["code_match"], "reasonCodes": ["code_mismatch"] },
+      "stubScenario": "wrong_code",
+      "notes": "placeholder, no photo"
+    },
+    {
+      "file": "placeholder-03-oos-valid.jpg",
+      "outcome": "OUT_OF_STOCK",
+      "case": "oos_valid",
+      "expectedCode": "P3W-9ZD",
+      "product": {
+        "name": "Example Pale Ale 0,33 l",
+        "ean": "4000000000000",
+        "aliases": ["example pale ale"]
+      },
+      "truth": { "code": "P3W-9ZD" },
+      "expect": { "pass": true },
+      "stubScenario": "ok",
+      "notes": "placeholder, no photo"
+    }
+  ]
+}

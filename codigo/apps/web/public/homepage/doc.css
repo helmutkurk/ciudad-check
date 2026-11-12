@@ -1,0 +1,544 @@
+/* Shelfie homepage: subpage styles (market, technology, roadmap, developers, legal).
+   Loaded after home.css, which owns the tokens (--forest, --green, --leaf, --mint, --cream, --card, --line). Light theme only. */
+
+.doc {
+  padding: 96px 0 0;
+}
+.doc-title {
+  margin: 0 0 16px;
+  font: 800 clamp(34px, 5vw, 56px) / 1.04 var(--display);
+  letter-spacing: -0.025em;
+  max-width: 22ch;
+}
+.doc > .wrap > .lead {
+  margin: 0 0 40px;
+  max-width: 60ch;
+}
+.draft-note {
+  margin: 0 0 32px;
+  padding: 10px 14px;
+  max-width: 68ch;
+  border-left: 4px solid var(--leaf);
+  background: var(--card);
+  border-radius: 0 8px 8px 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Breadcrumbs */
+.crumbs {
+  margin: 0 0 20px;
+  font-size: 14px;
+}
+.crumbs ol {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  padding: 0;
+}
+.crumbs li + li::before {
+  content: "/";
+  margin: 0 8px;
+  color: var(--muted);
+}
+.crumbs a {
+  color: var(--green-ink);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.crumbs [aria-current="page"] {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Layout: sticky table of contents plus prose */
+.doc-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 68ch);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+  padding-bottom: clamp(56px, 9vh, 96px);
+}
+.toc {
+  position: sticky;
+  top: 84px;
+  max-height: calc(100vh - 108px);
+  overflow-y: auto;
+  font-size: 15px;
+}
+.toc summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--green-ink);
+}
+.toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 2px solid var(--line);
+}
+.toc li a {
+  display: block;
+  padding: 6px 0 6px 14px;
+  margin-left: -2px;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.toc li a:hover,
+.toc li a[aria-current="true"] {
+  color: var(--forest);
+  border-left-color: var(--green);
+}
+.toc li a:focus-visible {
+  outline: 3px solid var(--forest);
+  outline-offset: 2px;
+}
+.toc-group {
+  margin: 12px 0 2px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Prose */
+.prose {
+  min-width: 0;
+  font-size: 17px;
+  line-height: 1.65;
+}
+.prose section {
+  scroll-margin-top: 84px;
+  padding-bottom: 8px;
+  margin-bottom: 56px;
+}
+.prose section + section {
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+}
+.prose [id] {
+  scroll-margin-top: 84px;
+}
+.prose h2 {
+  margin: 0 0 16px;
+  font: 800 clamp(26px, 3.2vw, 36px) / 1.1 var(--display);
+  letter-spacing: -0.02em;
+}
+.prose h3 {
+  margin: 32px 0 10px;
+  font: 800 21px / 1.2 var(--display);
+}
+.prose h4 {
+  margin: 24px 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.prose p,
+.prose ul,
+.prose ol,
+.prose dl {
+  margin: 0 0 16px;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.3em;
+}
+.prose li {
+  margin-bottom: 6px;
+}
+.prose li > ul,
+.prose li > ol {
+  margin-top: 6px;
+}
+.prose dt {
+  font-weight: 800;
+  margin-top: 12px;
+}
+.prose dd {
+  margin: 2px 0 0;
+}
+.prose a {
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.prose strong {
+  font-weight: 700;
+}
+.prose code,
+.prose kbd {
+  font: 0.88em ui-monospace, SFMono-Regular, Consolas, monospace;
+  background: rgba(11, 46, 31, 0.07);
+  padding: 1px 6px;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.prose pre {
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  overflow-x: auto;
+  background: var(--forest);
+  color: var(--cream);
+  border-radius: 12px;
+  font: 14px / 1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  overflow-wrap: normal;
+}
+.prose blockquote {
+  margin: 0 0 20px;
+  padding: 4px 0 4px 18px;
+  border-left: 4px solid var(--mint);
+  color: var(--muted);
+}
+.prose .small,
+.prose .source {
+  font-size: 14px;
+  color: var(--muted);
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 32px 0;
+}
+
+/* Tables sit inside .table-scroll (home.css owns the wrapper; these rules style the tables themselves) */
+.prose .table-scroll {
+  margin: 0 0 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.prose .table-scroll:focus-visible {
+  outline: 3px solid var(--forest);
+  outline-offset: 2px;
+}
+.prose table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  background: var(--card);
+}
+.prose caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0 0 10px;
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 14px;
+}
+.prose th,
+.prose td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+.prose thead th {
+  background: var(--mint);
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.prose tbody tr:nth-child(even) {
+  background: rgba(11, 46, 31, 0.035);
+}
+.prose tbody tr:last-child th,
+.prose tbody tr:last-child td {
+  border-bottom: 0;
+}
+.prose tr.row-us,
+.prose tr.row-us th,
+.prose tr.row-us td {
+  background: var(--forest);
+  color: var(--cream);
+}
+.prose tr.row-us a {
+  color: var(--mint);
+}
+.prose tr.group th {
+  background: rgba(107, 175, 91, 0.2);
+  color: var(--forest);
+  font-size: 14px;
+}
+.prose td.num,
+.prose th.num {
+  text-align: right;
+  white-space: nowrap;
+}
+.hash {
+  font: 13px / 1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: 0;
+  word-break: break-all;
+  display: block;
+  max-width: 34ch;
+}
+.prose .receipts-table {
+  background: var(--forest);
+  color: var(--cream);
+}
+.prose .receipts-table caption {
+  color: var(--muted);
+}
+.prose .receipts-table .hash {
+  color: var(--mint);
+  font-size: 15px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.prose .receipts-table a:focus-visible {
+  outline-color: var(--mint);
+}
+
+/* Callouts */
+.callout {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--green);
+  border-radius: 12px;
+}
+.callout > :last-child {
+  margin-bottom: 0;
+}
+.callout-title {
+  margin: 0 0 6px;
+  font-weight: 800;
+}
+.callout-limit {
+  border-left-color: #b26a00;
+}
+.callout-note {
+  border-left-color: var(--leaf);
+}
+
+/* Arithmetic blocks */
+.formula {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  background: var(--forest);
+  color: var(--cream);
+  border-radius: 12px;
+  font: 15px / 1.7 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  overflow-x: auto;
+}
+.formula p {
+  margin: 0;
+}
+.formula .label {
+  display: block;
+  margin-bottom: 6px;
+  font: 800 12px / 1.2 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--leaf);
+}
+.formula .result {
+  color: var(--leaf);
+  font-weight: 700;
+}
+.formula .tag {
+  display: block;
+  margin-top: 6px;
+  font: 13px / 1.4 var(--font);
+  color: var(--mint);
+}
+
+/* Architecture diagram */
+.arch {
+  margin: 0 0 24px;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+.arch svg {
+  display: block;
+  width: 100%;
+  min-width: 960px;
+  height: auto;
+}
+.arch figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Tech section facts (what / does / limit) */
+.facts {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.facts p {
+  margin: 0;
+}
+.facts .k {
+  font-weight: 800;
+  color: var(--green-ink);
+}
+.links {
+  font-size: 15px;
+}
+
+/* Highlight for missing facts; must be visible until the team fills them */
+.todo-marker {
+  background: #ffe9a8;
+  color: #4a3200;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px dashed #b26a00;
+  font-weight: 700;
+  font-size: 0.92em;
+}
+
+/* Back link */
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.back::before {
+  content: "\2190";
+  margin-right: 8px;
+}
+
+/* Cards used on the roadmap page */
+.road-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.road-card {
+  padding: 16px 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.road-card h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.road-card p {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+.road-card .source {
+  margin: 0;
+}
+
+/* Details inside prose (FAQ) */
+.prose details {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  margin: 0 0 10px;
+}
+.prose details[open] {
+  border-color: var(--green);
+}
+.prose details summary {
+  cursor: pointer;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-weight: 700;
+}
+.prose details > :not(summary) {
+  margin: 0 16px 14px;
+}
+
+/* Small CTA band */
+.doc .section-cta {
+  padding: clamp(48px, 8vh, 80px) 0;
+}
+.doc .section-cta .cta-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.doc .section-cta p {
+  text-align: center;
+  margin: 0 auto 20px;
+  max-width: 50ch;
+}
+
+/* Tablet and phone: the table of contents collapses to a details block above the prose */
+@media (max-width: 960px) {
+  .doc-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .toc {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 0 16px 8px;
+  }
+  .toc li a {
+    padding: 10px 0 10px 14px;
+  }
+}
+@media (max-width: 760px) {
+  .doc {
+    padding-top: 84px;
+  }
+  .prose {
+    font-size: 16px;
+  }
+  .road-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 761px) {
+  .road-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media print {
+  .toc,
+  .topbar,
+  .section-cta {
+    display: none;
+  }
+  .doc-grid {
+    display: block;
+  }
+}

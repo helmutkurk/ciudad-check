@@ -1,0 +1,1055 @@
+[
+  {
+    "id": "coca-cola-1-5l",
+    "ean": "5449000000439",
+    "name": "Coca-Cola Original Taste 1,5 l",
+    "brand": "Coca-Cola",
+    "packSize": "1.5 l",
+    "category": "beverage",
+    "aliases": [
+      "Coca-Cola 1,5L",
+      "Coca Cola 1,5 Liter",
+      "Coca-Cola Classic 1,5 l PET"
+    ],
+    "priceMinEur": 1.29,
+    "priceMaxEur": 1.89,
+    "priceObservations": [
+      {
+        "priceEur": 1.29,
+        "kind": "promo",
+        "chain": "Netto Marken-Discount",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Coca-Cola/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.89,
+        "kind": "previous price",
+        "chain": "Netto Marken-Discount",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Coca-Cola/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/5449000000439",
+    "eanNote": "OFF: Coca Cola Original taste, 1.5 L, Germany tag.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Coca-Cola/"
+    ],
+    "notes": "Deposit (Pfand, 0,25 EUR) is usually shown separately on the tag; price band excludes it.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "nutella-450g",
+    "ean": "4008400402222",
+    "name": "Nutella 450 g",
+    "brand": "Ferrero",
+    "packSize": "450 g",
+    "category": "spread",
+    "aliases": [
+      "Nutella Nuss-Nougat-Creme 450g",
+      "Ferrero Nutella 450 g Glas",
+      "Nutella"
+    ],
+    "priceMinEur": 2.79,
+    "priceMaxEur": 3.99,
+    "priceObservations": [
+      {
+        "priceEur": 2.79,
+        "kind": "promo",
+        "chain": "Netto Marken-Discount",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Nutella/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 3.99,
+        "kind": "regular",
+        "chain": "Netto Marken-Discount",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Nutella/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 3.99,
+        "kind": "promo (450 g + 50 g free)",
+        "chain": "Lidl",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Nutella/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": [
+      "Netto Marken-Discount",
+      "Lidl"
+    ],
+    "eanSource": "https://world.openfoodfacts.org/product/4008400402222",
+    "eanNote": "OFF lists quantity 500g for this EAN; German price sources refer to the 450 g jar. Confirm the jar before using.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Nutella/"
+    ],
+    "notes": null,
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "club-mate-0-5l",
+    "ean": "4029764001807",
+    "name": "Club-Mate 0,5 l",
+    "brand": "Loscher",
+    "packSize": "0.5 l",
+    "category": "beverage",
+    "aliases": [
+      "Club Mate 0,5l",
+      "Club-Mate Original",
+      "Club-Mate Mate-Tee 0,5 l"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": [
+      "REWE",
+      "Kaufland",
+      "Nahkauf"
+    ],
+    "eanSource": "https://world.openfoodfacts.org/product/4029764001807",
+    "eanNote": "OFF: Club-Mate Original, 0,5 l; stores field lists REWE, Kaufland, nahkauf.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled. Deposit (Pfand) applies.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "barilla-spaghetti-n5-500g",
+    "ean": "8076800195057",
+    "name": "Barilla Spaghetti Nr. 5 500 g",
+    "brand": "Barilla",
+    "packSize": "500 g",
+    "category": "pasta",
+    "aliases": [
+      "Barilla Spaghetti No. 5",
+      "Barilla Spaghetti n.5",
+      "Spaghetti Nr.5 500g"
+    ],
+    "priceMinEur": 1.69,
+    "priceMaxEur": 3.99,
+    "priceObservations": [
+      {
+        "priceEur": 1.69,
+        "kind": "promo",
+        "chain": "Aldi Nord (size not stated on page)",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Barilla/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 3.99,
+        "kind": "regular",
+        "chain": "Aldi Nord (size not stated on page)",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Barilla/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/8076800195057",
+    "eanNote": "OFF: Spaghetti N.5, Barilla, 500 g.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Barilla/"
+    ],
+    "notes": "Source is Aldi Nord (not a Munich chain) and does not state pack size; provisional.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "red-bull-250ml",
+    "ean": "9002490100070",
+    "name": "Red Bull Energy Drink 250 ml",
+    "brand": "Red Bull",
+    "packSize": "250 ml",
+    "category": "beverage",
+    "aliases": [
+      "Red Bull Energy Drink",
+      "Red Bull 0,25 l Dose",
+      "Red Bull 250ml"
+    ],
+    "priceMinEur": 0.88,
+    "priceMaxEur": 1.99,
+    "priceObservations": [
+      {
+        "priceEur": 0.88,
+        "kind": "promo",
+        "chain": "Kaufland",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Red-Bull/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.49,
+        "kind": "previous price",
+        "chain": "Kaufland",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Red-Bull/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 0.89,
+        "kind": "promo",
+        "chain": "Aldi Süd",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Red-Bull/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.49,
+        "kind": "promo",
+        "chain": "Netto Marken-Discount",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Red-Bull/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.99,
+        "kind": "previous price",
+        "chain": "Netto Marken-Discount",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Red-Bull/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": [
+      "Kaufland",
+      "Aldi Süd",
+      "Netto Marken-Discount"
+    ],
+    "eanSource": "https://world.openfoodfacts.org/product/9002490100070",
+    "eanNote": "OFF: Red Bull, Red Bull GmbH, 250ml, Germany tag.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Red-Bull/"
+    ],
+    "notes": "Can size not stated on the source page (assumed 250 ml); deposit extra.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "pringles-original-165g",
+    "ean": "5053990101573",
+    "name": "Pringles Original 165 g",
+    "brand": "Pringles",
+    "packSize": "165 g",
+    "category": "snack",
+    "aliases": [
+      "Pringles Original",
+      "Pringles Chips Original 165g",
+      "Pringles Originale"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": [
+      "Aldi Süd",
+      "Kaufland"
+    ],
+    "eanSource": "https://world.openfoodfacts.org/product/5053990101573",
+    "eanNote": "OFF: Pringles originale, 165 g.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Pringles/"
+    ],
+    "notes": "Pringles 185 g is also sold (Aldi Süd/Kaufland listings); no usable price: No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "dr-oetker-ristorante-spinaci-390g",
+    "ean": "4001724819400",
+    "name": "Dr. Oetker Ristorante Pizza Spinaci 390 g",
+    "brand": "Dr. Oetker",
+    "packSize": "390 g",
+    "category": "frozen",
+    "aliases": [
+      "Ristorante Pizza Spinaci",
+      "Dr. Oetker Ristorante Spinaci",
+      "Pizza Ristorante Spinaci"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [
+      {
+        "priceEur": 1.79,
+        "kind": "promo",
+        "chain": "REWE",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Dr-Oetker/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.79,
+        "kind": "promo",
+        "chain": "Nahkauf",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Dr-Oetker/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": [
+      "REWE",
+      "Nahkauf"
+    ],
+    "eanSource": "https://world.openfoodfacts.org/product/4001724819400",
+    "eanNote": "OFF: Ristorante Pizza Spinaci 390g, Dr. Oetker.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Dr-Oetker/"
+    ],
+    "notes": "Only promo observations (one price, one week); no range set.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "philadelphia-original-150g",
+    "ean": "7622300441937",
+    "name": "Philadelphia Original 150 g",
+    "brand": "Philadelphia",
+    "packSize": "150 g",
+    "category": "dairy",
+    "aliases": [
+      "Philadelphia Frischkäse Original",
+      "Philadelphia Original Frischkäse 150g",
+      "Frischkäse Philadelphia"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/7622300441937",
+    "eanNote": "OFF: Philadelphia Original, 150 g (brand field Mondelez Schweiz, Germany tag). Aldi Süd lists a 195 g variant.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Philadelphia/"
+    ],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "augustiner-lagerbier-hell-0-33l",
+    "ean": "4105250022331",
+    "name": "Augustiner Lagerbier Hell 0,33 l",
+    "brand": "Augustiner-Bräu",
+    "packSize": "0.33 l",
+    "category": "beer",
+    "aliases": [
+      "Augustiner Helles 0,33",
+      "Augustiner Hell",
+      "Augustiner Lagerbier Hell"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/4105250022331",
+    "eanNote": "OFF: Augustiner Lagerbier Hell 0.33 l. The 0,5 l bottle EAN was not verified.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled. Deposit applies.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "augustiner-edelstoff-0-33l",
+    "ean": "4105250024335",
+    "name": "Augustiner Edelstoff 0,33 l",
+    "brand": "Augustiner-Bräu",
+    "packSize": "0.33 l",
+    "category": "beer",
+    "aliases": [
+      "Augustiner Edelstoff",
+      "Edelstoff 0,33"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/4105250024335",
+    "eanNote": "OFF: Augustiner Edelstoff 0,33 l.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "augustiner-dunkel-0-5l",
+    "ean": "4105250023000",
+    "name": "Augustiner Dunkel 0,5 l",
+    "brand": "Augustiner-Bräu",
+    "packSize": "0.5 l",
+    "category": "beer",
+    "aliases": [
+      "Augustiner Dunkel",
+      "Augustiner Dunkel 0,5l"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/4105250023000",
+    "eanNote": "OFF: Augustiner Dunkel 0,5l.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "fritz-kola-0-33l",
+    "ean": "4260107220015",
+    "name": "fritz-kola Original 0,33 l",
+    "brand": "fritz-kola",
+    "packSize": "0.33 l",
+    "category": "beverage",
+    "aliases": [
+      "fritz-kola",
+      "Fritz Kola 0,33",
+      "fritz-kola Original"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/4260107220015",
+    "eanNote": "OFF: fritz-kola Original 0.33l.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "fritz-kola-0-5l",
+    "ean": "4260107222262",
+    "name": "fritz-kola 0,5 l",
+    "brand": "fritz-kola",
+    "packSize": "0.5 l",
+    "category": "beverage",
+    "aliases": [
+      "fritz-kola 0,5",
+      "Fritz Kola 0,5 l"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": "https://world.openfoodfacts.org/product/4260107222262",
+    "eanNote": "OFF: fritz-kola 0.5 l.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "weihenstephan-frische-milch-1l",
+    "ean": null,
+    "name": "Weihenstephan Frische Milch 3,5 % 1 l",
+    "brand": "Weihenstephan",
+    "packSize": "1 l",
+    "category": "dairy",
+    "aliases": [
+      "Frische Vollmilch 3,5%",
+      "Weihenstephan Frische Milch",
+      "Frische Milch 3,5% Fett"
+    ],
+    "priceMinEur": 0.99,
+    "priceMaxEur": 1.49,
+    "priceObservations": [
+      {
+        "priceEur": 0.99,
+        "kind": "promo",
+        "chain": "Aldi Nord (pack size not stated)",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Weihenstephan/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.49,
+        "kind": "previous price",
+        "chain": "Aldi Nord (pack size not stated)",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Weihenstephan/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Weihenstephan/"
+    ],
+    "notes": "Aldi Nord source, pack size assumed 1 l; provisional.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "kerrygold-extra-250g",
+    "ean": null,
+    "name": "Kerrygold extra Butter 250 g",
+    "brand": "Kerrygold",
+    "packSize": "250 g",
+    "category": "dairy",
+    "aliases": [
+      "Kerrygold extra",
+      "Kerrygold Butter",
+      "Kerrygold Original Irische Butter"
+    ],
+    "priceMinEur": 1.49,
+    "priceMaxEur": 1.59,
+    "priceObservations": [
+      {
+        "priceEur": 1.49,
+        "kind": "promo",
+        "chain": "Aldi Nord",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Kerrygold/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.59,
+        "kind": "promo",
+        "chain": "Edeka",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Kerrygold/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.59,
+        "kind": "promo",
+        "chain": "HIT",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Kerrygold/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": [
+      "Edeka"
+    ],
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Kerrygold/"
+    ],
+    "notes": "Promo observations only; regular price probably higher: widen before use.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "milka-schokolade-100g",
+    "ean": null,
+    "name": "Milka Schokolade 100 g (Tafel)",
+    "brand": "Milka",
+    "packSize": "100 g",
+    "category": "confectionery",
+    "aliases": [
+      "Milka Alpenmilch 100g",
+      "Milka Tafelschokolade",
+      "Milka Schokolade 100 g"
+    ],
+    "priceMinEur": 1.69,
+    "priceMaxEur": 1.99,
+    "priceObservations": [
+      {
+        "priceEur": 1.69,
+        "kind": "promo",
+        "chain": "REWE",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Milka/",
+        "observedOn": "2026-10-29"
+      },
+      {
+        "priceEur": 1.99,
+        "kind": "previous price",
+        "chain": "REWE",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Milka/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": [
+      "REWE",
+      "Netto Marken-Discount"
+    ],
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Milka/"
+    ],
+    "notes": "Observations are for flavours (Erdbeer-Joghurt) at 100 g; Alpenmilch price not confirmed.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "haribo-goldbaeren-175g",
+    "ean": null,
+    "name": "Haribo Goldbären 175 g",
+    "brand": "Haribo",
+    "packSize": "175 g",
+    "category": "confectionery",
+    "aliases": [
+      "Haribo Goldbären",
+      "Haribo Gold-Bären 175g",
+      "Goldbären Fruchtgummi"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [
+      {
+        "priceEur": 1.19,
+        "kind": "promo",
+        "chain": "Müller (drugstore, not in catalog)",
+        "source": "https://www.discounto.de/Aktuelle-Angebote/Haribo/",
+        "observedOn": "2026-10-29"
+      }
+    ],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package. OFF EAN 4001686301555 is a Haribo 100 g item with no name; not used.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Haribo/"
+    ],
+    "notes": "Single promo observation; no range set.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "jacobs-kroenung-500g",
+    "ean": null,
+    "name": "Jacobs Krönung 500 g",
+    "brand": "Jacobs",
+    "packSize": "500 g",
+    "category": "coffee",
+    "aliases": [
+      "Jacobs Krönung",
+      "Jacobs Kaffee Krönung",
+      "Jacobs Krönung gemahlen"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "ritter-sport-vollmilch-100g",
+    "ean": null,
+    "name": "Ritter Sport Vollmilch 100 g",
+    "brand": "Ritter Sport",
+    "packSize": "100 g",
+    "category": "confectionery",
+    "aliases": [
+      "Ritter Sport Alpenmilch",
+      "Ritter Sport Tafel",
+      "Ritter Sport"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package. OFF EAN 4000417025005 is named 'marsepein' (marzipan) with quantity 100g: not used.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "kinder-schokolade-riegel",
+    "ean": null,
+    "name": "Kinder Riegel",
+    "brand": "Ferrero",
+    "packSize": "21 g per bar",
+    "category": "confectionery",
+    "aliases": [
+      "Kinder Riegel",
+      "Kinder Schokolade Riegel"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "paulaner-spezi-0-5l",
+    "ean": null,
+    "name": "Paulaner Spezi 0,5 l",
+    "brand": "Paulaner",
+    "packSize": "0.5 l",
+    "category": "beverage",
+    "aliases": [
+      "Paulaner Spezi",
+      "Spezi 0,5"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": [
+      "Netto Marken-Discount"
+    ],
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Paulaner/"
+    ],
+    "notes": "Only a 20 x 0,5 l crate offer (10.99 EUR, previous 16.49, Netto) was found; single bottle price unknown. Deposit applies.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "paulaner-hefe-weissbier-0-5l",
+    "ean": null,
+    "name": "Paulaner Hefe-Weißbier 0,5 l",
+    "brand": "Paulaner",
+    "packSize": "0.5 l",
+    "category": "beer",
+    "aliases": [
+      "Paulaner Weißbier",
+      "Paulaner Hefe Weißbier hell"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": [
+      "Kaufland"
+    ],
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [
+      "https://www.discounto.de/Aktuelle-Angebote/Paulaner/"
+    ],
+    "notes": "Only a 20 x 0,5 l crate offer (13.99 EUR, previous 20.99, Kaufland) was found. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "augustiner-helles-0-5l",
+    "ean": null,
+    "name": "Augustiner Lagerbier Hell 0,5 l",
+    "brand": "Augustiner-Bräu",
+    "packSize": "0.5 l",
+    "category": "beer",
+    "aliases": [
+      "Augustiner Helles",
+      "Augustiner Hell 0,5 l",
+      "Augustiner Lagerbier Hell"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "No price source found; engine falls back to G5 defaults (0.20-60.00) until filled. The 0,33 l EAN is verified (see augustiner-lagerbier-hell-0-33l).",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "bananen-loose",
+    "ean": null,
+    "name": "Bananen (lose)",
+    "brand": "",
+    "packSize": "per kg",
+    "category": "produce",
+    "aliases": [
+      "Bananen",
+      "Bananen Chiquita",
+      "Bio Bananen"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Loose fruit, no EAN; price is per kg on the tag. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "eier-10er",
+    "ean": null,
+    "name": "Eier Freiland 10er",
+    "brand": "",
+    "packSize": "10 pieces",
+    "category": "dairy",
+    "aliases": [
+      "Eier 10 Stück",
+      "Freilandeier 10er",
+      "Eier Bodenhaltung 10er"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Generic, many brands; EAN depends on the brand. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "toast-golden-toast",
+    "ean": null,
+    "name": "Golden Toast Sandwich Scheiben",
+    "brand": "Golden Toast",
+    "packSize": "500 g",
+    "category": "bakery",
+    "aliases": [
+      "Golden Toast Buttertoast",
+      "Sandwich Toast"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Brand and variant to confirm in store. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "bauernbrot-vollkorn",
+    "ean": null,
+    "name": "Vollkornbrot (verpackt)",
+    "brand": "",
+    "packSize": "500 g",
+    "category": "bakery",
+    "aliases": [
+      "Vollkornbrot",
+      "Harry Vollkornbrot"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Generic; brand varies. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "rewe-ja-h-milch-1l",
+    "ean": null,
+    "name": "ja! H-Milch 3,5 % 1 l",
+    "brand": "ja! (REWE own brand)",
+    "packSize": "1 l",
+    "category": "dairy",
+    "aliases": [
+      "ja! Haltbare Vollmilch",
+      "ja! H-Milch"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Own brand of REWE (general knowledge, not checked in a source). No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "lidl-milbona-butter-250g",
+    "ean": null,
+    "name": "Milbona Deutsche Markenbutter 250 g",
+    "brand": "Milbona (Lidl own brand)",
+    "packSize": "250 g",
+    "category": "dairy",
+    "aliases": [
+      "Milbona Butter",
+      "Milbona Markenbutter"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Own brand of Lidl (general knowledge, not checked in a source). No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "aldi-milsani-vollmilch-1l",
+    "ean": null,
+    "name": "Milsani Frische Vollmilch 3,5 % 1 l",
+    "brand": "Milsani (Aldi own brand)",
+    "packSize": "1 l",
+    "category": "dairy",
+    "aliases": [
+      "Milsani Vollmilch",
+      "Milsani Frische Milch"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Own brand of Aldi Süd (general knowledge, not checked in a source). No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "edeka-gut-guenstig-spaghetti-500g",
+    "ean": null,
+    "name": "Gut & Günstig Spaghetti 500 g",
+    "brand": "Gut & Günstig (Edeka own brand)",
+    "packSize": "500 g",
+    "category": "pasta",
+    "aliases": [
+      "Gut&Günstig Spaghetti",
+      "G&G Spaghetti"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Own brand of Edeka (general knowledge, not checked in a source). No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "kaufland-k-classic-toast",
+    "ean": null,
+    "name": "K-Classic Sandwich Toast",
+    "brand": "K-Classic (Kaufland own brand)",
+    "packSize": "750 g",
+    "category": "bakery",
+    "aliases": [
+      "K-Classic Toast",
+      "K-Classic Sandwichtoast"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Own brand of Kaufland (general knowledge, not checked in a source). No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "gerolsteiner-sprudel-1-5l",
+    "ean": null,
+    "name": "Gerolsteiner Sprudel 1,5 l",
+    "brand": "Gerolsteiner",
+    "packSize": "1.5 l",
+    "category": "beverage",
+    "aliases": [
+      "Gerolsteiner Mineralwasser",
+      "Gerolsteiner Sprudel"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Check variant and EAN on the bottle. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "granini-apfelschorle",
+    "ean": null,
+    "name": "Apfelschorle (Granini / Lidl)",
+    "brand": "",
+    "packSize": "1 l",
+    "category": "beverage",
+    "aliases": [
+      "Apfelschorle",
+      "Granini Apfelschorle"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "Variable brand. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "oreo-original-154g",
+    "ean": null,
+    "name": "Oreo Original",
+    "brand": "Oreo",
+    "packSize": "154 g",
+    "category": "confectionery",
+    "aliases": [
+      "Oreo Kekse",
+      "Oreo Original 154g"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "OFF 7622300489434 is a Norwegian-market 246 g item (not DE): EAN not used. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "haribo-color-rado",
+    "ean": null,
+    "name": "Haribo Color-Rado",
+    "brand": "Haribo",
+    "packSize": "175 g",
+    "category": "confectionery",
+    "aliases": [
+      "Haribo Colorado",
+      "Color-Rado"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "EAN to read from pack. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "hellmanns-mayonnaise",
+    "ean": null,
+    "name": "Hellmann's Real Mayonnaise",
+    "brand": "Hellmann's",
+    "packSize": "250 ml",
+    "category": "condiment",
+    "aliases": [
+      "Hellmann's Mayonnaise",
+      "Hellmanns Mayo"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "EAN to read from pack. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "heinz-tomato-ketchup",
+    "ean": null,
+    "name": "Heinz Tomato Ketchup",
+    "brand": "Heinz",
+    "packSize": "500 ml",
+    "category": "condiment",
+    "aliases": [
+      "Heinz Ketchup",
+      "Tomato Ketchup Heinz"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "OFF 5000157024671 is a UK beans item: not used. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  },
+  {
+    "id": "maggi-fix-bolognese",
+    "ean": null,
+    "name": "Maggi Fix für Spaghetti Bolognese",
+    "brand": "Maggi",
+    "packSize": "1 pack",
+    "category": "condiment",
+    "aliases": [
+      "Maggi Fix Bolognese",
+      "Fix für Spaghetti Bolognese"
+    ],
+    "priceMinEur": null,
+    "priceMaxEur": null,
+    "priceObservations": [],
+    "chainsCarrying": null,
+    "eanSource": null,
+    "eanNote": "No EAN-13 verified in a source; leave out of the Friday pack catalog until read from the physical package.",
+    "sources": [],
+    "notes": "EAN to read from pack. No price source found; engine falls back to G5 defaults (0.20-60.00) until filled.",
+    "retrievedAt": "2026-10-29"
+  }
+]

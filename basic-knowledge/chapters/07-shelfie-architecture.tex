@@ -1,0 +1,458 @@
+\chapter{Architecture and domain model}
+\newcommand{\cSevenCode}[1]{\texttt{\scriptsize #1}}
+
+\section*{Why this matters for us}
+Four people will write code in parallel from Friday 09:00 without meetings. That only works if everyone shares the same picture of the pieces, the names and the rules for money. This chapter is that picture, in plain language. It follows the design folder (\texttt{diseno/}), which is the canonical source when files disagree. \textbf{Nothing described here exists as code yet.} It is a plan, and the build window opens on Friday.
+
+\section{The big idea: a verified micro-task engine}
+Shelfie is not a ``shelf app''. Underneath, it is a general machine for one pattern:
+\begin{center}
+\sffamily\bfseries Job $\rightarrow$ Tasks $\rightarrow$ Worker (human or agent) $\rightarrow$ Verifier $\rightarrow$ Settlement
+\end{center}
+A \term{job} is what the customer orders. It is split into small \term{tasks} (one per store). A \term{worker} does each task; the worker may be a human with a phone or another agent. A \term{verifier} applies rules to the result. \term{Settlement} is the money outcome of the whole job. Everything about shelves (the task template, the verification rules, the report layout) lives in a replaceable \term{domain pack}.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[actor,minimum width=2.6cm] (job) at (0,0) {Job\\``check product X\\in N stores''};
+\node[actor,minimum width=2.6cm] (task) at (3.6,0) {Tasks\\one per store};
+\node[human,minimum width=2.6cm] (wk) at (7.2,0) {Worker\\human or agent};
+\node[agent,minimum width=2.6cm] (ver) at (10.8,0) {Verifier\\rules, pass/fail};
+\node[chain,minimum width=2.6cm] (set) at (14.4,0) {Settlement\\pay / deliver /\\refund};
+\draw[flow] (job)--(task); \draw[flow] (task)--(wk); \draw[flow] (wk)--(ver); \draw[flow] (ver)--(set);
+\node[box,fill=cGold!20,draw=cGold!90!black,minimum width=15cm,minimum height=1.1cm] (pack) at (7.2,-2.2)
+  {\textbf{Domain pack ``shelf-check''}: task template $\cdot$ code rules $\cdot$ extraction prompt $\cdot$ gate thresholds $\cdot$ payout $\cdot$ K rule $\cdot$ report};
+\draw[data] (pack.north -| task) -- (task.south);
+\draw[data] (pack.north -| wk) -- (wk.south);
+\draw[data] (pack.north -| ver) -- (ver.south);
+\draw[data] (pack.north -| set) -- (set.south);
+\node[font=\sffamily\scriptsize,text=cGrey] at (7.2,-3.3) {Generic parts (never edited when the pack is swapped): shell, payments, state machines, ledger, API, web frame.};
+\end{tikzpicture}}
+\caption{The engine pattern. The domain pack plugs shelf-specific content into the generic stages.}
+\end{figure}
+
+\begin{analogybox}{A pizza oven with changeable recipe cards}
+The oven (heat, timer, conveyor belt) stays the same. Only the recipe card says what goes in and when it is done. Our engine is the oven; the domain pack is the recipe card. If we swap the card, we bake a different dish (Plan B: decode a German letter) with the same oven.
+\end{analogybox}
+
+\subsection{Domain packs}
+A pack tells the engine: what a task looks like, who works on it (human or agent), what the verifier extracts, which rules apply, how much a task pays, which K rule decides the job, and how to render the report. Plan B shows how little changes:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}XX@{}}
+\toprule
+\textbf{Pack field} & \textbf{\code{shelf-check}} & \textbf{\code{letter-decoder} (Plan B)}\\
+\midrule
+Job input & product, EAN, stores, $K$ & letter images, language\\
+Tasks & one per store & one per page or field group\\
+Worker & human, camera, challenge code & agent (OCR), no challenge\\
+Extraction & product name, price, code & sender, date, amount, deadline\\
+Rules & code, readable, product, price, timing & date and amount parse, plausible\\
+Payout & bounty to the human & optional fee or 0\\
+Settlement & $K$ of $N$ stores & all fields required ($K=N$)\\
+\bottomrule
+\end{tabularx}
+\end{center}
+To keep Plan B truly cheap, two things are in the engine from day one: workers of kind \code{human} and \code{agent}, and an \emph{optional} challenge.
+
+\section{Components and owners}
+Four roles, A to D. The names of the four teammates are \emph{not yet} assigned to letters; this is decided on Thursday evening.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}p{3.5cm}Xp{1.5cm}@{}}
+\toprule
+\textbf{Component} & \textbf{Folder} & \textbf{What it does} & \textbf{Owner}\\
+\midrule
+Lead agent shell & \cSevenCode{apps/shell} & Fork of the Masumi starter (JavaScript). Sokosumi Coworker, paid-task adapter, bridge to the engine. Thin. & A\\
+Engine & \cSevenCode{apps/engine} & State machines, challenge codes, K-of-N decision, REST API, ledger writer. Loads one pack. & A\\
+Verifier & \cSevenCode{apps/verifier} & Sells \cSevenCode{POST /v1/verify} behind x402; one vision call, then deterministic gates. & B + C\\
+Payments & \cSevenCode{packages/payments} & Wallet signers, x402 buyer, payout queue, reconcile. & B\\
+Worker page & \cSevenCode{apps/web} \cSevenCode{/w} & Mobile page: list tasks, claim, show code, take photo, show verdict. & D\\
+Brand dashboard & \cSevenCode{apps/web} \cSevenCode{/dashboard} & Progress per store, verdicts, ledger with explorer links, big-screen layout. & D\\
+Evidence ledger & \cSevenCode{packages/evidence} & Append-only, hash-chained list of every tx hash and verdict. & D\\
+Domain pack & \cSevenCode{packages/domain-shelf} & Thresholds, prompts, report template, labels. & C\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{conceptbox}{Role summary in one line each}
+\textbf{A}: shell and engine (Sokosumi/Masumi operator). \textbf{B}: payments, x402, wallets, tunnel. \textbf{C}: verifier gate, vision, domain pack, 20-photo evaluation. \textbf{D}: web pages, evidence ledger, README, pitch. On stage the roles shift: D pitches, B operates, A is the field shopper, C narrates the verifier.
+\end{conceptbox}
+
+\subsection{Deployment: one hub laptop and one tunnel}
+During the demo everything runs on \textbf{one laptop}, the hub (ADR-14). One machine to keep awake, one set of secret files. Phones reach the engine through a public HTTPS \term{tunnel} (a tool such as a Cloudflare quick tunnel that gives your laptop a temporary public web address). Why HTTPS matters: phone browsers allow the in-page camera only on secure pages. The verifier and Masumi Payment Service stay private.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[human,minimum width=2.6cm] (p1) at (0,3) {Phone 1\\worker};
+\node[human,minimum width=2.6cm] (p2) at (0,1.2) {Phone 2\\worker / judge};
+\node[actor,minimum width=2.6cm] (big) at (0,-1.4) {Projector\\dashboard};
+\node[service,minimum width=2.6cm] (tun) at (3.9,2.1) {Public HTTPS\\tunnel};
+\draw[flow] (p1.east) -- (tun.north west);
+\draw[flow] (p2.east) -- (tun.south west);
+\node[draw=cBlue,rounded corners=6pt,thick,fill=cBlue!4,minimum width=9cm,minimum height=5.6cm,anchor=north west] (hub) at (6.1,4.4) {};
+\node[font=\sffamily\bfseries\small,text=cBlue,anchor=north west] at (6.3,4.3) {Hub laptop (demo)};
+\node[actor] (eng) at (8.6,2.6) {Engine :4000\\API, /w, /dashboard};
+\node[agent] (ver) at (13,2.6) {Verifier :4021\\x402 seller + gate};
+\node[agent] (shl) at (8.6,0.2) {Shell\\Coworker + paid task};
+\node[service] (mps) at (13,0.2) {Masumi Payment\\Service + Postgres};
+\node[service] (led) at (10.8,-1.4) {evidence.jsonl};
+\draw[flow] (tun.east) -- (tun.east -| hub.west) |- (eng.west);
+\draw[flow] (big.east) -- node[lbl]{localhost} (big.east -| hub.west);
+\draw[flow] (eng) -- (ver);
+\draw[flow] (shl) -- (eng);
+\draw[flow] (shl) -- (mps);
+\draw[flow] (eng.west) -- ++(-0.35,0) |- (led.west);
+\node[chain,minimum width=6cm] (out) at (10.6,-4) {Outbound calls only: Sokosumi, Blockfrost,\\x402 facilitator, vision API};
+\draw[flow] (hub.south) -- (out.north);
+\end{tikzpicture}}
+\caption{Demo deployment. Only the engine is exposed publicly; everything else calls out from the hub.}
+\end{figure}
+
+\begin{warningbox}{Never restart the tunnel mid-demo}
+Quick-tunnel addresses change on restart. The dashboard shows a QR code for the worker page; after any restart everyone must scan again. Fallback: laptop hotspot with plain HTTP, where the page falls back to a file picker (no in-page camera).
+\end{warningbox}
+
+\section{One task, end to end}
+Here is the happy path of one store, as a sequence diagram. Read it top to bottom; each arrow is a message.
+
+\newcommand{\cSevenMsg}[5]{\draw[->,thick,draw=#5] (#1,#3) -- (#2,#3) node[midway,above,font=\sffamily\scriptsize,inner sep=1pt,fill=white]{#4};}
+\begin{figure}[htbp]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\foreach \x/\n/\c in {0/Brand/cBlue, 2.4/{Sokosumi\\Masumi}/cPurple, 4.8/Engine/cBlue, 7.2/{Worker\\phone}/cOrange, 9.6/Verifier/cPurple, 12/{Cardano\\preprod}/cTeal}{
+  \node[box,draw=\c,fill=\c!10,minimum width=1.9cm] (h\x) at (\x,0) {\n};
+  \draw[dashed,\c!60] (\x,-0.7) -- (\x,-12.2);
+}
+\cSevenMsg{0}{2.4}{-1.2}{hire, fee to escrow}{cGrey}
+\cSevenMsg{2.4}{12}{-1.9}{escrow lock tx}{cGold!90!black}
+\cSevenMsg{2.4}{4.8}{-2.6}{paid task: POST /api/jobs}{cGrey}
+\node[font=\sffamily\scriptsize,fill=cLight,draw=cGrey!40] at (4.8,-3.3) {split into N tasks (OPEN)};
+\cSevenMsg{7.2}{4.8}{-4.0}{GET open tasks}{cGrey}
+\cSevenMsg{7.2}{4.8}{-4.7}{POST claim}{cGrey}
+\cSevenMsg{4.8}{7.2}{-5.4}{code K7Q-4XM (300 s)}{cGreen}
+\node[font=\sffamily\scriptsize,fill=cLight,draw=cGrey!40,align=center] at (7.2,-6.1) {code on paper, photo of\\tag + code};
+\cSevenMsg{7.2}{4.8}{-6.9}{POST submission}{cGrey}
+\cSevenMsg{4.8}{9.6}{-7.6}{POST /v1/verify}{cGrey}
+\cSevenMsg{9.6}{4.8}{-8.3}{402: pay 1 tADA}{cRed}
+\cSevenMsg{4.8}{9.6}{-9.0}{retry + signed payment}{cGold!90!black}
+\cSevenMsg{9.6}{12}{-9.7}{settle: verify tx}{cGold!90!black}
+\node[font=\sffamily\scriptsize,fill=cLight,draw=cGrey!40] at (9.6,-10.3) {vision + gates G1--G7};
+\cSevenMsg{9.6}{4.8}{-11.0}{200 verdict PASS}{cGreen}
+\cSevenMsg{4.8}{12}{-11.7}{payout 3 tADA: tx}{cGold!90!black}
+\cSevenMsg{4.8}{7.2}{-12.4}{PASS + payout link}{cGreen}
+\end{tikzpicture}}
+\caption{One store, happy path. Gold arrows are money; green arrows are good news; red is the 402 challenge.}
+\end{figure}
+
+\begin{conceptbox}{What the 402 steps do}
+The engine first calls the verifier \emph{without} paying. The verifier answers ``402 Payment Required, 1 tADA''. The engine signs a payment from its wallet \code{W-VBUY} and retries with the proof. This is exactly the x402 flow from Chapter~3, with our verifier as the seller and our engine as the buyer. A spending cap prevents the buyer from paying more than 2 tADA per call.
+\end{conceptbox}
+
+When the photo fails, the picture changes: the verifier still answers 200 (it did its job), but the verdict is FAIL, so the engine enqueues \emph{no payout}. The check was paid for, the photo was not. If attempts remain (default cap: 3), the task goes back to OPEN, and the next attempt needs a \emph{new} code. After the repeat for all stores, the engine counts passes: $\ge K$ means the report is delivered and the escrow settles later; otherwise the shell submits \emph{no} result hash and the escrow refunds the brand after the Masumi timeout (about $+30$ minutes counted from the start of the job, i.e.\ about 10 minutes after the submit deadline; an estimate to record Friday).
+
+\section{Entities and ID prefixes}
+The domain model lists nine things the engine stores. Each has an ID that begins with a short prefix, so you can recognise it in a log at a glance. All IDs are strings; money is always a decimal string of lovelace (1 ADA = 1,000,000 lovelace).
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{1.5cm}p{2.5cm}X@{}}
+\toprule
+\textbf{Prefix} & \textbf{Entity} & \textbf{Meaning}\\
+\midrule
+\code{job\_} & Job & One hired engagement (e.g.\ ``Isarquell in 10 stores''). Knows $N$, $K$, window and decision.\\
+\code{tsk\_} & Task & One unit of work: one store. Has state, attempts, accepted submission.\\
+\code{clm\_} & Claim & A worker reserved a task for a short time (default 300 s) and received a code.\\
+\code{sub\_} & Submission & One photo upload for a claim, with server receive time and image hash.\\
+\code{vdt\_} & Verdict & The verifier's answer: pass or fail, all gate results, extraction, verify tx hash. Immutable.\\
+\code{pay\_} & Payout & One payment to a worker for one task. Unique per task.\\
+\code{stl\_} & Settlement & The job-level outcome: DELIVER or WITHHOLD, escrow tx references.\\
+\code{evd\_} & Evidence entry & One line in the hash-chained ledger.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+A \code{ChallengeCode} (not prefixed) belongs to a claim and is single use. It uses the 6-character format described in Chapter~8.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[actor] (job) at (0,0) {\code{job\_}\\Job};
+\node[actor] (tsk) at (3,0) {\code{tsk\_}\\Task};
+\node[human] (clm) at (6,0) {\code{clm\_}\\Claim};
+\node[human] (sub) at (9,0) {\code{sub\_}\\Submission};
+\node[agent] (vdt) at (12,0) {\code{vdt\_}\\Verdict};
+\node[chain] (pay) at (12,-2.1) {\code{pay\_}\\Payout};
+\node[chain] (stl) at (0,-2.1) {\code{stl\_}\\Settlement};
+\node[service] (evd) at (6,-2.1) {\code{evd\_}\\Evidence entry};
+\draw[flow] (job) -- node[lbl]{1 : N} (tsk);
+\draw[flow] (tsk) -- node[lbl]{1 : many} (clm);
+\draw[flow] (clm) -- node[lbl]{1 : 1} (sub);
+\draw[flow] (sub) -- node[lbl]{1 : 1} (vdt);
+\draw[pay] (vdt) -- node[lbl,right]{if pass} (pay);
+\draw[flow] (job) -- node[lbl,left]{1 : 1} (stl);
+\draw[data] (pay) -- (evd); \draw[data] (vdt) -- (evd); \draw[data] (stl) -- (evd);
+\end{tikzpicture}}
+\caption{How the entities relate. Dashed arrows: everything on-chain or decisive is also written to the evidence ledger.}
+\end{figure}
+
+\section{State machines}
+A \term{state machine} lists the states a thing can be in and the allowed moves between them. It prevents nonsense such as paying a task that was never verified.
+
+\subsection{Job states}
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[st/.style={box,fill=cBlue!8,draw=cBlue,minimum width=2.3cm,font=\sffamily\scriptsize},
+  okst/.style={st,fill=cGreen!12,draw=cGreen},badst/.style={st,fill=cRed!10,draw=cRed}]
+\node[st] (rec) at (0,0) {RECEIVED};
+\node[st] (col) at (4.2,0) {COLLECTING};
+\node[st] (dec) at (8.4,0) {DECIDING};
+\node[okst] (del) at (12.6,0) {DELIVERABLE};
+\node[okst] (dld) at (16.8,0) {DELIVERED};
+\node[okst] (set) at (16.8,-2.3) {SETTLED};
+\node[badst] (wit) at (12.6,-2.3) {WITHHELD};
+\node[badst] (ref) at (12.6,-4.4) {REFUNDED};
+\node[badst] (rej) at (0,-2.3) {REJECTED\_INPUT};
+\node[badst] (can) at (4.2,-2.3) {CANCELLED};
+\draw[flow] (rec)--node[lbl,above=2pt]{planned}(col);
+\draw[flow] (col)--node[lbl,above=2pt]{all done}(dec);
+\draw[flow] (dec)--node[lbl,above=2pt]{$\ge K$}(del);
+\draw[flow] (del)--node[lbl,above=2pt]{submitted}(dld);
+\draw[flow] (dld)--node[lbl,right]{settles}(set);
+\draw[flow] (dec)--node[lbl,sloped]{$<K$}(wit);
+\draw[flow] (wit)--node[lbl,right]{refund seen}(ref);
+\draw[flow] (rec)--node[lbl,left]{bad input}(rej);
+\draw[flow] (col)--node[lbl,left]{admin cancel}(can);
+\end{tikzpicture}}
+\caption{Job lifecycle: ``all done'' means the window closed or every task is finished; $K$ is the pass threshold. SETTLED and REFUNDED are informational: the engine records what Masumi did but never waits for it.}
+\end{figure}
+
+\subsection{Task states}
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[st/.style={box,fill=cBlue!8,draw=cBlue,minimum width=2.3cm,font=\sffamily\scriptsize},
+  okst/.style={st,fill=cGreen!12,draw=cGreen},badst/.style={st,fill=cRed!10,draw=cRed}]
+\node[st] (open) at (0,0) {OPEN};
+\node[st] (clm) at (5,0) {CLAIMED};
+\node[st] (sub) at (10,0) {SUBMITTED};
+\node[st] (ver) at (15,0) {VERIFYING};
+\node[okst] (acc) at (15,-2.4) {ACCEPTED};
+\node[okst] (paid) at (15,-4.6) {PAID};
+\node[badst] (fail) at (10,-2.4) {FAILED};
+\node[badst] (exp) at (5,-2.4) {EXPIRED};
+\draw[flow] (open)--node[lbl]{claim, code issued}(clm);
+\draw[flow] (clm)--node[lbl]{photo received}(sub);
+\draw[flow] (sub)--node[lbl]{call verifier}(ver);
+\draw[flow] (ver)--node[lbl,right]{verdict pass}(acc);
+\draw[flow] (acc)--node[lbl,right]{payout confirmed}(paid);
+\draw[flow] (ver.south west)--node[lbl,sloped]{fail, no attempts left}(fail.north east);
+\draw[flow] (ver.north) to[bend right=25] node[lbl,above]{verdict fail, attempts left} (open.north);
+\draw[flow] (clm.north) to[bend left=30] node[lbl,above]{claim expired} (open.north east);
+\draw[flow] (clm)--node[lbl,left]{window closed}(exp);
+\end{tikzpicture}}
+\caption{Task lifecycle. ACCEPTED counts toward K immediately, even if the payout is still in flight; the payout has its own machine.}
+\end{figure}
+
+\begin{shelfiebox}{A rejected photo burns its code}
+A claim is single use: one submission per claim. If the photo fails, the code is spent. A retry means a new claim and a \emph{new} code. This is the reason a cheater cannot try the same code twice.
+\end{shelfiebox}
+
+\subsection{Payout states}
+The payout machine is the most delicate, because it moves real value. States: \code{QUEUED} $\rightarrow$ \code{SENDING} $\rightarrow$ \code{SUBMITTED} $\rightarrow$ \code{CONFIRMED}. If the engine does not know whether a transaction went out (timeout, crash), the payout becomes \code{UNKNOWN} and must be \emph{reconciled} against the chain before anything is sent again. The next section explains why.
+
+\section{Idempotency and the payout queue, from zero}
+\subsection{What idempotent means}
+An operation is \term{idempotent} if doing it twice has the same effect as doing it once. Pressing the lift button twice calls the lift once. In a web system requests are repeated all the time: the network times out, the user double-taps, a program restarts and tries again. If the operation is ``pay 3 tADA'' and it is not idempotent, a retry means paying twice. Money makes retries dangerous.
+
+An \term{idempotency key} is a label that identifies the \emph{intention}, e.g.\ ``pay the worker for task \code{tsk\_07}''. The system stores the key the first time. Any later request with the same key returns the original result instead of repeating the action.
+
+\begin{examplebox}{Why it prevents double payment}
+Task \code{tsk\_07} passes. The engine creates a payout with the key \code{payout:tsk\_07} and sends 3 tADA to Anna's address. The engine crashes at the worst moment: the transaction was sent, but the engine did not write down its hash.
+
+\textbf{Without idempotency and write-ahead logging:} after restart the engine sees ``task accepted, no payout hash'', concludes ``not paid'' and sends another 3 tADA. Anna received 6 tADA; Shelfie lost 3.
+
+\textbf{With our design:} before calling the wallet, the engine \emph{writes} ``SENDING, attempt 1'' to disk (this is called a write-ahead record). After the crash it sees SENDING with no hash and moves the payout to UNKNOWN. A reconcile step searches the wallet's history for a transaction carrying the metadata tag \code{shelfie:pay\_03} to Anna's address. It finds one: the payout is marked SUBMITTED with that hash. No second payment. Only if the search \emph{proves} no such transaction exists (after a waiting period of at least two minutes) may the payout return to QUEUED.
+\end{examplebox}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[font=\sffamily\small\bfseries,text=cRed,anchor=west] at (0,1.4) {Naive retry};
+\node[bad] (n1) at (1.6,0.3) {send 3 tADA};
+\node[bad] (n2) at (5.2,0.3) {crash before\\saving hash};
+\node[bad] (n3) at (8.8,0.3) {restart: ``no hash'',\\send again};
+\node[bad,fill=cRed!25] (n4) at (12.6,0.3) {Anna gets 6 tADA};
+\draw[flow] (n1)--(n2); \draw[flow] (n2)--(n3); \draw[flow] (n3)--(n4);
+\node[font=\sffamily\small\bfseries,text=cGreen,anchor=west] at (0,-1.3) {Shelfie design};
+\node[good] (g1) at (1.6,-2.4) {write ahead:\\SENDING};
+\node[good] (g2) at (5.2,-2.4) {send 3 tADA,\\crash};
+\node[good] (g3) at (8.8,-2.4) {restart: UNKNOWN,\\reconcile by tag};
+\node[good,fill=cGreen!25] (g4) at (12.6,-2.4) {tx found: SUBMITTED\\one payment};
+\draw[flow] (g1)--(g2); \draw[flow] (g2)--(g3); \draw[flow] (g3)--(g4);
+\end{tikzpicture}}
+\caption{The same crash, two designs.}
+\end{figure}
+
+\subsection{The keys we use}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{2.8cm}p{4.2cm}X@{}}
+\toprule
+\textbf{Operation} & \textbf{Key} & \textbf{On repeat}\\
+\midrule
+Create job & Sokosumi task id (\cSevenCode{externalRef}) & Returns the existing job\\
+Claim a task & (task, worker) while active & Same claim, same code\\
+Submit a photo & claim id; image hash & One submission per claim; same hash in same job: \cSevenCode{duplicate\_image}\\
+Verify & \cSevenCode{verify:<submissionId>} & Cached verdict; vision model not called again\\
+Payout & \cSevenCode{payout:<taskId>} & Returns the existing payout\\
+Payout tx & metadata tag \cSevenCode{shelfie:<payoutId>} & Lets reconcile find an earlier attempt\\
+Override & \cSevenCode{override:<submissionId>} & One override per submission\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{The payout queue and one-wallet-no-concurrency}
+In Cardano's eUTXO model (Chapter~2), a wallet spends specific coins (UTxOs). If two payments from one wallet start at once, both may try to spend the same coin and one fails. The x402 runbook states the first UTxO acts as a nonce, and a timeout does not prove a payment failed. Design consequences:
+\begin{itemize}
+  \item Each sending wallet has its \textbf{own serial queue with concurrency 1}: the next send starts only after the previous is confirmed or its change output is visible.
+  \item Separate wallets per purpose, so a verify payment and a worker payout never compete.
+  \item The worker page shows ``queued for verification, position 3''. Verification takes 20 to 60 s per check (an estimate), so a burst of five uploads takes minutes. The demo script staggers submissions.
+\end{itemize}
+
+\section{Wallets and who pays whom}
+Four wallets, each with one purpose (plus the workers' own addresses). All are throwaway preprod wallets; secrets live only in untracked environment files.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{1.8cm}p{4.1cm}X@{}}
+\toprule
+\textbf{Wallet} & \textbf{Who uses it} & \textbf{Purpose}\\
+\midrule
+\code{W-SELL} & verifier (receives) & Receives the 1 tADA verifier fees. The verifier holds no keys, only this address.\\
+\code{W-VBUY} & engine (pays) & x402 buyer: pays the verifier, with a spend cap.\\
+\code{W-PAY} & engine (pays) & Plain transfers of 3 tADA to workers.\\
+\code{W-MPS} & Masumi Payment Service & Seller wallet for the escrowed job fee, independent of ours.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[actor,minimum width=2.5cm] (brand) at (0,3) {Brand};
+\node[chain,minimum width=2.8cm] (esc) at (4.2,3) {Masumi escrow\\(holds the fee)};
+\node[service,minimum width=2.5cm] (mps) at (8.4,3) {\code{W-MPS}\\seller wallet};
+\draw[pay] (brand) -- node[lbl]{job fee (quote)} (esc);
+\draw[pay] (esc) -- node[lbl]{if DELIVER} (mps);
+\draw[pay,draw=cRed] (esc.north) -- ++(0,0.9) -| node[lbl,pos=0.25]{if WITHHOLD: refund} (brand.north);
+\node[service,minimum width=2.5cm] (vb) at (0,0) {\code{W-VBUY}\\engine buyer};
+\node[service,minimum width=2.5cm] (ws) at (4.2,0) {\code{W-SELL}\\verifier income};
+\draw[pay] (vb) -- node[lbl,above]{1 tADA per check} node[lbl,below]{pass or fail} (ws);
+\node[service,minimum width=2.5cm] (wp) at (0,-2.6) {\code{W-PAY}\\engine payouts};
+\node[human,minimum width=2.5cm] (wk) at (4.2,-2.6) {Worker address\\(own wallet)};
+\draw[pay] (wp) -- node[lbl,above]{3 tADA per pass} (wk);
+\node[font=\sffamily\scriptsize,text=cGrey,align=left,anchor=west] at (6.2,0) {Funding budget (inference):\\ per accepted task about\\ 1 + 0.17 fee + 3 + 0.2 fee;\\ per rejected attempt about 1.17;\\ fund \code{W-VBUY} and \code{W-PAY}\\ with at least 100 tADA.};
+\end{tikzpicture}}
+\caption{Money flow of one job. Gold arrows are payments. The escrow asset is a Masumi quote (about 1 test USDM, verify Friday); the other payments are tADA.}
+\end{figure}
+
+\begin{warningbox}{Do not mix up the two kinds of money}
+The brand's escrow fee is a Sokosumi/Masumi quote whose asset and amount are \textbf{still to be confirmed} (\texttt{[VERIFY\_ASSET]}). The verifier fee and the payout are in tADA (ADR-03). Never convert between them in the pitch.
+\end{warningbox}
+
+\section{Key API endpoints}
+The engine exposes a small REST API on \code{http://localhost:4000/api}. IDs are prefixed strings, timestamps are ISO-8601 UTC, and errors share one shape: \code{\{ "error": \{ "code": "claim\_expired", "message": "..." \} \}}. A selection:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{6.6cm}p{2.0cm}X@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Caller} & \textbf{Purpose}\\
+\midrule
+\cSevenCode{POST /api/jobs} & shell, admin & Create a job (idempotent on \cSevenCode{externalRef}); returns tasks.\\
+\cSevenCode{GET /api/jobs/\{id\}} & web & Job with counts, decision, settlement.\\
+\cSevenCode{GET /api/jobs/\{id\}/decision} & shell & Long poll: PENDING, DELIVER (with report), WITHHOLD.\\
+\cSevenCode{POST /api/jobs/\{id\}/settlement-events} & shell & Report Masumi observations (lock, settle, refund).\\
+\cSevenCode{GET /api/tasks?status=OPEN} & worker page & List tasks a worker can take.\\
+\cSevenCode{POST /api/tasks/\{id\}/claim} & worker page & Reserve a task; returns the challenge code.\\
+\cSevenCode{POST /api/tasks/\{id\}/submissions} & worker page & Upload the photo (base64 JSON); returns 202.\\
+\cSevenCode{GET /api/submissions/\{id\}} & worker page & Poll verdict, payout state and tx link.\\
+\cSevenCode{GET /api/ledger}, \cSevenCode{/ledger/stream} & dashboard & Evidence entries; live stream (SSE).\\
+\cSevenCode{GET /api/health} & dashboard & Wallet balances, verifier up/down, \emph{fake} flags.\\
+\cSevenCode{POST /api/admin/.../override} & admin only & Demo override (off by default).\\
+\cSevenCode{POST /v1/verify} (verifier) & engine & Paid endpoint; 402 first, then verdict.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+Three header-based roles exist: workers are open (a random \code{workerId} plus a payout address), the shell sends \code{X-Shell-Token}, admins send \code{X-Admin-Token}. The verifier's \code{POST /v1/verify} is protected only by x402. Typical status codes you will meet: 402 (payment needed, verifier only), 409 (state conflict such as \code{claim\_expired}), 413 (image too large), 422 (valid format, bad content), 429 (rate limited).
+
+\begin{shelfiebox}{Fakes make parallel work possible}
+With \code{FAKE\_PAYMENTS=1} the engine runs on fake payments and fake verification, so A, C and D can build against it from minute one. The dashboard then shows a red ``FAKE PAYMENTS'' banner, and an evidence run never counts a fake verdict.
+\end{shelfiebox}
+
+\section{Important decisions (ADRs) in plain language}
+An \term{ADR} (architecture decision record) is a short note: what we decided, which alternatives we rejected, what it costs us. The design folder has 15; these are the ones every teammate should know.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{1.2cm}p{3.5cm}X@{}}
+\toprule
+\textbf{ADR} & \textbf{Decision} & \textbf{In plain words}\\
+\midrule
+01 & Engine plus domain pack & Build one generic engine; shelf checks are one pack. Costs about an hour of structure, buys a cheap Plan B.\\
+02 & x402 for the verifier, 1 tADA per check & Agents paying agents is the point of the track. Every check leaves a public tx, pass or fail. 1 tADA is the floor; if the facilitator rejects it, use 2.\\
+03 & tADA, not tUSDM & Two incompatible tUSDM token variants exist; lovelace avoids the mix-up.\\
+04 & Plain transfer for worker payouts & Unverified: can the SDK send plain transfers? Fallbacks in order: SDK; Lucid/Mesh for the transfer only; worker address as x402 \code{payTo}; labelled manual payout.\\
+05 & Escrow job runs early & An escrow cycle takes at least 60 minutes, so start Friday and show recorded settlement on stage.\\
+06 & HTTPS tunnel over LAN & Only secure pages may use the in-page camera; venue Wi-Fi may isolate clients.\\
+07 & Vision model is configuration & The 20-photo test picks the model. The model reads; plain code decides; the model never sees the expected code or price.\\
+08 & Separate wallets, one queue each & Avoids coin contention; verification becomes slow but safe.\\
+09 & Workers paid at verifier pass & Keeps the live payout moment; Shelfie bears the risk if the job later fails.\\
+10 & Simple persistence & In-memory plus an append-only log replayed at start; fine for tens of records.\\
+11 & Withhold the result to refund & On a failed job the shell submits no hash, so Masumi's no-result refund applies. A ``failed'' result would pay the seller.\\
+12 & Code proves freshness, not location & GPS is spoofable and EXIF editable; store-owned QR codes are roadmap.\\
+13 & Override exists, off by default, always visible & A rescue for the stage, never silent.\\
+14 & One hub laptop & One machine to keep awake; a cold spare is prepared.\\
+15 & Thin shell fork & JavaScript stays only in the starter; logic is in testable TypeScript.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keypoints}
+\begin{itemize}
+  \item Shelfie is a \textbf{generic engine} (Job $\rightarrow$ Tasks $\rightarrow$ Worker $\rightarrow$ Verifier $\rightarrow$ Settlement); shelf checks are one swappable \textbf{domain pack}.
+  \item Roles: A shell and engine, B payments and x402, C verifier and pack, D web, evidence, pitch. Everything runs on one hub laptop behind one HTTPS tunnel.
+  \item IDs: \code{job\_ tsk\_ clm\_ sub\_ vdt\_ pay\_ stl\_ evd\_}. State machines forbid illegal moves.
+  \item \textbf{Idempotency keys} and a write-ahead payout queue with on-chain reconcile prevent double payment.
+  \item Wallets: \code{W-VBUY} pays the verifier (1 tADA per check), \code{W-SELL} receives, \code{W-PAY} pays workers (3 tADA), \code{W-MPS} is Masumi's seller wallet.
+  \item Nothing is built yet; items marked ``verify Friday'' (SDK transfers, escrow timing, tunnel) are open.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item Name the five stages of the engine pattern.
+  \item What would you change to swap Shelfie for the letter decoder, and what stays?
+  \item What does the prefix \code{pay\_} identify, and how many may exist per task?
+  \item Explain in two sentences how the write-ahead record and the metadata tag prevent a double payout after a crash.
+  \item Which wallet pays the verifier, and how much per check?
+  \item Why is the demo run on one hub laptop with an HTTPS tunnel?
+\end{enumerate}
+{\small\color{cGrey}\textbf{Answers.}
+(1) Job, Tasks, Worker, Verifier, Settlement.
+(2) Only the domain pack (and \code{PACK\_ID}); shell, payments, engine core, verifier wrapper, ledger and web frame stay.
+(3) A payout; at most one per task (unique key \code{payout:<taskId>}).
+(4) The ``SENDING'' record is written before the wallet is called, so after a crash the engine knows a send may have happened and checks the chain for the tagged transaction first; it only resends if none exists.
+(5) \code{W-VBUY}; 1 tADA, pass or fail.
+(6) One machine to keep awake and configure; the tunnel gives phones HTTPS (needed for the in-page camera) and works on mobile data.}
+\end{quizbox}

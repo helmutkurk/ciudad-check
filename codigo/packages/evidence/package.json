@@ -1,0 +1,28 @@
+{
+  "name": "@shelfie/evidence",
+  "license": "BUSL-1.1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Hash-chained append-only JSONL evidence ledger (writer, reader, verifier) and explorer URL helpers.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./explorer": {
+      "types": "./src/explorer.ts",
+      "default": "./src/explorer.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify-ledger": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@shelfie/core": "0.0.0"
+  },
+  "devDependencies": {
+    "tsx": "4.21.0"
+  }
+}

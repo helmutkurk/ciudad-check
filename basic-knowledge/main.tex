@@ -1,0 +1,170 @@
+% Basic Knowledge: Cardano track study guide for team "Los Curiosos" (Shelfie)
+% Build: latexmk -pdf main.tex
+\documentclass[11pt,a4paper,oneside]{report}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{charter}
+\usepackage[scale=0.92]{tgheros}
+\usepackage{microtype}
+\usepackage[margin=2.3cm,headheight=14pt]{geometry}
+\usepackage[dvipsnames,svgnames,table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,shapes.misc,shapes.symbols,calc,fit,backgrounds,decorations.pathreplacing,shadows,matrix,chains}
+\usepackage[most]{tcolorbox}
+\usepackage{booktabs,tabularx,array,longtable,multirow}
+\usepackage{enumitem}
+\usepackage{pifont}
+\usepackage{amsmath,amssymb}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{colorlinks=true,linkcolor=cBlue,urlcolor=cBlue}
+
+% ---------- Palette ----------
+\definecolor{cBlue}{HTML}{0033AD}     % Cardano blue
+\definecolor{cSky}{HTML}{3D7BFF}
+\definecolor{cTeal}{HTML}{0F9D8A}
+\definecolor{cGreen}{HTML}{2E8B3A}
+\definecolor{cOrange}{HTML}{E8770E}
+\definecolor{cRed}{HTML}{C62828}
+\definecolor{cPurple}{HTML}{6A3FB5}
+\definecolor{cGold}{HTML}{C99A06}
+\definecolor{cGrey}{HTML}{5F6670}
+\definecolor{cLight}{HTML}{F3F6FB}
+
+% ---------- Headings ----------
+\titleformat{\chapter}[display]
+  {\sffamily\bfseries\color{cBlue}}
+  {\Large\MakeUppercase{\chaptertitlename}~\thechapter}
+  {4pt}{\Huge}[{\color{cSky}\titlerule[1.2pt]}]
+\titlespacing*{\chapter}{0pt}{0pt}{18pt}
+\titleformat{\section}{\sffamily\Large\bfseries\color{cBlue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\sffamily\large\bfseries\color{cSky!80!black}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\sffamily\normalsize\bfseries\color{cGrey}}{}{0em}{}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{1}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\sffamily\small\color{cGrey}Cardano Track · Basic Knowledge}
+\fancyhead[R]{\sffamily\small\color{cGrey}\leftmark}
+\fancyfoot[C]{\sffamily\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\sffamily\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\parskip}{5pt}
+
+% ---------- Boxes ----------
+% Usage: \begin{conceptbox}{Title} ... \end{conceptbox}
+\newtcolorbox{conceptbox}[1]{enhanced,breakable,colback=cBlue!5,colframe=cBlue,
+  fonttitle=\sffamily\bfseries,title={\ding{228}\ #1},arc=2mm,boxrule=0.8pt,left=6pt,right=6pt}
+\newtcolorbox{examplebox}[1]{enhanced,breakable,colback=cGreen!5,colframe=cGreen,
+  fonttitle=\sffamily\bfseries,title={Example: #1},arc=2mm,boxrule=0.8pt}
+\newtcolorbox{analogybox}[1]{enhanced,breakable,colback=cOrange!6,colframe=cOrange,
+  fonttitle=\sffamily\bfseries,title={Everyday analogy: #1},arc=2mm,boxrule=0.8pt}
+\newtcolorbox{warningbox}[1]{enhanced,breakable,colback=cRed!5,colframe=cRed,
+  fonttitle=\sffamily\bfseries,title={\ding{55}\ Common pitfall: #1},arc=2mm,boxrule=0.8pt}
+\newtcolorbox{shelfiebox}[1]{enhanced,breakable,colback=cPurple!5,colframe=cPurple,
+  fonttitle=\sffamily\bfseries,title={In Shelfie: #1},arc=2mm,boxrule=0.8pt}
+\newtcolorbox{keypoints}{enhanced,breakable,colback=cGold!8,colframe=cGold,
+  fonttitle=\sffamily\bfseries,title={\ding{72}\ Key takeaways},arc=2mm,boxrule=0.8pt}
+\newtcolorbox{quizbox}{enhanced,breakable,colback=cTeal!5,colframe=cTeal,
+  fonttitle=\sffamily\bfseries,title={? Check yourself},arc=2mm,boxrule=0.8pt}
+% Inline term highlight for first definitions
+\newcommand{\term}[1]{\textbf{\color{cBlue}#1}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\yes}{\textcolor{cGreen}{\ding{51}}}
+\newcommand{\no}{\textcolor{cRed}{\ding{55}}}
+
+% ---------- TikZ styles (shared by all chapters) ----------
+\tikzset{
+  >=Stealth,
+  box/.style={draw,rounded corners=3pt,thick,align=center,font=\sffamily\small,minimum height=9mm,inner sep=5pt},
+  actor/.style={box,fill=cBlue!10,draw=cBlue},
+  agent/.style={box,fill=cPurple!12,draw=cPurple},
+  human/.style={box,fill=cOrange!12,draw=cOrange},
+  chain/.style={box,fill=cTeal!12,draw=cTeal},
+  service/.style={box,fill=cGrey!10,draw=cGrey},
+  good/.style={box,fill=cGreen!12,draw=cGreen},
+  bad/.style={box,fill=cRed!10,draw=cRed},
+  flow/.style={->,thick,draw=cGrey},
+  pay/.style={->,very thick,draw=cGold!90!black},
+  data/.style={->,thick,dashed,draw=cSky},
+  lbl/.style={font=\sffamily\scriptsize,midway,fill=white,inner sep=1.5pt},
+  blk/.style={draw=cBlue,fill=cBlue!8,thick,minimum width=2.4cm,minimum height=1.6cm,align=center,font=\sffamily\scriptsize},
+  utxo/.style={draw=cTeal,fill=cTeal!15,thick,rounded corners=6pt,align=center,font=\sffamily\scriptsize,minimum width=2cm,minimum height=1cm},
+}
+
+\lstset{basicstyle=\ttfamily\small,backgroundcolor=\color{cLight},frame=single,rulecolor=\color{cGrey!40},
+  breaklines=true,columns=fullflexible,keywordstyle=\color{cBlue}\bfseries,commentstyle=\color{cGrey}\itshape,
+  stringstyle=\color{cGreen!70!black}}
+
+\begin{document}
+
+% ---------- Title page ----------
+\begin{titlepage}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[cBlue] (current page.north west) rectangle ([yshift=-9cm]current page.north east);
+  \foreach \i in {0,...,11}{
+    \pgfmathsetmacro{\a}{\i*30}
+    \fill[white,opacity=0.25] ([xshift=-3.2cm,yshift=-4.5cm]current page.north east) ++(\a:2.2cm) circle (2.5mm);
+    \fill[white,opacity=0.45] ([xshift=-3.2cm,yshift=-4.5cm]current page.north east) ++(\a+15:1.3cm) circle (1.6mm);
+  }
+  \fill[white] ([xshift=-3.2cm,yshift=-4.5cm]current page.north east) circle (5mm);
+  \node[anchor=north west,text=white,font=\sffamily\bfseries\fontsize{30}{36}\selectfont,align=left]
+    at ([xshift=2.2cm,yshift=-2.6cm]current page.north west) {Basic Knowledge};
+  \node[anchor=north west,text=white!85!cSky,font=\sffamily\Large,align=left]
+    at ([xshift=2.2cm,yshift=-4.4cm]current page.north west)
+    {Everything you need to understand\\the Cardano track and Shelfie};
+\end{tikzpicture}
+\vspace*{9.5cm}
+
+{\sffamily\large
+\textbf{TUM Blockchain \& AI Hackathon 2026}\\[2pt]
+Track: \textcolor{cBlue}{\textbf{Agentic Commerce on Cardano}}\\[2pt]
+Team \textit{Los Curiosos}: Helmut · Isabel · Fernando · Lorenz\par}
+\vspace{1cm}
+
+\begin{tcolorbox}[colback=cLight,colframe=cGrey!40,boxrule=0.5pt,arc=2mm]
+\sffamily\small
+\textbf{How to read this guide.} Part~I explains blockchains and Cardano from zero.
+Part~II explains the payment and agent technologies of the track: HTTP~402, x402, AI agents,
+Masumi and Sokosumi, and what ``on-chain'' really means. Part~III explains our own idea, Shelfie, and
+how all the pieces fit together on hackathon day. Colour code of the boxes:\\[4pt]
+\textcolor{cBlue}{\ding{110}} concept \quad
+\textcolor{cGreen}{\ding{110}} example \quad
+\textcolor{cOrange}{\ding{110}} everyday analogy \quad
+\textcolor{cRed}{\ding{110}} pitfall \quad
+\textcolor{cPurple}{\ding{110}} how Shelfie uses it \quad
+\textcolor{cGold}{\ding{110}} takeaways \quad
+\textcolor{cTeal}{\ding{110}} self-check
+\end{tcolorbox}
+\vfill
+{\sffamily\small\color{cGrey} Study material, prepared before the build window. Facts about tools were taken from the
+team's research notes (\texttt{investigacion/}, \texttt{diseno/}); anything marked \emph{verify Friday} is still unconfirmed.\par}
+\end{titlepage}
+
+\tableofcontents
+
+\part{Foundations}
+\input{chapters/01-blockchain}
+\input{chapters/02-cardano}
+
+\part{Payments and agents}
+\input{chapters/03-http402-x402}
+\input{chapters/04-agents-masumi}
+\input{chapters/05-onchain-offchain}
+
+\part{Our idea: Shelfie}
+\input{chapters/06-shelfie-idea}
+\input{chapters/07-shelfie-architecture}
+\input{chapters/08-shelfie-verifier}
+\input{chapters/09-hackathon-day}
+
+\appendix
+\input{chapters/10-glossary}
+
+\end{document}

@@ -1,0 +1,78 @@
+# Dependencies and builds
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Secrets: never commit. Names only in .env.example
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.skey
+*.pem
+secrets/
+
+# Claude Code local settings (only auto-ignored on the creator's machine)
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/worktrees/
+
+# Runtime data
+apps/engine/data/
+*.jsonl
+codigo/**/data/
+codigo/eval/photos/
+codigo/eval/results/*.json
+
+# Evidence: keep text, ignore large images (keep originals locally)
+docs/evidence/screenshots/*.png
+docs/evidence/screenshots/*.jpg
+docs/evidence/screenshots/*.jpeg
+docs/evidence/screenshots/*.mov
+docs/evidence/screenshots/*.mp4
+!docs/evidence/screenshots/.gitkeep
+
+# Pitch photos (real shelf photos for the hook slide): local only
+pitch/slides/img/
+
+# Personal, never committed
+invoice/
+investigacion/codex-stdout.log
+
+# Third-party material, never committed (public repo): raw downloads of the organisers' website
+# and saved copies of its pages/JS chunks (copyright, minified bundles, no value in git)
+downloads-blockchain-website/
+investigacion/prizes.html
+investigacion/chunk.txt
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.xdv
+*.bbl
+*.blg
+*.vrb
+
+# Keep the built PDFs
+!basic-knowledge/main.pdf
+!pitch/slides/shelfie.pdf
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Context-gate acknowledgements (per machine)
+.claude/state/

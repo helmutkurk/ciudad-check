@@ -1,0 +1,440 @@
+\chapter{HTTP 402 and x402}
+
+\section*{Why this matters for us}
+Shelfie sells exactly one thing to other software: a \emph{verification} of a shelf photo, for 1~tADA per check. The way we sell it is x402, the Cardano track's ``fastest path to a first payment''. Our engine (a program) pays our verifier (another program) over plain HTTP, with no accounts, no API keys and no invoices, and every payment leaves a transaction hash that judges can open on Cardanoscan. To understand how that works you need three layers: (1) what HTTP is, (2) what the unused status code \code{402 Payment Required} was meant for, and (3) how the x402 protocol finally gives it a meaning. This chapter builds those layers from zero and ends with the exact numbers we plan to use.
+
+\section{HTTP from zero}
+\subsection{Client, server, request, response}
+The web works as a conversation between two programs. The \term{client} asks (your browser, a phone app, a script, an AI agent). The \term{server} answers (a program running on some computer, listening at an address such as \code{shelfie.example}). Each question is called a \term{request} and each answer a \term{response}. \term{HTTP} (HyperText Transfer Protocol) is the agreed format of these messages, so that any client can talk to any server.
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[actor,minimum width=3.2cm] (c) at (0,0) {\textbf{Client}\\browser, script, agent};
+  \node[service,minimum width=3.2cm] (s) at (10,0) {\textbf{Server}\\program with an address};
+  \draw[flow] ([yshift=3mm]c.east) -- ([yshift=3mm]s.west) node[lbl,above=1mm,fill=none] {\textbf{Request}: ``GET /v1/price''};
+  \draw[data] ([yshift=-3mm]s.west) -- ([yshift=-3mm]c.east) node[lbl,below=1mm,fill=none] {\textbf{Response}: ``200 OK'' + data};
+  \node[font=\sffamily\scriptsize,text=cGrey] at (5,-1.6) {One request gets exactly one response. The server never calls the client first.};
+\end{tikzpicture}
+\end{center}
+
+\begin{analogybox}{a restaurant}
+The client is a guest, the server is the kitchen, the request is the order slip and the response is the plate. The guest uses a fixed menu format (HTTP), so every kitchen understands every guest. If the kitchen needs a deposit before cooking, it should say so on the slip it hands back. That missing ``deposit'' answer is what HTTP~402 was reserved for.
+\end{analogybox}
+
+\subsection{Anatomy of a message}
+A request has four parts and a response has three:
+\begin{itemize}
+  \item \term{Method}: what the client wants to do (\code{GET} = read, \code{POST} = send data to be processed).
+  \item \term{URL / path}: which resource (\code{/v1/verify}).
+  \item \term{Headers}: small labelled extra facts, one per line (\code{Content-Type: application/json}). x402 lives entirely in headers.
+  \item \term{Body}: the payload (for us: JSON containing a photo).
+  \item In the response, the \term{status code} is a three-digit number plus a short text that says how it went.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm,every node/.style={font=\ttfamily\scriptsize}]
+  \node[draw=cBlue,fill=cBlue!6,rounded corners=3pt,align=left,inner sep=6pt,text width=6.8cm] (rq) at (0,0)
+   {\textbf{\sffamily REQUEST}\\[2pt]
+    \textcolor{cBlue}{POST /v1/verify} HTTP/1.1\\
+    \textcolor{cTeal}{Host}: verifier.example\\
+    \textcolor{cTeal}{Content-Type}: application/json\\
+    \textcolor{cTeal}{Idempotency-Key}: verify:sub\_01\\[2pt]
+    \textcolor{cOrange}{\{ "packId": "shelf-check", ... \}}};
+  \node[draw=cGreen,fill=cGreen!6,rounded corners=3pt,align=left,inner sep=6pt,text width=6.8cm] (rs) at (8.2,0)
+   {\textbf{\sffamily RESPONSE}\\[2pt]
+    HTTP/1.1 \textcolor{cGreen}{200 OK}\\
+    \textcolor{cTeal}{Content-Type}: application/json\\
+    \textcolor{cTeal}{PAYMENT-RESPONSE}: eyJ0cmFuc2...\\[2pt]
+    \textcolor{cOrange}{\{ "pass": false, "failedGates": [...] \}}};
+  \node[font=\sffamily\scriptsize,text=cBlue,above=1mm of rq] {method + path \quad headers \quad body};
+  \node[font=\sffamily\scriptsize,text=cGreen!60!black,above=1mm of rs] {status \quad headers \quad body};
+\end{tikzpicture}
+\end{center}
+
+\subsection{The status codes you must know}
+The first digit is the family: 2xx = success, 3xx = look elsewhere, 4xx = the \emph{client} did something wrong or is missing something, 5xx = the \emph{server} failed.
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \foreach \x/\t/\c/\d in {0/2xx/cGreen/Success,3.3/3xx/cSky/Redirect,6.6/4xx/cOrange/Client side,9.9/5xx/cRed/Server side}{
+    \node[draw=\c,fill=\c!12,thick,rounded corners=4pt,minimum width=3cm,minimum height=1.1cm,align=center,font=\sffamily\small] at (\x+1.5,0) {\textbf{\t}\\\d};}
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Code} & \textbf{Name} & \textbf{Meaning in plain words}\\
+\midrule
+\code{200} & OK & It worked, here is what you asked for.\\
+\code{301} & Moved Permanently & The thing now lives at another URL; go there.\\
+\code{400} & Bad Request & Your request is malformed (broken JSON, missing field).\\
+\code{401} & Unauthorized & ``Who are you?'' Log in or send credentials.\\
+\code{403} & Forbidden & I know who you are, but you may not do this.\\
+\code{404} & Not Found & There is nothing at this address.\\
+\textcolor{cPurple}{\textbf{\code{402}}} & \textcolor{cPurple}{\textbf{Payment Required}} & \textcolor{cPurple}{\textbf{You must pay first.} Reserved since the 1990s, now used by x402.}\\
+\code{500} & Internal Server Error & The server crashed or failed; not your fault.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{examplebox}{reading Shelfie's own error codes}
+In our verifier contract (\code{diseno/contracts.md}), errors before payment settles use \code{400 invalid\_request}, \code{413 image\_too\_large}, \code{422 image\_not\_decodable} and \code{503 vision\_unavailable}. Codes 413, 422 and 503 are standard HTTP codes that we simply reuse: ``payload too large'', ``cannot process this content'' and ``service temporarily unavailable''. The design goal is that these must \emph{not} charge the buyer.
+\end{examplebox}
+
+\section{The history of \texttt{402 Payment Required}}
+When the HTTP status codes were designed in the 1990s, the authors expected money to move on the web soon. They set aside code \code{402} with the name ``Payment Required'' and the note ``reserved for future use''. The idea: a server could answer 402 to say ``this resource costs money''.
+
+Then nothing happened. No standard defined \emph{how} to say the price, \emph{in which currency}, or \emph{how} to prove payment. Credit-card networks, PayPal and later Stripe built their own checkouts on top of web pages instead. For about thirty years \code{402} stayed an unused code: browsers show it like any 4xx error, and a few services misuse it informally (for example ``your subscription lapsed'').
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \draw[thick,draw=cGrey] (0,0) -- (15.5,0);
+  \foreach \x/\t in {0.8/1990s,5/2000s--2010s,10/2010s,14.2/Today}{
+    \fill[cBlue] (\x,0) circle (2.2mm);
+    \node[font=\sffamily\small\bfseries,above=3mm,text=cBlue] at (\x,0) {\t};}
+  \node[font=\sffamily\scriptsize,below=3mm,align=center] at (0.8,0) {402 is reserved\\``for future use''};
+  \node[font=\sffamily\scriptsize,below=3mm,align=center] at (5,0) {Cards, PayPal, Stripe:\\payment happens\\on web pages};
+  \node[font=\sffamily\scriptsize,below=3mm,align=center] at (10,0) {Bitcoin shows micro-\\payments are\\technically possible};
+  \node[font=\sffamily\scriptsize,below=3mm,align=center] at (14.2,0) {x402: 402 finally\\gets a standard};
+\end{tikzpicture}
+\end{center}
+
+\begin{conceptbox}{Why 402 is attractive again}
+Three things changed. (1) Blockchains give a payment method that works without a bank, around the clock, in any amount. (2) Settlement takes seconds to a minute and costs cents or less, so tiny prices make sense. (3) The biggest new customers of the web are no longer humans with credit cards but \emph{software agents}, which cannot fill in a checkout form. x402 is the protocol that turns the dormant status code into a working payment handshake.
+\end{conceptbox}
+
+\section{Why paying per request matters for machines}
+Think about how a program normally buys a service today. A human signs up, enters a credit card, receives an \term{API key} (a secret password string), and the program sends that key in every request. That works, but it has costs that grow when the buyer is an autonomous agent:
+\begin{itemize}
+  \item \textbf{Accounts and onboarding.} Someone must register, accept terms, and store the key. An agent that discovers a new service at 3~a.m.\ cannot do this alone.
+  \item \textbf{Subscriptions.} A flat monthly fee is wasteful if you need 12 checks this week and none next week.
+  \item \textbf{Minimum charges.} Card fees (often a fixed part of tens of cents plus a percentage) make a price of 1 cent or 10 cents impossible. These are \term{micropayments}.
+  \item \textbf{Secrets management.} A leaked API key lets strangers spend your money.
+\end{itemize}
+
+x402 flips this. The \emph{request itself} carries the payment, one request at a time. The seller needs no list of customers and the buyer needs no account.
+
+\begin{analogybox}{a vending machine versus a gym membership}
+A gym membership means registration, a contract and a monthly debit whether you use it or not (subscription + API key). A vending machine lets anyone walk up, put coins in and receive exactly one item (pay per request). The machine does not know you and does not need to. x402 turns every API into a vending machine, and the ``coins'' are a signed blockchain payment.
+\end{analogybox}
+
+\section{The x402 protocol}
+\subsection{Roles}
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[agent,minimum width=3.6cm,minimum height=1.6cm] (b) at (0,0) {\textbf{Buyer / client}\\wants the resource,\\holds the wallet key};
+  \node[actor,minimum width=3.6cm,minimum height=1.6cm] (s) at (5.7,0) {\textbf{Seller / resource server}\\sells an API,\\holds \emph{no} keys};
+  \node[service,minimum width=3.6cm,minimum height=1.6cm] (f) at (11.4,0) {\textbf{Facilitator}\\checks and submits\\the payment};
+  \node[chain,minimum width=11.4cm] (c) at (5.7,-2.6) {\textbf{Cardano preprod}\ \ (the ledger that records the payment)};
+  \draw[flow,<->] (b) -- (s) node[lbl,midway,above=1mm,fill=none] {HTTP + payment headers};
+  \draw[flow,<->] (s) -- (f) node[lbl,midway,above=1mm,fill=none] {``verify'' / ``settle''};
+  \draw[pay] (f.south) -- (f.south |- c.north) node[lbl,midway,right=1mm,fill=none] {submits tx};
+  \draw[data] (b.south) -- (b.south |- c.north) node[lbl,midway,left=1mm,fill=none] {signs only (no submit)};
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item The \term{buyer} (client) is the party that wants something. It holds a wallet key and \emph{signs} the payment.
+  \item The \term{seller} (resource server) owns the API. It only needs a receiving address, never a private key. This is why a seller cannot lose funds to a hack of its server.
+  \item The \term{facilitator} is a helper service. It checks that a signed payment is valid (\term{verify}) and submits it to the blockchain (\term{settle}). It exists so the seller does not need blockchain code or a node connection. On Cardano the hosted preprod facilitator is \term{non-custodial}: it never holds the buyer's money or keys.
+\end{itemize}
+
+\subsection{The full flow}
+The key trick is the \emph{two-step request}. The buyer first asks without paying, learns the price from a 402 answer, signs a payment, and asks again with the payment attached.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,
+   life/.style={dashed,draw=cGrey!60},
+   msg/.style={->,thick,draw=cGrey},
+   payl/.style={->,very thick,draw=cGold!90!black},
+   ret/.style={->,thick,dashed,draw=cSky},
+   n/.style={font=\sffamily\scriptsize,fill=white,inner sep=1.5pt,align=center}]
+  \node[agent,minimum width=2.6cm] (B) at (0,0) {Buyer};
+  \node[actor,minimum width=2.6cm] (S) at (6.4,0) {Seller};
+  \node[service,minimum width=2.6cm] (F) at (12.4,0) {Facilitator};
+  \node[chain,minimum width=2.6cm] (C) at (17.6,0) {Cardano};
+  \foreach \p in {B,S,F,C} \draw[life] (\p.south) -- ++(0,-10.6);
+  \draw[msg] (0,-1.1) -- (6.4,-1.1) node[n,midway] {1. GET /resource (no payment)};
+  \draw[ret] (6.4,-2.0) -- (0,-2.0) node[n,midway] {2. \textbf{402} + PAYMENT-REQUIRED (price, asset, payTo)};
+  \node[font=\sffamily\scriptsize,text=cPurple,align=left,anchor=west] at (0.2,-2.7) {3. Buyer checks the price against its spend cap,\\ \ \ builds and \textbf{signs} a payment (not yet sent to the chain)};
+  \draw[payl] (0,-3.7) -- (6.4,-3.7) node[n,midway] {4. same request again + PAYMENT-SIGNATURE};
+  \draw[msg] (6.4,-4.6) -- (12.4,-4.6) node[n,midway] {5. verify(payment, requirements)};
+  \draw[ret] (12.4,-5.3) -- (6.4,-5.3) node[n,midway] {6. isValid = true};
+  \node[font=\sffamily\scriptsize,text=cBlue,anchor=west] at (6.6,-6.0) {7. Seller runs its real work (our vision check + rules)};
+  \draw[msg] (6.4,-6.8) -- (12.4,-6.8) node[n,midway] {8. settle(payment)};
+  \draw[payl] (12.4,-7.6) -- (17.6,-7.6) node[n,midway] {9. submit transaction};
+  \draw[ret] (17.6,-8.3) -- (12.4,-8.3) node[n,midway] {10. tx hash (confirmed)};
+  \draw[ret] (12.4,-9.0) -- (6.4,-9.0) node[n,midway] {11. settlement result};
+  \draw[ret] (6.4,-9.9) -- (0,-9.9) node[n,midway] {12. \textbf{200 OK} + result + receipt (tx hash)};
+\end{tikzpicture}}
+\end{center}
+
+\begin{examplebox}{the same flow with numbers}
+A buyer calls \code{POST /v1/verify}. Step 2 returns: ``price 1000000 lovelace, asset lovelace, network cardano:preprod, payTo addr\_test1\ldots''. The buyer's cap is 2000000 lovelace, so it accepts (1~tADA $\le$ 2~tADA). It signs a transaction moving 1~tADA to the seller's address and retries (steps 3--4). The facilitator confirms the signature and balance (steps 5--6). The seller does its work, the facilitator submits the transaction (step 9), and after 20--60~s the buyer receives the verdict plus the transaction hash (step 12). Network fee: about 0.17~ADA on top, paid by the buyer.
+\end{examplebox}
+
+\subsection{What is in the payment requirements}
+The 402 answer carries a small structured document (header \code{PAYMENT-REQUIRED}) that tells the buyer everything it needs to decide and pay:
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Field} & \textbf{Example} & \textbf{Meaning}\\
+\midrule
+\code{scheme} & \code{exact} & Pay exactly the stated amount (no ``up to'').\\
+\code{network} & \code{cardano:preprod} & Which chain; here the practice network.\\
+\code{price.amount} & \code{1000000} & The price in the asset's smallest unit.\\
+\code{price.asset} & \code{lovelace} & What to pay with: ADA (in lovelace) or a token.\\
+\code{payTo} & \code{addr\_test1\ldots} & The seller's receiving address.\\
+\code{description} & ``One shelf-photo verification'' & Human-readable purpose.\\
+\code{mimeType} & \code{application/json} & Type of the thing you will get back.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent Remember: 1~ADA = 1\,000\,000 lovelace, and on the test network the coin is called \emph{tADA} (worthless test money from a faucet).
+
+\subsection{The three headers}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Header} & \textbf{Direction} & \textbf{Content}\\
+\midrule
+\code{PAYMENT-REQUIRED} & seller $\rightarrow$ buyer (with 402) & The payment requirements above.\\
+\code{PAYMENT-SIGNATURE} & buyer $\rightarrow$ seller (retry) & The signed payment, encoded as text.\\
+\code{PAYMENT-RESPONSE} & seller $\rightarrow$ buyer (with 200) & The receipt: success flag and the transaction hash.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Verify versus settle}
+These two facilitator steps are easy to confuse and matter for correctness.
+\begin{itemize}
+  \item \term{Verify} is a \emph{check only}: ``Is this signature valid? Does the buyer have the funds? Does the payment match the requirements?'' Nothing is sent to the chain, nothing is spent. A failed check arrives as HTTP~200 with \code{isValid:false} and an \code{invalidReason}; do not mistake that 200 for ``paid''.
+  \item \term{Settle} actually submits the transaction and waits for the chain to confirm it. Only now has money moved.
+\end{itemize}
+In the Cardano express template the seller's paid handler runs \emph{after verify and before settle}. This gives the seller a safe ``go/no-go'' point: it can refuse to do work for an invalid payment, and the buyer is charged only when settlement happens.
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[box,fill=cLight,draw=cGrey,minimum width=3cm] (a) at (0,0) {Signed payment\\arrives};
+  \node[good,minimum width=3cm] (v) at (4.2,0) {\textbf{Verify}\\check only};
+  \node[agent,minimum width=3cm] (h) at (8.4,0) {\textbf{Handler runs}\\our vision check};
+  \node[chain,minimum width=3cm] (s) at (12.6,0) {\textbf{Settle}\\tx on the chain};
+  \draw[flow] (a)--(v); \draw[flow] (v)--(h); \draw[flow] (h)--(s);
+  \node[font=\sffamily\scriptsize,text=cGrey,align=center] at (2.1,-1.2) {no money moved};
+  \node[font=\sffamily\scriptsize,text=cGrey,align=center] at (6.3,-1.2) {no money moved};
+  \node[font=\sffamily\scriptsize,text=cGreen!60!black,align=center] at (10.5,-1.2) {work done, still\\no money moved};
+  \node[font=\sffamily\scriptsize,text=cGold!70!black,align=center] at (12.6,-1.4) {\textbf{money moves here}};
+\end{tikzpicture}
+\end{center}
+
+\begin{warningbox}{the handler can run more than once}
+Because retries happen (timeouts, dropped connections), the paid handler may be called again for the same payment. Our verifier therefore stores each verdict under an \code{Idempotency-Key} and, on a repeat, returns the cached answer without calling the vision model a second time.
+\end{warningbox}
+
+
+\subsection{What a 402 exchange looks like on the wire}
+To make this concrete, here is the exchange in simplified form. The header values are really long encoded strings; they are shortened here with dots.
+\begin{lstlisting}
+--- first request (no payment) ---
+POST /v1/verify HTTP/1.1
+Idempotency-Key: verify:sub_01
+
+--- first response ---
+HTTP/1.1 402 Payment Required
+PAYMENT-REQUIRED: eyJzY2hlbWUiOiJleGFjdCIs...   (price, asset, payTo, network)
+
+--- second request (same call, now with payment) ---
+POST /v1/verify HTTP/1.1
+Idempotency-Key: verify:sub_01
+PAYMENT-SIGNATURE: eyJwYXlsb2FkIjoi...          (signed payment)
+
+--- second response ---
+HTTP/1.1 200 OK
+PAYMENT-RESPONSE: eyJzdWNjZXNzIjp0cnVl...       (receipt: transaction hash)
+{ "pass": false, "failedGates": ["code_match"] }
+\end{lstlisting}
+The values are encoded (base64 text) so they fit safely in a header; the libraries encode and decode them for us. We never write this by hand.
+
+\subsection{How an agent decides whether to pay}
+A human reads a price and decides. An agent needs a rule. The buyer wrapper turns the human decision into a short, checkable procedure:
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm,node distance=5mm]
+  \node[box,fill=cLight,draw=cGrey,minimum width=2.6cm] (a) at (0,0) {Got a\\402 answer};
+  \node[box,fill=cGold!15,draw=cGold!80!black,minimum width=2.8cm] (b) at (4,0) {Asset allowed?\\network known?};
+  \node[box,fill=cGold!15,draw=cGold!80!black,minimum width=2.8cm] (c) at (8,0) {Price $\le$ cap?};
+  \node[box,fill=cGold!15,draw=cGold!80!black,minimum width=2.8cm] (d) at (12,0) {Wallet has\\enough funds?};
+  \node[good,minimum width=2.8cm] (ok) at (12,-2.2) {Sign and retry};
+  \node[bad,minimum width=2.8cm] (no) at (4,-2.2) {Refuse: throw an\\error, spend nothing};
+  \draw[flow] (a)--(b); \draw[flow] (b)--(c); \draw[flow] (c)--(d);
+  \draw[flow,draw=cGreen] (d)--(ok) node[lbl,midway,right=1mm,fill=none] {yes};
+  \draw[flow,draw=cRed] (b)--(no); \draw[flow,draw=cRed] (c) |- ([yshift=2mm]no.east); \draw[flow,draw=cRed] (d) |- (no.east);
+\end{tikzpicture}
+\end{center}
+Every ``no'' ends in refusal rather than payment. This is exactly why the cap and the asset allow-list are not optional extras.
+
+\begin{examplebox}{a hostile or buggy seller}
+Suppose our verifier URL is mistyped and points to a stranger's server that answers 402 asking for 400~tADA. The wrapper compares 400\,000\,000 lovelace with the cap of 2\,000\,000, refuses, and the call fails with an error. Without a cap, one wrong string could empty the wallet. On the test network the loss would be only worthless tADA, but the habit has to be right before it ever touches mainnet money.
+\end{examplebox}
+
+\section{x402 on Cardano}
+The Cardano Foundation provides ready-made parts so we do not implement any of the above by hand. All of these are from the team's runbook (\code{investigacion/cardano/x402-runbook.md}); nothing has been executed yet, so treat them as \emph{plan}, not as proven.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Part} & \textbf{What it is / how we use it}\\
+\midrule
+\code{@x402/cardano} & The Cardano payment scheme (\code{exact}), with both a client signer and a server verifier. Pinned at version 2.26.0 together with \code{@x402/core}, \code{@x402/express}, \code{@x402/fetch}.\\
+Hosted preprod facilitator & Public, non-custodial, needs no key. URL in the template's \code{.env.example}. The public x402.org facilitator does \emph{not} support Cardano. Fallback: run a local facilitator (\code{npm run facilitator}, about 100 lines, needs a Blockfrost key).\\
+\code{x402-express} template & A small seller (Express server with payment middleware) plus a buyer script, both in TypeScript. Created with the \code{giget} command from the Cardano developer portal.\\
+Headless buyer signer & \code{toClientCardanoSigner} signs from a 24-word \emph{mnemonic} stored in \code{.env}. No browser wallet is needed; that is what lets a program pay.\\
+\code{npm run wallet} & Generates a fresh mnemonic and address (shown once).\\
+\code{npm run demo} & Starts the seller, runs the buyer once, stops. First paid transaction in about 30--60 minutes including keys and faucet (our estimate).\\
+Blockfrost & A free API service that lets our code read and submit to the preprod chain; needs a free project id.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{The buyer side: \texttt{fetchWithPayment}}
+In the buyer, the normal \code{fetch} function is wrapped so that it understands 402. In shape (simplified from the template):
+\begin{lstlisting}
+const client = new x402Client().setSpendControls({
+  allowedAssets: [{ network: "cardano:*", asset: "lovelace",
+                    maxAmountPerPayment: "5000000" }] });   // cap
+client.register("cardano:*", new ExactCardanoScheme(signer));
+const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+const res = await fetchWithPayment(url, { method: "GET" });
+\end{lstlisting}
+The \term{per-payment cap} (\code{maxAmountPerPayment}) is a safety fuse: if a seller suddenly asks for 500~tADA the wrapper refuses to sign. Lovelace is rejected by default (it is not pegged to a currency), so the allow-list entry is mandatory. Our plan sets the cap to 2\,000\,000 lovelace for a 1\,000\,000 price.
+
+\subsection{The seller side}
+The seller registers one route with its price and receiving address; the middleware does the rest. The seller holds no keys, only \code{SELLER\_ADDRESS}.
+\begin{lstlisting}
+app.use(paymentMiddleware({
+  "POST /v1/verify": { accepts: [{ scheme: "exact",
+      network: "cardano:preprod",
+      price: { amount: "1000000", asset: "lovelace" },
+      payTo }], description: "One shelf-photo verification",
+    mimeType: "application/json" } }, resourceServer));
+\end{lstlisting}
+(The template's example route is \code{GET /api/message}; ours is the contract in \code{diseno/contracts.md}.)
+
+\begin{warningbox}{limits to remember}
+Lovelace routes need a price of at least 1~tADA (the chain's minimum output size), so 1~tADA is our floor; if the facilitator rejects it we move to 2~tADA (\emph{verify Friday}). One wallet cannot pay twice at the same moment, because the first coin it spends doubles as a unique nonce; we use one serial queue per wallet. Python has no supported Cardano x402 client, so the paying code stays in TypeScript. Two different test-USDM tokens exist, which is why we price in lovelace.
+\end{warningbox}
+
+\section{Worked example: the Shelfie verifier}
+Shelfie's engine receives a photo from a human worker. It must decide whether the photo proves the product is on the shelf. The decision is made by a separate \emph{verifier service}, and we deliberately sell it through x402 so ``agent pays agent'' is visible on-chain.
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[agent,minimum width=3.0cm] (e) at (0,0) {\textbf{Engine}\\x402 buyer};
+  \node[human,minimum width=2.6cm,minimum height=1cm] (wv) at (0,-2.4) {Wallet\\\code{W-VBUY}};
+  \node[actor,minimum width=3.2cm] (v) at (6.2,0) {\textbf{Verifier}\\\code{POST /v1/verify}};
+  \node[human,minimum width=2.6cm,minimum height=1cm] (ws) at (6.2,-2.4) {Wallet\\\code{W-SELL} (address only)};
+  \node[service,minimum width=2.8cm] (f) at (12,0) {Hosted\\facilitator};
+  \node[box,fill=cLight,draw=cGrey,minimum width=2.8cm] (vm) at (6.2,2.4) {Vision model\\+ gate rules};
+  \draw[flow] (e) -- (v) node[lbl,midway,above=1mm,fill=none] {photo + Idempotency-Key};
+  \draw[data] ([yshift=-3mm]v.west) -- ([yshift=-3mm]e.east) node[lbl,midway,below=1mm,fill=none] {402, then verdict};
+  \draw[flow] (v) -- (f) node[lbl,midway,above=1mm,fill=none] {verify / settle};
+  \draw[flow] (v) -- (vm);
+  \draw[pay] (wv) -- (ws) node[lbl,midway,above=1mm,fill=none] {1 tADA (x402 payment)};
+  \draw[flow] (e) -- (wv);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Endpoint, price and environment}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Item} & \textbf{Planned value (from \code{diseno/contracts.md})}\\
+\midrule
+Paid endpoint & \code{POST /v1/verify}, protected by x402 seller middleware\\
+Price & 1~tADA = \code{VERIFY\_PRICE\_LOVELACE=1000000}, \emph{per check, whether the photo passes or fails}\\
+Asset / network & lovelace, \code{cardano:preprod}\\
+Pay-to & address of wallet \code{W-SELL}, from env \code{SELLER\_ADDRESS}\\
+Buyer cap & \code{VERIFY\_MAX\_PRICE\_LOVELACE=2000000} (2~tADA per payment)\\
+Required header & \code{Idempotency-Key: verify:<submissionId>}\\
+Free endpoints & \code{GET /health}, \code{GET /v1/price} (shows ``verification costs 1 tADA per check'')\\
+Dev-only (no payment) & \code{POST /v1/verify-dry}; the engine refuses to count its verdicts as evidence\\
+Buyer wallet & \code{W-VBUY} with env \code{VBUY\_MNEMONIC\_1}; facilitator URL in \code{FACILITATOR\_URL}\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Who pays whom}
+Three wallets are kept separate: \code{W-VBUY} pays the verifier, \code{W-SELL} receives verifier fees, and \code{W-PAY} pays workers (a plain transfer, not x402; see Chapter~7 of this guide). Money for one accepted task, in tADA (our estimate): 1 (verify) $+$ about 0.17 (network fee) $+$ 3 (worker payout) $+$ about 0.2 (payout fee). A rejected attempt costs about 1.17, because the check is paid even when it fails.
+
+\begin{examplebox}{one paid check, step by step}
+Worker Anna uploads a photo for task \code{tsk\_01} (store A, expected code K7Q-4XM). The engine asks the verifier; it answers 402 with the 1~tADA requirement. \code{W-VBUY} signs and retries. The verifier checks the photo; the code gate fails (``K7Q-4XN'' instead of ``K7Q-4XM''), so the verdict is \code{pass:false}. The payment still settles: the 1~tADA arrives at \code{W-SELL}, and the engine stores the transaction hash in its ledger with the verdict. Anna sees a hint to retake the photo; no payout is made. What the judges see: a Cardanoscan link for the check, even for the rejected photo.
+\end{examplebox}
+
+\begin{shelfiebox}{why pay-per-check suits the track}
+Every verification, pass or fail, is a visible, verifiable on-chain payment and a ledger line. It proves that one agent (the engine) pays another (the verifier) with no accounts. The cost is honest and stated: rejects cost money (``verification spend''). The alternative of calling the verifier as a function in the same program (rejected as ADR-02) would be cheaper but would remove exactly the proof the track asks for. The Masumi-escrow variant of x402 was also considered and postponed (4+ hours of work, only if time remains).
+\end{shelfiebox}
+
+\section{Pitfalls}
+\begin{enumerate}
+  \item \textbf{Paying for failed checks.} By design the fee is per check. Mitigate with clear photo guidance, a retry limit (\code{MAX\_ATTEMPTS}) and free pre-checks (blur, size) before the paid call. Report the spend openly.
+  \item \textbf{Errors that should be free.} Invalid input (400/413/422) and an unavailable vision model (503) should return \emph{before} settlement. Where exactly a handler error lands relative to settle in the template is a \emph{verify Friday} item.
+  \item \textbf{Spend caps.} Always set \code{maxAmountPerPayment}. A bug or a hostile seller must not be able to drain the buyer wallet. Use throwaway wallets with only the test money needed (about 100 tADA each for \code{W-VBUY} and \code{W-PAY}).
+  \item \textbf{Double payment.} If a call times out after about a minute, the payment may still settle. Do \emph{not} blindly sign again: first search \code{W-VBUY}'s history on Cardanoscan for a payment to \code{W-SELL} for this idempotency key, and only pay again if none exists.
+  \item \textbf{Idempotency.} The paid handler can run on retries; make side effects (calling a metered vision model) happen only once per key.
+  \item \textbf{Concurrency.} One wallet at a time; throughput is roughly one check per 20--60~s per wallet, so the worker page shows queue positions and the demo staggers uploads.
+  \item \textbf{Facilitator trust.} The facilitator reports whether a payment is valid and settled. A hosted one is a third party: if it is down, the seller answers 500 (``no supported payment kinds''); if it lies, the seller might give work for free or the buyer might be charged without service. Mitigation: it is non-custodial (cannot take funds), we can check hashes on the chain ourselves, and we can run a local facilitator as fallback.
+  \item \textbf{Secrets.} Mnemonics live only in untracked \code{.env} files; never in the repo or a browser.
+\end{enumerate}
+
+\section{x402 versus the alternatives}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}l X X X@{}}
+\toprule
+ & \textbf{x402 on Cardano} & \textbf{API key + subscription} & \textbf{Credit card checkout}\\
+\midrule
+Who can buy & Anyone with a wallet, including agents & Registered customers & Humans with a card\\
+Sign-up needed & \no & \yes & \yes\\
+Secret to protect & Wallet key (capped by spend limit) & API key (unbounded spend) & Card data\\
+Smallest sensible price & Around 1 tADA on Cardano (chain minimum); cents elsewhere & Flat monthly fee & Limited by card fees\\
+Pay per request & \yes & Usually \no & \no\\
+Chargebacks / reversal & \no (settled on chain) & Contractual & \yes\\
+Public proof of payment & \yes (tx hash) & \no & \no\\
+Third party in the middle & Facilitator (non-custodial) & Billing provider & Bank, card network\\
+Automation by software & Native, one extra round trip & Needs prior human setup & Hard\\
+Typical settlement & 20--60 s in our estimate & Monthly invoice & Days\\
+\bottomrule
+\end{tabularx}
+\end{center}
+The honest trade-off: x402 is slower per call (a payment confirmation, 20--60~s in our estimate) and has no refund button, while an API key is instant but needs a human relationship first.
+
+\begin{keypoints}
+\begin{itemize}
+\item HTTP is request and response; status codes classify the answer. \code{402 Payment Required} was reserved in the 1990s but never standardised.
+\item x402 gives 402 a meaning: the seller answers with price, asset, pay-to and network; the buyer signs and retries with \code{PAYMENT-SIGNATURE}; the seller returns the result plus a receipt.
+\item Three roles: buyer (signs), seller (holds no keys), facilitator (verifies and settles, non-custodial on Cardano).
+\item Verify checks, settle moves money. The paid handler runs between them and can run again on retries, so it must be idempotent.
+\item On Cardano: \code{@x402/cardano}, hosted preprod facilitator, headless mnemonic signer, \code{x402-express} template, \code{fetchWithPayment} with a per-payment cap. All of this is planned, not yet built.
+\item Shelfie: 1~tADA per check, paid pass or fail, cap 2~tADA, wallets \code{W-VBUY} $\rightarrow$ \code{W-SELL}.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item What is the difference between a 401, a 403 and a 402 response?
+  \item Name the three roles in x402 and say which one holds no private keys.
+  \item In which order do verify, the seller's work and settle happen, and when does money actually move?
+  \item Why does the buyer wrapper need a \code{maxAmountPerPayment}, and what value do we plan?
+  \item Why is a Shelfie rejected photo still paid for, and how can the team limit this cost?
+  \item A buyer call times out after one minute. What must it do before paying again?
+\end{enumerate}
+{\footnotesize\color{cGrey}\textbf{Answers.} (1) 401 = not logged in, 403 = logged in but not allowed, 402 = must pay first. (2) Buyer, seller, facilitator; the seller holds no keys. (3) Verify, then the seller's work, then settle; money moves at settle. (4) A safety fuse against overpaying or hostile prices; 2\,000\,000 lovelace. (5) The price is per check and the verifier does the work either way; limit via retry limits, free pre-checks, clear guidance. (6) Check the buyer wallet's on-chain history for a payment with this key; pay again only if none exists.\par}
+\end{quizbox}

@@ -1,0 +1,5 @@
+# Runtime state: journal, ledger, uploaded photos. Never committed.
+data/
+engine-data/
+images/
+*.jsonl

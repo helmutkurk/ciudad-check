@@ -1,0 +1,66 @@
+\documentclass[aspectratio=169,14pt]{beamer}
+\usepackage{iftex}
+% xelatex/lualatex: Fira Sans, else Noto Sans. pdflatex fallback (no fontspec needed): TeX Gyre Heros.
+\ifPDFTeX
+  \usepackage[T1]{fontenc}\usepackage{textcomp}
+  \usepackage{tgheros}\renewcommand{\familydefault}{\sfdefault}
+\else
+  \usepackage{fontspec}
+  \IfFontExistsTF{Fira Sans}{}{%
+    \setsansfont{Noto Sans}[Ligatures=TeX]\setmainfont{Noto Sans}[Ligatures=TeX]}
+\fi
+\usetheme[progressbar=frametitle,numbering=none,block=fill]{metropolis}
+\ifPDFTeX\else\IfFontExistsTF{Fira Sans}{}{\setsansfont{Noto Sans}\setmainfont{Noto Sans}}\fi
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
+\usepackage{qrcode}
+\usepackage{xcolor}
+% Colours follow the web app tokens in diseno/ui-design.md section 2.1 (Helmut, 2026-10-29).
+\date{}
+\definecolor{cardano}{HTML}{0066CC}
+\definecolor{cardanolight}{HTML}{F5F5F7}
+\definecolor{warm}{HTML}{0066CC}
+\definecolor{ink}{HTML}{1D1D1F}
+\definecolor{paper}{HTML}{FFFFFF}
+\definecolor{okgreen}{HTML}{1B7A31}
+\definecolor{nogo}{HTML}{B3261E}
+\setbeamercolor{normal text}{fg=ink,bg=paper}
+\setbeamercolor{alerted text}{fg=warm}
+\setbeamercolor{frametitle}{bg=paper,fg=ink}
+\setbeamercolor{progress bar}{fg=warm,bg=cardanolight}
+\setbeamercolor{title separator}{fg=warm}
+\setbeamercolor{block title}{bg=cardano,fg=white}
+\setbeamercolor{block body}{bg=cardanolight,fg=ink}
+\newcommand{\ph}[1]{\colorbox{warm!25}{\textcolor{nogo}{\texttt{[#1]}}}}
+\newcommand{\todo}[1]{\ph{TODO: #1}}
+\newcommand{\hero}[1]{{\fontsize{26}{30}\selectfont\bfseries #1}}
+\setbeamerfont{subtitle}{size=\normalsize}
+\input{facts}
+\title{\TeamName}
+\subtitle{\Tagline}
+\author{\MemberA \,\textbullet\, \MemberB \,\textbullet\, \MemberC \,\textbullet\, \MemberD}
+\institute{\Event}
+\begin{document}
+% Title: shown before the timer starts. Live deck (pitch/live-pitch.md run of show, review/pitch-jury-2026-10-30.md):
+% hook, flow, demo, receipts, today/next, close.
+\input{sections/00-title}
+\input{sections/01-hook}
+\input{sections/05b-flow}
+\input{sections/07-demo}
+\input{sections/08b-receipts}
+\input{sections/11b-today}
+\input{sections/13-closing}
+% Backup slides for Q&A, after the close. 03-problem and 08-proof are kept in sections/ but not shown
+% (unsourced placeholders; superseded by 08b-receipts).
+\appendix
+\input{sections/14-status}
+\input{sections/03a-market}
+\input{sections/10-cardano}
+\input{sections/02-customer}
+\input{sections/05-how}
+\input{sections/06-gates}
+\input{sections/09-business}
+\input{sections/11-beyond}
+\input{sections/04-idea}
+\input{sections/12-team}
+\end{document}

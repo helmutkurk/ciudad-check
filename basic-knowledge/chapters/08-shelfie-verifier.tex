@@ -1,0 +1,328 @@
+\chapter{The verifier}
+\newcommand{\cEightCode}[1]{\texttt{\scriptsize #1}}
+
+\section*{Why this matters for us}
+The verifier is the part of Shelfie that decides whether money moves. Everything the pitch promises (``paid only when the photo is true'') rests on it. It is also the part judges will attack with questions about fraud. Understanding it deeply, including what it \emph{cannot} prove, lets any teammate answer those questions calmly. The details come from \texttt{diseno/verifier-rules.md}. As everywhere in this guide, nothing is built yet.
+
+\section{Design principle: a deterministic gate around a probabilistic reader}
+Two kinds of components appear in the verifier:
+\begin{itemize}
+  \item A \term{vision model} (an AI that looks at images) is \emph{probabilistic}: it gives an answer that is usually right, sometimes wrong, and can differ between two runs.
+  \item A \term{deterministic} rule is ordinary code: the same input always gives the same output, and you can explain why.
+\end{itemize}
+Shelfie's rule: \textbf{the model only reads; plain code decides.} The model reports what it sees (a code, a price, a product name). Then rules compare those readings with what we expect. Payment depends on rules, never on the model's opinion.
+
+\begin{analogybox}{Court clerk and judge}
+The vision model is a clerk who reads out what is written on a document. The gates are the judge who applies the law to those words. If the clerk misreads a digit, the judge's explicit rules (does the code match? is the price plausible?) still catch most mistakes, and every decision can be explained afterwards.
+\end{analogybox}
+
+Another design rule: \textbf{the model never sees the expected code or the expected price.} If it knew the answer, it might ``confirm'' what we hope to see (confirmation bias). It reports blindly and our code compares.
+
+\section{The challenge code}
+\subsection{What problem it solves}
+A worker is paid for a photo. The cheapest cheat is to reuse a photo: an old one, a stock image, a screenshot, or a photo taken at home. How can the verifier know that the photo was taken \emph{now} and \emph{for this task}? Ask the worker to include something that did not exist before the task started. That is the \term{challenge code}.
+
+\begin{conceptbox}{Challenge code}
+A random, single-use, short-lived 6-character code, issued when the worker claims a task. The worker must show it in the photo, next to the price tag. It proves \emph{freshness} (the photo is newer than the claim) and \emph{task binding} (the photo belongs to this task). It does \textbf{not} prove location.
+\end{conceptbox}
+
+\subsection{Format and alphabet}
+\begin{itemize}
+  \item 6 characters, displayed as \code{XXX-XXX}, for example \code{K7Q-4XM}, in a big monospace font.
+  \item Alphabet: \code{ABCDEFGHJKMNPQRSTUVWXYZ23456789}. The characters \textbf{0, O, 1, I, L} are left out because they are easily confused in handwriting and photos (zero or letter O? one or letter L?). That leaves 31 characters.
+  \item $31^6 = 887{,}503{,}681$ combinations, so guessing is hopeless (the design files say ``about $30^6$'', which is the same order). Codes come from a cryptographically secure random generator, not from the task id, so they cannot be predicted.
+  \item Time to live: 300 s by default. An expired claim returns the task to OPEN.
+  \item A new claim attempt always gets a \emph{new} code. A rejected photo burns its code.
+\end{itemize}
+
+\subsection{Why the phone cannot show its own screen}
+The phone that takes the photo is busy being a camera. It cannot display the code and photograph itself at the same time. So the code has to be \emph{physically} next to the price tag. Two modes exist, chosen in the pack config:
+\begin{itemize}
+  \item \code{handwritten} (default): the worker reads the code on the phone, writes it on a piece of paper and holds it next to the tag.
+  \item \code{card-pool}: printed cards with pre-generated codes; the engine hands out a card number. We use this for the stage demo for reliability. In the card-pool mode we print 20 large cards with high contrast.
+\end{itemize}
+A third mode, \code{none}, exists for Plan B where agents, not humans, do the work.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+% shelf
+\fill[cGrey!15] (0,0) rectangle (13,0.25);
+\fill[cGrey!25] (0,2.9) rectangle (13,3.1);
+% price tag
+\node[draw=cBlue,thick,fill=white,rounded corners=2pt,minimum width=3.6cm,minimum height=1.7cm,align=center,font=\sffamily] (tag) at (3.2,1.7) {\small Example Pale Ale\\\small 0,33 l\\[2pt]\Large\bfseries 2,49 EUR};
+% bottle
+\fill[cOrange!60] (0.8,0.25) rectangle (1.5,2.1);
+\fill[cOrange!60] (1.0,2.1) rectangle (1.3,2.7);
+% paper with code
+\node[draw=cGrey,thick,fill=white,minimum width=3.4cm,minimum height=1.7cm,rotate=-4,align=center] (paper) at (7.6,1.6) {\ttfamily\bfseries\LARGE K7Q-4XM};
+\node[font=\sffamily\scriptsize,text=cGrey] at (7.6,0.5) {paper or printed card};
+% hand
+\fill[cOrange!25,rounded corners=4pt] (8.9,0.9) rectangle (9.7,1.5);
+% label arrows
+\node[font=\sffamily\scriptsize,text=cBlue,align=center] at (3.2,3.5) {price tag\\(read by the model)};
+\node[font=\sffamily\scriptsize,text=cGreen!60!black,align=center] at (7.6,3.5) {challenge code\\(compared by the rules)};
+% camera frame
+\draw[thick,cPurple,dashed,rounded corners=4pt] (0.4,-0.35) rectangle (12.6,3.95);
+\node[font=\sffamily\scriptsize,text=cPurple,anchor=south east] at (12.6,-0.35) {one photo: tag and code both in frame};
+\end{tikzpicture}
+\caption{What a valid photo contains (schematic, not a real photo). The code is not shown on the phone; it is on paper or a card in the frame.}
+\end{figure}
+
+\begin{warningbox}{Freshness is not location}
+The code proves the photo is new and for this task. A worker could still photograph the same product in a different shop. We state this limit in the pitch (ADR-12). Roadmap: store-owned QR codes or geofenced tasks.
+\end{warningbox}
+
+\section{The verification pipeline and gates G1 to G7}
+The verifier receives a request (the photo plus the task context: expected code, product, time window) and produces one \term{verdict}. The verdict says \textbf{pass only if every gate passes}. There is no weighted score; scores exist only inside a gate, against that gate's own threshold. All gates are evaluated and reported, so the worker and the dashboard see every failure at once. The one exception: if G1 fails, the (costly) vision call is skipped.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+\node[service,minimum width=2.3cm] (in) at (0,0) {Request:\\photo + task};
+\node[bad,fill=cOrange!10,draw=cOrange,minimum width=1.8cm] (g1) at (3,0) {G1\\image\_ok};
+\node[agent,minimum width=2.1cm] (vis) at (6,0) {Vision model\\one call};
+\node[actor,minimum width=1.8cm] (g2) at (9,1.1) {G2\\code\_match};
+\node[actor,minimum width=1.8cm] (g3) at (11.4,1.1) {G3\\readable};
+\node[actor,minimum width=1.8cm] (g4) at (13.8,1.1) {G4\\product\_match};
+\node[actor,minimum width=1.8cm] (g5) at (9,-1.1) {G5\\price\_sanity};
+\node[actor,minimum width=1.8cm] (g6) at (11.4,-1.1) {G6\\timing};
+\node[actor,minimum width=1.8cm] (g7) at (13.8,-1.1) {G7\\not\_duplicate};
+\node[good,minimum width=2.4cm] (out) at (16.8,0) {Verdict:\\PASS only if\\all gates pass};
+\draw[flow] (in)--(g1); \draw[flow] (g1)--(vis);
+\draw[flow] (vis.east) -- ++(0.5,0) |- (g2.west);
+\draw[flow] (g2)--(g3); \draw[flow] (g3)--(g4);
+\draw[flow] (g4.east) -- ++(0.35,0) |- (out.north west);
+\draw[flow] (vis.east) ++(0.5,0) |- (g5.west);
+\draw[flow] (g5)--(g6); \draw[flow] (g6)--(g7);
+\draw[flow] (g7.east) -- ++(0.35,0) |- (out.south west);
+\draw[flow,draw=cRed,dashed] (g1.north) -- ++(0,1.3) -| node[lbl,pos=0.15]{G1 fails: skip vision call} (out.north);
+\node[font=\sffamily\scriptsize,text=cGrey,anchor=north] at (11.4,-2.1) {G6 and G7 need server-side data: engine receive time and earlier image hashes};
+\end{tikzpicture}}
+\caption{The verification pipeline. The vision call is the only impure step; the seven rules are pure functions of the stored extraction, so they can be tested with fixed JSON and no model.}
+\end{figure}
+
+\subsection{The seven gates, each with a pass and a fail example}
+Use \code{Example Pale Ale 0.33l}, expected code \code{K7Q-4XM}, as the running example.
+
+{\small
+\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{@{}p{2.3cm}p{3.5cm}p{4.2cm}p{4.2cm}@{}}
+\toprule
+\textbf{Gate} & \textbf{What it checks} & \textbf{Pass example} & \textbf{Fail example (reason code)}\\
+\midrule
+\endhead
+\textbf{G1} \cEightCode{image\_ok} & Decodable JPEG or PNG; at least 800$\times$600 pixels; not too big; not a near-blank image. & 1600$\times$1200 JPEG, 400 KB. & 640$\times$480 image (\cEightCode{image\_too\_small}).\\
+\textbf{G2} \cEightCode{code\_match} & Code read from the photo equals the expected code (edit distance at most 0) and read confidence at least 0.7. & Reads \cEightCode{K7Q-4XM}, confidence 0.93. & Reads \cEightCode{K7Q-4XN} (\cEightCode{code\_mismatch}); no code visible (\cEightCode{code\_missing}).\\
+\textbf{G3} \cEightCode{readable} & Price parses to a number (by our parser); currency EUR or absent; product text not empty; overall confidence at least 0.6. & Text \cEightCode{2,49 EUR} parses to 2.49. & Glare hides the price (\cEightCode{price\_unreadable}).\\
+\textbf{G4} \cEightCode{product\_match} & Valid EAN-13 barcode equals the task EAN, or name similarity to name or an alias at least 0.8. & Reads \cEightCode{Example Pale Ale 0,33 l}. & Reads another beer (\cEightCode{product\_mismatch}).\\
+\textbf{G5} \cEightCode{price\_sanity} & Between 0.20 and 60.00 EUR; within 60\% of a reference price if the job gives one; at most 2 decimals. & 2.49 EUR. & 249.00 EUR (\cEightCode{price\_out\_of\_range}).\\
+\textbf{G6} \cEightCode{timing} & Engine's receive time is at least 5 s after the claim and before the claim expires and before the task window ends. & Received 40 s after the claim. & Received after the 300 s TTL (\cEightCode{claim\_expired}).\\
+\textbf{G7} \cEightCode{not\_duplicate} & Image hash not seen in the same job; perceptual hash not too close to earlier accepted photos. & A new photo. & The same file submitted twice (\cEightCode{duplicate\_image}).\\
+\bottomrule
+\end{longtable}
+}
+
+A few details that often confuse people:
+\begin{itemize}
+  \item \textbf{Edit distance} counts how many characters you must change to turn one string into another. \code{K7Q-4XM} to \code{K7Q-4XN} is distance 1. The default allows 0, because our alphabet has no confusable characters.
+  \item \textbf{G6 uses the engine's clock}, never the phone's clock and never the photo's built-in EXIF date, because both are editable. EXIF time is only logged as advisory.
+  \item A \textbf{perceptual hash} is a small fingerprint of what an image \emph{looks like}, so that a slightly cropped or recompressed copy of a photo is still recognised as the same.
+  \item The worker sees a plain-language message per failure, for example ``We could not read the code K7Q-4XM in your photo. Hold the paper closer and try again.''
+\end{itemize}
+
+\begin{examplebox}{Cheat attempts we rehearse (all must be rejected)}
+\begin{enumerate}
+  \item An old camera-roll photo of the tag: no code in frame, G2 \code{code\_missing}.
+  \item The right tag with a wrong code: G2 \code{code\_mismatch}.
+  \item A photo of a different product with the right code: G4 \code{product\_mismatch}.
+  \item The price covered or blurred: G3 \code{price\_unreadable}.
+  \item The same photo submitted twice: G7 \code{duplicate\_image}.
+\end{enumerate}
+In every case the check was still paid to the verifier (1 tADA); the worker is paid nothing.
+\end{examplebox}
+
+\section{The vision model contract}
+One call per submission. The prompt lives in the domain pack. The model must return \emph{only} JSON in a fixed shape (illustrative, from the design file):
+
+\begin{lstlisting}
+{ "code":    { "text": "K7Q-4XM", "confidence": 0.93 },
+  "price":   { "text": "2,49 EUR", "value": 2.49,
+               "currency": "EUR", "confidence": 0.9 },
+  "product": { "text": "Example Pale Ale 0,33 l", "confidence": 0.88 },
+  "barcode": { "digits": "4000000000000", "confidence": 0.4 },
+  "scene":   { "isShelfOrPriceTag": true, "peopleVisible": false,
+               "glare": "low", "blur": "none" },
+  "advisory":{ "tamperSuspected": false, "looksLikeScreenPhoto": false },
+  "overallConfidence": 0.88 }
+\end{lstlisting}
+
+Rules for the adapter, in plain words:
+\begin{enumerate}
+  \item Unreadable fields are \code{null} with confidence 0, never guessed.
+  \item The JSON is parsed strictly; on a parse failure the call is retried once with a repair instruction, then the verifier answers ``503 vision unavailable'' (no verdict, and if possible no charge).
+  \item German number formats such as \code{2,49} are parsed by \emph{our} parser. If the model's \code{value} and our parse disagree, ours wins.
+  \item Images are downscaled to at most 1600 pixels on the long side for cost and speed.
+  \item Which model and provider is used is \emph{configuration} (ADR-07), chosen by the 20-photo test below, not by preference. Whether the shell's own language model can read images is unknown (verify Friday).
+\end{enumerate}
+
+\section{Thresholds}
+Every number is in \code{pack.config.json}, so tuning needs no code change.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{5.6cm}p{1.9cm}X@{}}
+\toprule
+\textbf{Parameter} & \textbf{Start} & \textbf{How it is tuned}\\
+\midrule
+\cEightCode{code\_match.maxEditDistance} & 0 & Raise to 1 only if handwritten codes fail but wrong-code attacks still fail.\\
+\cEightCode{code\_match.minConfidence} & 0.7 & Lower if too many false rejects, never below 0.5.\\
+\cEightCode{readable.minConfidence} & 0.6 & Same.\\
+\cEightCode{product\_match.minTokenScore} & 0.8 & Add aliases first; lower the threshold last.\\
+\cEightCode{price\_sanity.minEur / maxEur} & 0.20 / 60 & Set per demo product.\\
+\cEightCode{price\_sanity.maxDeviationFromRef} & 0.6 & Only when the job gives a reference price.\\
+\cEightCode{timing.minSecondsAfterClaim} & 5 & Fixed.\\
+\cEightCode{image\_ok.minWidth / minHeight} & 800 / 600 & Fixed.\\
+Verify latency budget & p95 under 8 s & Faster model if exceeded (excludes the x402 step).\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{conceptbox}{False accept versus false reject}
+A \term{false accept} is a bad photo that passes (we pay for fraud). A \term{false reject} is a good photo that fails (an honest worker is annoyed). For a payment gate, false accepts are the safety failure. That is why the acceptance targets below demand \emph{zero} false accepts but tolerate one false reject.
+\end{conceptbox}
+
+\section{The 20-photo evaluation}
+Goal: choose the model and thresholds with evidence and obtain an honest number for the pitch. Owner C runs it on Friday as soon as the verifier answers (target: before milestone M2). Capture takes about 45 minutes with two people: printed price tags for a real product on our own shelf (or a fridge) plus a few from a shop with permission; \textbf{no people in frame}; each photo gets a throwaway code on paper.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{1.1cm}p{6.6cm}X@{}}
+\toprule
+\textbf{Count} & \textbf{Case} & \textbf{Expected}\\
+\midrule
+6 & Valid: correct code, readable tag, right product, different angles and light & PASS\\
+2 & Valid but hard: glare or sharp angle & PASS (a reject here is a false reject)\\
+3 & Wrong code (different valid format; one off by one character) & FAIL \code{code\_mismatch}\\
+2 & No code in frame (camera-roll style) & FAIL \code{code\_missing}\\
+2 & Wrong product, right code & FAIL \code{product\_mismatch}\\
+2 & Tag blurred or covered & FAIL unreadable / low confidence\\
+1 & Absurd edited price (e.g.\ 249.00) & FAIL \code{price\_out\_of\_range}\\
+1 & Same image as a valid one, resubmitted & FAIL \code{duplicate\_image}\\
+1 & Photo of a screen showing a tag & Record what happens (not required to detect)\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\def\u{0.72}
+\fill[cGreen!70] (0,0) rectangle (6*\u,0.8);
+\fill[cGreen!40] (6*\u,0) rectangle (8*\u,0.8);
+\fill[cRed!60] (8*\u,0) rectangle (11*\u,0.8);
+\fill[cRed!45] (11*\u,0) rectangle (13*\u,0.8);
+\fill[cRed!35] (13*\u,0) rectangle (15*\u,0.8);
+\fill[cOrange!50] (15*\u,0) rectangle (17*\u,0.8);
+\fill[cOrange!70] (17*\u,0) rectangle (18*\u,0.8);
+\fill[cPurple!50] (18*\u,0) rectangle (19*\u,0.8);
+\fill[cGrey!40] (19*\u,0) rectangle (20*\u,0.8);
+\foreach \a/\b/\t in {0/6/6 valid,6/8/2 hard,8/11/3 wrong code,11/13/2 no code,13/15/2 wrong prod.,15/17/2 blurred,17/18/1,18/19/1,19/20/1}
+  \node[font=\sffamily\tiny] at ({(\a+\b)/2*\u},0.4) {\t};
+\draw[decorate,decoration={brace,amplitude=4pt}] (0,0.95) -- (8*\u,0.95) node[midway,above=3pt,font=\sffamily\scriptsize] {8 should pass};
+\draw[decorate,decoration={brace,amplitude=4pt}] (8*\u,0.95) -- (20*\u,0.95) node[midway,above=3pt,font=\sffamily\scriptsize] {12 should fail (screen photo included)};
+\end{tikzpicture}
+\caption{Composition of the 20-photo test set. The last three blocks: absurd price, duplicate, screen photo.}
+\end{figure}
+
+\subsection{Acceptance targets}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{5.2cm}p{3cm}X@{}}
+\toprule
+\textbf{Metric} & \textbf{Target} & \textbf{If missed}\\
+\midrule
+False accepts on the 12 should-fail cases & \textbf{0 of 12} & Tighten thresholds or change model. Blocking for payments.\\
+False rejects on the 8 valid cases & at most 1 of 8 & Add aliases, loosen confidence, improve prompt, try another model.\\
+Price value exact on valid cases & at least 7 of 8 & Prompt or model change.\\
+Code read exact on valid cases & at least 7 of 8 & Switch to \code{card-pool} mode with large printed cards.\\
+Latency p95 & under 8 s & Faster model, smaller image.\\
+Cost per check & recorded & A number for the pitch.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+A runner script posts every photo to a dry (no-payment) verify endpoint, compares the results with labels, prints a confusion table and stores the raw extractions, so thresholds can be re-tuned offline without new model calls. With only 20 photos, the estimate is rough. The pitch says ``tested on 20 photos'', \emph{never} ``99\% accurate''.
+
+\section{Manual override: a stage safety net, clearly flagged}
+If the vision provider misreads on stage, a human operator may keep the demo flowing. This is a rescue tool, not a product feature, and it is limited by strict rules:
+
+\begin{itemize}
+  \item \textbf{Off by default} (\code{ALLOW\_DEMO\_OVERRIDE=false}). It must be off for every evidence run (milestones M1 to M5) and for recorded video takes. Turning it on is itself written to the ledger.
+  \item \textbf{Admin only:} one endpoint behind \code{X-Admin-Token}; there is no button on the public worker page.
+  \item Every override creates a verdict with source \code{MANUAL\_OVERRIDE}, a \textbf{required reason}, and a ledger entry flagged \code{demoOverride}.
+  \item \textbf{Visible everywhere:} the dashboard row shows a red ``DEMO OVERRIDE'' badge, the report footnotes the row, and the Devfolio text says the override exists and which rows (if any) used it.
+  \item It can \emph{never} rescue a photo that failed G1 or G7, so one photo cannot be paid twice. It may only turn a FAIL into a PASS for the first accepted attempt of a task, one override per submission.
+\end{itemize}
+
+\begin{warningbox}{Credibility depends on never using it silently}
+The whole claim is ``paid only when the photo is true''. An unlabelled override would make the claim false. If the override was needed in an evidence run, re-record instead.
+\end{warningbox}
+
+\section{Privacy}
+Stores are semi-public places with staff and customers. Rules:
+\begin{itemize}
+  \item The task tells workers: \textbf{shelf and tag only, no people}.
+  \item The vision model reports \code{peopleVisible}. If \code{true}, an advisory note is attached to the verdict and the operator sees a warning. It is an \emph{advisory flag}: it does \textbf{not} block the payment today. Automatic rejection or cropping is roadmap. (An earlier answer draft claimed faces were cropped; the review report corrected this.)
+  \item Images are stored only on the hub laptop during the event (for the video and disputes) and deleted afterwards.
+  \item Workers' data: a random worker id and a wallet address, nothing else.
+  \item Open question: whether stores permit photographing; we ask permission for the video or use our own shelf.
+\end{itemize}
+
+\section{What the verifier cannot prove}
+Say these limits yourself before a judge does:
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{4.6cm}X@{}}
+\toprule
+\textbf{Not proven} & \textbf{Why / what we do}\\
+\midrule
+Location (``the photo was taken in this store'') & A worker can shoot the same product elsewhere. Roadmap: store-owned QR codes, geofenced tasks.\\
+The tag sits on the right shelf slot & Accepted risk for the hackathon.\\
+Authenticity beyond freshness and readability & A live-made fake is possible in theory; the claim is that cheating costs more than the payout.\\
+Identity of the worker & Only a wallet address; no reputation or sybil protection yet.\\
+The model never errs & It can misread; G2 to G5 catch many errors, but 20 test photos give only a rough rate.\\
+Screenshots and photos of screens & Not reliably detected by the gates. The code is generated at claim time, which makes a prepared fake hard; \code{looksLikeScreenPhoto} is advisory only.\\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{keypoints}
+\begin{itemize}
+  \item The verifier is a \textbf{deterministic gate around a probabilistic reader}: the model reads, code decides; the model never sees the expected code or price.
+  \item The \textbf{challenge code}: 6 characters \code{XXX-XXX}, alphabet without 0/O/1/I/L ($31^6$ combinations), single use, 300 s, shown on the phone but written on paper or a printed card.
+  \item \textbf{G1 to G7}: image\_ok, code\_match, readable, product\_match, price\_sanity, timing, not\_duplicate. Pass only if all seven pass.
+  \item Pass or fail, each check costs 1 tADA, paid to the verifier via x402.
+  \item The 20-photo test must show \textbf{0 false accepts} of 12 bad cases; say ``tested on 20 photos''.
+  \item The manual override is admin-only, red-badged, off in evidence runs, and cannot rescue G1 or G7 failures.
+  \item Limits: freshness not location; \code{peopleVisible} is advisory; no identity checks.
+\end{itemize}
+\end{keypoints}
+
+\begin{quizbox}
+\begin{enumerate}
+  \item Why is the code alphabet missing the characters 0, O, 1, I and L?
+  \item Why can the phone that takes the photo not show the code on its own screen?
+  \item Which gate fails for an old camera-roll photo, and with which reason code?
+  \item Why does G6 use the engine's clock rather than the photo's date?
+  \item What are the acceptance targets for false accepts and false rejects on the 20 photos?
+  \item Name three rules that limit the manual override.
+\end{enumerate}
+{\small\color{cGrey}\textbf{Answers.}
+(1) They are easy to confuse in handwriting and photos.
+(2) The phone is the camera and cannot photograph itself; the code must be physically in the frame on paper or a card.
+(3) G2 \code{code\_match}, reason \code{code\_missing}.
+(4) EXIF and device clocks can be edited; the server's receive time cannot.
+(5) 0 of 12 false accepts; at most 1 of 8 false rejects.
+(6) Any three of: off by default; admin token only; mandatory reason; red badge and ledger flag; never in evidence runs; cannot override G1 or G7; one per submission.}
+\end{quizbox}

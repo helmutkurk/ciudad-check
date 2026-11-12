@@ -1,0 +1,34 @@
+{
+  "name": "@shelfie/verifier",
+  "license": "BUSL-1.1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Verifier service: x402 seller for POST /v1/verify, evaluate() gates, idempotency cache.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "tsx --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/main.ts"
+  },
+  "dependencies": {
+    "@shelfie/core": "*",
+    "@shelfie/domain-shelf": "*",
+    "@shelfie/vision": "*",
+    "zod": "4.6.7",
+    "express": "4.22.3",
+    "@x402/express": "2.26.0",
+    "@x402/core": "2.26.0",
+    "@x402/cardano": "2.26.0",
+    "sharp": "0.35.5"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.25",
+    "tsx": "4.23.15"
+  }
+}

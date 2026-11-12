@@ -1,0 +1,20 @@
+Shelfie — Los Curiosos
+
+Copyright (c) 2026 Helmut Kurk Sierra, [FULL NAME Isabel] (GitHub mariaisabel16),
+[FULL NAME Fernando] (GitHub Fmayo444), [FULL NAME Lorenz] (GitHub 04Lenz04),
+jointly ("the Shelfie team").
+
+The root LICENSE (Business Source License 1.1, BUSL-1.1) covers all files
+authored by the Shelfie team, including code, design and pitch material,
+subject to the third-party exclusions below. It grants no trademark rights.
+
+Third-party exclusions retain their own licenses and copyright notices:
+- Third-party npm dependencies: their respective upstream licenses apply.
+- Organisers' starter fork in codigo/apps/shell/starter, from
+  masumi-network/tum-hackathon-quickstart: license: verify.
+- Code derived from the organisers' Cardano x402-express template:
+  license: verify. Upstream terms continue to apply to that code.
+
+Git-ignored third-party downloads are not part of this repository.
+See AUTHORS.md for team roles and docs/ip-agreement.md for the draft ownership
+agreement and pending confirmations.

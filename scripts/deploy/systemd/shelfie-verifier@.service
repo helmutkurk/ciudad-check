@@ -1,0 +1,18 @@
+[Unit]
+Description=Shelfie verifier (%i), loopback only
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/shelfie/%i.env
+Environment=NODE_ENV=production
+Environment=PATH=%h/.local/share/mise/shims:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=%h/shelfie-deploy/%i/current/codigo
+ExecStart=/usr/bin/env npm run start -w @shelfie/verifier
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

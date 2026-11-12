@@ -1,0 +1,369 @@
+diff --git a/agent-api.mjs b/agent-api.mjs
+index 3bf643a..2d2b5d9 100644
+--- a/agent-api.mjs
++++ b/agent-api.mjs
+@@ -4,6 +4,11 @@ import {existsSync,readFileSync,writeFileSync,mkdirSync,readdirSync} from 'node:
+ import {answer,client} from './client.mjs';
+ import {inputHash,resultHash,sha256} from './standard-hash.mjs';
+ import {confirmedState} from './paid-task.mjs';
++import {inputSchemaFromCatalog} from '../bridge/index.js';
++// Shelfie: with SHELL_TOKEN set, the hire form shows catalog dropdowns (MIP-003 "option", answered as indices).
++const shelfie=Boolean(process.env.SHELL_TOKEN?.trim());
++const catalogSchema=async()=>inputSchemaFromCatalog(await (await fetch(`${(process.env.ENGINE_URL||'http://127.0.0.1:4000').replace(/\/+$/,'')}/api/catalog`,{signal:AbortSignal.timeout(10000)})).json());
++const shelfieInputOk=d=>typeof d==='object'&&d!==null&&Object.keys(d).sort().join()==='productEan,storeId'&&['productEan','storeId'].every(k=>(Array.isArray(d[k])&&d[k].length===1&&Number.isInteger(d[k][0]))||(typeof d[k]==='string'&&d[k].length<=200));
+ const jobsDir='.local/standard-jobs';mkdirSync(jobsDir,{recursive:true,mode:0o700});
+ const token=process.env.MPS_RUNTIME_TOKEN;
+ const registry=()=>JSON.parse(readFileSync('docs/registration-state.json','utf8'));
+@@ -20,7 +25,7 @@ createServer(async(req,res)=>{
+  try{
+  const url=new URL(req.url,'http://127.0.0.1');
+  if(req.method==='GET'&&url.pathname==='/availability')return respond(res,200,{status:'available',type:'masumi-agent'});
+- if(req.method==='GET'&&url.pathname==='/input_schema')return respond(res,200,schema);
++ if(req.method==='GET'&&url.pathname==='/input_schema')return respond(res,200,shelfie?await catalogSchema():schema);
+  if(req.method==='GET'&&url.pathname==='/status'){
+  const id=url.searchParams.get('job_id');if(!/^[0-9a-f-]{36}$/.test(id||''))return respond(res,400,{error:'Invalid job_id'});
+  if(!existsSync(`${jobsDir}/${id}.json`))return respond(res,404,{error:'Job not found'});
+@@ -29,7 +34,8 @@ createServer(async(req,res)=>{
+  if(req.method!=='POST'||url.pathname!=='/start_job')return respond(res,404,{error:'Route not found'});
+  let bytes=0,body='';for await(const part of req){bytes+=part.length;if(bytes>20000)return respond(res,413,{error:'Request too large'});body+=part}
+  const input=JSON.parse(body);const nonce=input.identifier_from_purchaser??input.identifierFromPurchaser;
+- if(!/^[a-fA-F0-9]{14,26}$/.test(nonce||'')||typeof input.input_data?.prompt!=='string'||!input.input_data.prompt.trim()||input.input_data.prompt.length>16000||Object.keys(input.input_data).some(k=>k!=='prompt'))return respond(res,400,{error:'Expected hex purchaser nonce and input_data.prompt'});
++ if(shelfie&&(!/^[a-fA-F0-9]{14,26}$/.test(nonce||'')||!shelfieInputOk(input.input_data)))return respond(res,400,{error:'Expected hex purchaser nonce and input_data.productEan and input_data.storeId'});
++ if(!shelfie&&(!/^[a-fA-F0-9]{14,26}$/.test(nonce||'')||typeof input.input_data?.prompt!=='string'||!input.input_data.prompt.trim()||input.input_data.prompt.length>16000||Object.keys(input.input_data).some(k=>k!=='prompt')))return respond(res,400,{error:'Expected hex purchaser nonce and input_data.prompt'});
+  const reg=registry();if(reg.registrationState!=='RegistrationConfirmed'&&reg.registration?.state!=='RegistrationConfirmed')return respond(res,503,{error:'Registration not confirmed'});
+  // Persist before the payment write. Unknown outcomes require inspection, never automatic replay.
+  const key=sha256(nonce);let job=readdirSync(jobsDir).filter(x=>/^[0-9a-f-]{36}\.json$/.test(x)).map(x=>load(x.replace('.json',''))).find(j=>j.nonceKey===key);
+@@ -52,7 +58,7 @@ setInterval(async()=>{
+  if(Number(payment.submitResultTime)<=Date.now()+120000){job.phase='deadline-blocked';job.status='failed';save(job);continue;}
+  job.phase='model-pending';job.status='running';save(job);
+  if(Number(payment.submitResultTime)<=Date.now()+120000)continue;
+- job.result=await answer(job.input.prompt,`${jobsDir}/${job.id}-session`,Number(payment.submitResultTime));
++ job.result=await answer(shelfie?JSON.stringify(job.input):job.input.prompt,`${jobsDir}/${job.id}-session`,Number(payment.submitResultTime));
+  writeFileSync(`${jobsDir}/${job.id}.txt`,job.result,{mode:0o600});job.resultHash=resultHash(job.result,job.nonce);job.phase='submit-pending';save(job);
+  if(Number(payment.submitResultTime)<=Date.now()){job.phase='deadline-blocked';job.status='failed';save(job);continue;}
+  await mps('/payment/submit-result',{network:'Preprod',blockchainIdentifier:payment.blockchainIdentifier,submitResultHash:job.resultHash});
+diff --git a/client.mjs b/client.mjs
+index 3a74bb4..2646ea4 100644
+--- a/client.mjs
++++ b/client.mjs
+@@ -1,7 +1,11 @@
+ import { Client } from 'eve/client';
+ import { writeFileSync } from 'node:fs';
++import { createBridge, createStarterAnswer, loadBridgeConfig } from '../bridge/index.js';
+ export const client=new Client({host:process.env.EVE_URL});
+-export async function answer(input,journal,deadline) {
++// Shelfie: with SHELL_TOKEN set, the Shelfie engine decides through the bridge instead of the model.
++export const bridge=process.env.SHELL_TOKEN?.trim()?createBridge(loadBridgeConfig()):null;
++export const answer=bridge?createStarterAnswer(bridge):modelAnswer;
++async function modelAnswer(input,journal,deadline) {
+  if(typeof input!=='string'||!input.trim()||input.length>16000) throw new Error('Input must contain 1 to 16000 characters');
+  const {session}=await client.sessions.create();
+  writeFileSync(journal,JSON.stringify({sessionId:session.state.sessionId,phase:'sending'}),{mode:0o600});
+diff --git a/comments.mjs b/comments.mjs
+index 99e2329..08801d1 100644
+--- a/comments.mjs
++++ b/comments.mjs
+@@ -5,6 +5,17 @@ import {taskTarget,assertTaskTarget,verifyRuntimeTask} from './task-target.mjs';
+ const target=taskTarget();
+ const {readRuntimeCredential,createCoworkerHttpClient,fetchTaskEvents,createTaskEvent}=await loadSokosumiRuntime();
+ const runtime=createCoworkerHttpClient({apiKey:readRuntimeCredential(target.coworkerId)});
++// Shelfie: tell the buyer once why no result comes (WITHHOLD or intake rejection). Comment only: no status
++// change and no result, so a paid Task's escrow still refunds on its own after the submit deadline.
++export async function postWithheld(task,comment){
++ assertTaskTarget(task,target);
++ const p=`.local/${task.id}-withheld.json`;
++ if(existsSync(p))return;
++ writeFileSync(p,JSON.stringify({state:'post-pending'}),{mode:0o600});
++ await verifyRuntimeTask(runtime,task.id,target);
++ const event=await createTaskEvent(runtime,task.id,{comment:String(comment).slice(0,2000)},AbortSignal.timeout(30000));
++ writeFileSync(p,JSON.stringify({state:'posted',eventId:event?.id??event?.data?.id??null}),{mode:0o600});
++}
+ export async function reply(task){
+  assertTaskTarget(task,target);
+  const taskId=task.id;
+@@ -15,6 +26,7 @@ export async function reply(task){
+  const sessionFile=`.local/${taskId}-session.json`;
+  if(!existsSync(sessionFile))return;
+  const {sessionId}=JSON.parse(readFileSync(sessionFile,'utf8'));
++ if(!sessionId)return; // Shelfie: a bridge journal has no Eve session to continue the chat in
+  for(const event of events.filter(e=>e.actor?.type==='user'&&typeof e.comment==='string'&&e.comment.trim())){
+  if(state[event.id])continue;
+  state[event.id]='model-pending';writeFileSync(p,JSON.stringify(state),{mode:0o600});
+diff --git a/paid-task.mjs b/paid-task.mjs
+index 29b54a3..e490545 100644
+--- a/paid-task.mjs
++++ b/paid-task.mjs
+@@ -12,6 +12,13 @@ export function confirmedState(payment,expected){
+ }
+ // Running MPS dist/app-DCTS_JYs.js:249079 signs no forceLayer field.
+ // Source differs from the loaded build. An absent field is valid for that build.
++// Shelfie: hash of the confirmed tx that moved the escrow into `expected`, for engine settlement events.
++export function confirmedTxHash(payment,expected){
++ const tx=[payment.CurrentTransaction,...(payment.TransactionHistory||[])].find(t=>t?.status==='Confirmed'&&t.newOnChainState===expected&&/^[0-9a-f]{64}$/.test(t.txHash??''));
++ return tx?.txHash??null;
++}
++// Shelfie: no result was or can be submitted; the buyer's no-result refund applies.
++export const REFUND_STATES=['RefundWithdrawn','DisputedWithdrawn'];
+ export function purchasePayload(payment,nonce,registration){
+  if(payment.sellerReturnAddress!==null||(payment.forceLayer!==undefined&&payment.forceLayer!==null))throw new Error('Core Task events cannot preserve non-null signed sellerReturnAddress or forceLayer');
+  if(payment.PaymentSource?.network!=='Preprod'||payment.PaymentSource?.paymentSourceType!=='Web3CardanoV2')throw new Error('Payment source is not Preprod Web3CardanoV2');
+@@ -30,7 +37,7 @@ export function isPaidReady(){
+  const r=JSON.parse(readFileSync('docs/registration-state.json','utf8'));
+  return r.status==='RegistrationConfirmed'||r.registrationState==='RegistrationConfirmed'||r.registration?.state==='RegistrationConfirmed';
+ }
+-export async function createPaidAdapter({save,answer,core:providedCore,mps:providedMps,registration:providedRegistration,target=taskTarget()}){
++export async function createPaidAdapter({save,answer,onEvent=async()=>{},core:providedCore,mps:providedMps,registration:providedRegistration,target=taskTarget()}){
+  const registration=()=>providedRegistration??JSON.parse(readFileSync('docs/registration-state.json','utf8'));
+  let core=providedCore;
+  async function getCore(){
+@@ -48,10 +55,32 @@ export async function createPaidAdapter({save,answer,core:providedCore,mps:provi
+   return data.data;
+  }
+  async function persist(task,state,paid){const next={...state,paid};await save(task.id,next);return next;}
++ // Shelfie: run the engine bridge; a WithheldError ends the result path (stage withheld) and is rethrown
++ // so the worker posts the comment once. Other errors leave model-pending for the idempotent retry.
++ async function runAnswer(task,state,p){
++  try{
++   const result=await answer(state.input,`.local/${task.id}-session.json`,Number(p.payment.submitResultTime),{escrowTxHash:confirmedTxHash(p.observed??{},'FundsLocked')});
++   if(typeof result!=='string'||!result.trim())throw new Error('Model did not return a result');
++   writeFileSync(`.local/${task.id}.txt`,result,{mode:0o600});
++   return persist(task,state,{...p,stage:'result-saved',result,resultHash:taskHash(result)});
++  }catch(e){
++   if(e?.name==='WithheldError')await persist(task,state,{...p,stage:'withheld',withheldReason:String(e.reason??'')});
++   throw e;
++  }
++ }
+  return {async advance(task,state){
+   assertTaskTarget(task,target);
++  let p=state.paid??{};
++  if(p.stage==='model-pending'&&answer.idempotent){
++   if(Date.now()>=Number(p.payment.submitResultTime)){
++    await onEvent(task.id,{event:'WITHHELD',note:'shell_deadline'});
++    return persist(task,state,{...p,stage:'withheld',withheldReason:'shell_deadline'});
++   }
++   await verifyRuntimeTask(await getCore(),task.id,target);
++   return runAnswer(task,state,p);
++  }
+   await verifyRuntimeTask(await getCore(),task.id,target);
+-  let p=state.paid??{};const r=registration();
++  const r=registration();
+   if(!p.stage){
+    if(!state.input?.trim())throw new Error('Paid Task requires authoritative started input');
+    const nonce=randomBytes(10).toString('hex');const now=Date.now();
+@@ -70,21 +99,38 @@ export async function createPaidAdapter({save,answer,core:providedCore,mps:provi
+    const response=await (await verifyRuntimeTask(await getCore(),task.id,target)).post(`/v1/tasks/${encodeURIComponent(task.id)}/events`,{comment:'Payment requested: 1 test USDM.',masumiPayment:payload});
+    return persist(task,state,{...p,stage:'awaiting-escrow',eventId:response.data.id});
+   }
+-  if(['awaiting-escrow','awaiting-result','awaiting-withdrawal'].includes(p.stage)){
++  if(['awaiting-escrow','awaiting-result','awaiting-withdrawal','withheld'].includes(p.stage)){
+    const observed=await mps('/api/v1/payment/resolve-blockchain-identifier',{network:'Preprod',blockchainIdentifier:p.payment.blockchainIdentifier,includeHistory:'true'});
+    p={...p,observed};state=await persist(task,state,p);
+    if(p.stage==='awaiting-escrow'){
+-    if(observed.onChainState!=='FundsLocked'||!confirmedState(observed,'FundsLocked'))return state;
+-    if(Date.now()>=Number(p.payment.submitResultTime))throw new Error('Result deadline expired before model');
++    if(observed.onChainState!=='FundsLocked'||!confirmedState(observed,'FundsLocked')){
++     // Shelfie: never locked and past the result deadline: nothing to do for this Task any more.
++     if(Date.now()>=Number(p.payment.submitResultTime))return persist(task,state,{...p,stage:'expired'});
++     return state;
++    }
++    if(Date.now()>=Number(p.payment.submitResultTime)){
++     if(!answer.idempotent)throw new Error('Result deadline expired before model');
++     return persist(task,state,{...p,stage:'withheld',withheldReason:'shell_deadline'});
++    }
+     state=await persist(task,state,{...p,stage:'model-pending'});
+-    if(Date.now()>=Number(p.payment.submitResultTime))throw new Error('Result deadline expired before model send');
+-    const result=await answer(state.input,`.local/${task.id}-session.json`,Number(p.payment.submitResultTime));
+-    if(typeof result!=='string'||!result.trim())throw new Error('Model did not return a result');
+-    writeFileSync(`.local/${task.id}.txt`,result,{mode:0o600});
+-    return persist(task,state,{...p,stage:'result-saved',result,resultHash:taskHash(result)});
++    if(!answer.idempotent&&Date.now()>=Number(p.payment.submitResultTime))throw new Error('Result deadline expired before model send');
++    return runAnswer(task,state,{...p,stage:'model-pending'});
++   }
++   if(p.stage==='withheld'){
++    if(!REFUND_STATES.includes(observed.onChainState))return state;
++    const txHash=confirmedTxHash(observed,observed.onChainState);
++    await onEvent(task.id,{event:'REFUND_OBSERVED',txHash,note:observed.onChainState});
++    return persist(task,state,{...p,stage:'refunded',refundTxHash:txHash});
++   }
++   if(p.stage==='awaiting-result'&&observed.resultHash===p.resultHash&&confirmedState(observed,'ResultSubmitted')&&observed.onChainState==='ResultSubmitted'){
++    await onEvent(task.id,{event:'RESULT_SUBMITTED',txHash:confirmedTxHash(observed,'ResultSubmitted')});
++    return persist(task,state,{...p,stage:'complete-ready'});
++   }
++   if(p.stage==='awaiting-withdrawal'&&['Withdrawn','DisputedWithdrawn'].includes(observed.onChainState)){
++    const evidence=await verifySettlement({core:await verifyRuntimeTask(await getCore(),task.id,target),taskId:task.id,payment:observed,sellerAddress:registration().registration?.SmartContractWallet?.walletAddress,unit:USDM});
++    if(evidence.verified)await onEvent(task.id,{event:'SETTLED',txHash:evidence.txHash??null});
++    return persist(task,state,{...p,stage:evidence.verified?'settled':'awaiting-withdrawal',settlement:evidence});
+    }
+-   if(p.stage==='awaiting-result'&&observed.resultHash===p.resultHash&&confirmedState(observed,'ResultSubmitted')&&observed.onChainState==='ResultSubmitted')return persist(task,state,{...p,stage:'complete-ready'});
+-   if(p.stage==='awaiting-withdrawal'&&['Withdrawn','DisputedWithdrawn'].includes(observed.onChainState)){const evidence=await verifySettlement({core:await verifyRuntimeTask(await getCore(),task.id,target),taskId:task.id,payment:observed,sellerAddress:registration().registration?.SmartContractWallet?.walletAddress,unit:USDM});return persist(task,state,{...p,stage:evidence.verified?'settled':'awaiting-withdrawal',settlement:evidence});}
+    return state;
+   }
+   if(p.stage==='result-saved'){
+diff --git a/paid-task.test.mjs b/paid-task.test.mjs
+index 800a922..c3c9067 100644
+--- a/paid-task.test.mjs
++++ b/paid-task.test.mjs
+@@ -62,3 +62,37 @@ test('paid execution rejects another Workspace or Coworker before any saved stat
+  ])await assert.rejects(adapter.advance(task,{input:'abc'}),/configured Coworker and Workspace/);
+  assert.equal(writes,0);
+ });
++
++// Shelfie (A-25): idempotent bridge recovery, withhold and refund observation.
++const bridgeAnswer=(fn)=>{const a=async(...args)=>fn(...args);a.idempotent=true;return a;};
++const locked={...payment,onChainState:'FundsLocked',CurrentTransaction:{status:'Confirmed',newOnChainState:'FundsLocked',txHash:'c'.repeat(64)}};
++test('bridge answer retried from model-pending after a restart, with the lock tx',async()=>{
++ const calls=[];const adapter=await createPaidAdapter({target,core,registration,save:async()=>{},answer:bridgeAnswer((input,journal,deadline,extra)=>{calls.push(extra);return '# report';})});
++ const state=await adapter.advance(task,{input:'abc',paid:{stage:'model-pending',payment,observed:locked}});
++ assert.equal(state.paid.stage,'result-saved');assert.equal(calls[0].escrowTxHash,'c'.repeat(64));
++});
++test('model answer still never retried from model-pending',async()=>{
++ const adapter=await createPaidAdapter({target,core,registration,save:async()=>{},answer:async()=>{throw Error('unexpected model')}});
++ await assert.rejects(()=>adapter.advance(task,{input:'abc',paid:{stage:'model-pending',payment}}),/automatic retry disabled/);
++});
++test('model-pending past the result deadline becomes withheld without calling the engine',async()=>{
++ const events=[];let sends=0;const adapter=await createPaidAdapter({target,core,registration,save:async()=>{},onEvent:async(id,e)=>events.push(e.event),answer:bridgeAnswer(()=>{sends++;})});
++ const state=await adapter.advance(task,{input:'abc',paid:{stage:'model-pending',payment:{...payment,submitResultTime:'1'}}});
++ assert.equal(state.paid.stage,'withheld');assert.equal(sends,0);assert.deepEqual(events,['WITHHELD']);
++});
++test('WithheldError keeps no result and moves to withheld',async()=>{
++ let saved;const adapter=await createPaidAdapter({target,core,registration,save:async(_,s)=>{saved=s},answer:bridgeAnswer(()=>{const e=new Error('w');e.name='WithheldError';e.reason='no_passing_photo';throw e;}),mps:async()=>locked});
++ await assert.rejects(()=>adapter.advance(task,{input:'abc',paid:{stage:'awaiting-escrow',payment}}),/w/);
++ assert.equal(saved.paid.stage,'withheld');assert.equal(saved.paid.result,undefined);
++});
++test('withheld Task reports the refund tx once the escrow is RefundWithdrawn',async()=>{
++ const events=[];const adapter=await createPaidAdapter({target,core,registration,save:async()=>{},onEvent:async(id,e)=>events.push(e),
++  mps:async()=>({...payment,onChainState:'RefundWithdrawn',CurrentTransaction:{status:'Confirmed',newOnChainState:'RefundWithdrawn',txHash:'d'.repeat(64)}}),answer:bridgeAnswer(()=>{})});
++ const state=await adapter.advance(task,{input:'abc',paid:{stage:'withheld',payment}});
++ assert.equal(state.paid.stage,'refunded');assert.deepEqual(events,[{event:'REFUND_OBSERVED',txHash:'d'.repeat(64),note:'RefundWithdrawn'}]);
++});
++test('never-locked Task past the result deadline expires',async()=>{
++ const adapter=await createPaidAdapter({target,core,registration,save:async()=>{},answer:bridgeAnswer(()=>{}),mps:async()=>({...payment,onChainState:null})});
++ const state=await adapter.advance(task,{input:'abc',paid:{stage:'awaiting-escrow',payment:{...payment,submitResultTime:'1'}}});
++ assert.equal(state.paid.stage,'expired');
++});
+diff --git a/payment-registration.mjs b/payment-registration.mjs
+index cdfecf0..c7cd31b 100644
+--- a/payment-registration.mjs
++++ b/payment-registration.mjs
+@@ -24,7 +24,7 @@ if(process.argv[2]==='key'){
+  const sources=await request('/payment-source?take=100');
+  const find=(x)=>{if(Array.isArray(x)){for(const y of x){const r=find(y);if(r)return r;}}else if(x&&typeof x==='object'){if(x.id===payment.sourceId)return x;for(const y of Object.values(x)){const r=find(y);if(r)return r;}}};
+  const source=find(sources);if(!source||wallet.walletAddress!==payment.sellerAddress)throw Error('Dedicated source or wallet mismatch');
+- const body={network:'Preprod',type:'Standard',sellingWalletVkey:wallet.walletVkey,supportedPaymentSources:[{chain:'Cardano',network:'Preprod',paymentSourceType:'Web3CardanoV2',address:source.smartContractAddress,pricing:{pricingType:'Dynamic'}}],ExampleOutputs:[],Tags:['hackathon','team-names'],name:'Hackathon Team Name Finder',description:'Suggests hackathon team names from a project topic and style.',Capability:{name:process.env.ZAI_MODEL,version:'1'},Author:{name:author},apiBaseUrl:registrationUrl(process.env.AGENT_API_PORT)};
++ const body={network:'Preprod',type:'Standard',sellingWalletVkey:wallet.walletVkey,supportedPaymentSources:[{chain:'Cardano',network:'Preprod',paymentSourceType:'Web3CardanoV2',address:source.smartContractAddress,pricing:{pricingType:'Dynamic'}}],ExampleOutputs:[],...(process.env.SHELL_TOKEN?.trim()?{Tags:['shelfie','retail','shelf-check','munich','verified-photo'],name:'Shelfie',description:'Verified shelf checks in Munich stores: a person photographs the product price tag with a one-time code, a verifier checks the photo, and you pay only when the photo is true. Pick a product and a store from the catalog.',Capability:{name:'shelfie-shelf-check',version:'1'}}:{Tags:['hackathon','team-names'],name:'Hackathon Team Name Finder',description:'Suggests hackathon team names from a project topic and style.',Capability:{name:process.env.ZAI_MODEL,version:'1'}}),Author:{name:author},apiBaseUrl:registrationUrl(process.env.AGENT_API_PORT)};
+  state.registrationWritePending=true;state.request=body;save();
+  const r=await request('/registry',body);state.registrationId=r.id;state.registrationWritePending=false;state.registration=r;save();console.log(JSON.stringify(r));
+ }else{
+diff --git a/sokosumi-runtime.mjs b/sokosumi-runtime.mjs
+index d95c7c2..7a7f83f 100644
+--- a/sokosumi-runtime.mjs
++++ b/sokosumi-runtime.mjs
+@@ -1,10 +1,16 @@
+ import {execFileSync} from 'node:child_process';
+-import {dirname,join,isAbsolute} from 'node:path';
++import {basename,dirname,join,isAbsolute} from 'node:path';
+ import {pathToFileURL} from 'node:url';
+ let loaded;
+-export function sokosumiRoot(run=execFileSync){
+- const skillsPath=run('sokosumi',['skills','path'],{encoding:'utf8',timeout:30000}).trim();
+- if(!isAbsolute(skillsPath)||!skillsPath.endsWith('/skills'))throw new Error('sokosumi skills path returned an invalid package path');
++// On Windows the npm shim is sokosumi.cmd, which execFileSync cannot start without a shell; run the package's JS entry with node instead.
++export function execSokosumi(command,args,options){
++ if(process.platform!=='win32')return execFileSync(command,args,options);
++ const shim=execFileSync('where.exe',[`${command}.cmd`],{encoding:'utf8'}).split(/\r?\n/)[0].trim();
++ return execFileSync(process.execPath,[join(dirname(shim),'node_modules','@masumi_network','sokosumi','dist','bin','sokosumi.js'),...args],options);
++}
++export function sokosumiRoot(run=execSokosumi){
++ const skillsPath=run('sokosumi',['skills','path'],{encoding:'utf8',timeout:30000}).trim().replace(/[\\/]+$/,'');
++ if(!isAbsolute(skillsPath)||basename(skillsPath)!=='skills')throw new Error('sokosumi skills path returned an invalid package path');
+  return join(dirname(skillsPath),'dist','src');
+ }
+ export async function loadSokosumiRuntime(){
+diff --git a/worker.mjs b/worker.mjs
+index 54308fc..7c420fc 100644
+--- a/worker.mjs
++++ b/worker.mjs
+@@ -1,8 +1,8 @@
+-import {execFileSync} from 'node:child_process';
++import {execSokosumi} from './sokosumi-runtime.mjs';
+ import {existsSync,readFileSync,writeFileSync} from 'node:fs';
+ import {acquireWorkerLock} from './worker-lock.mjs';
+-import {answer,client} from './client.mjs';
+-import {reply} from './comments.mjs';
++import {answer,bridge,client} from './client.mjs';
++import {reply,postWithheld} from './comments.mjs';
+ import {createPaidAdapter,isPaidReady} from './paid-task.mjs';
+ import {taskTarget,isTaskForTarget} from './task-target.mjs';
+ const target=taskTarget();
+@@ -10,20 +10,43 @@ const id=target.coworkerId;
+ const releaseLock=acquireWorkerLock();
+ process.once('exit',releaseLock);
+ for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>{releaseLock();process.exit(0)});
+-function cli(args){return JSON.parse(execFileSync('sokosumi',['--preprod',...args,'--json'],{encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024}));}
++function cli(args){return JSON.parse(execSokosumi('sokosumi',['--preprod',...args,'--json'],{encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024}));}
++const stamp=()=>new Date().toISOString();
++// Shelfie: Tasks run in parallel (one in-flight handler per Task), finished ones are skipped, and the
++// slow on-chain waits (refund, settlement) are observed at most once a minute per Task.
++const TERMINAL=['settled','refunded','expired'],SLOW=['withheld','awaiting-withdrawal'],OBSERVE_MS=60000;
++const WITHHELD_COMMENT='The job did not finish before the submit deadline. The result is withheld and your fee is refunded.';
++const inflight=new Set(),observedAt=new Map();
++function jobIdOf(taskId){try{return JSON.parse(readFileSync(`.local/${taskId}-session.json`,'utf8')).jobId??null}catch{return null}}
++async function onEvent(taskId,event){
++ const jobId=jobIdOf(taskId);
++ if(!bridge||!jobId){console.log(stamp(),'Settlement event not sent (no engine job)',taskId,event.event);return;}
++ await bridge.postSettlementEvent(jobId,{...event,ref:taskId});
++ console.log(stamp(),'Settlement event',taskId,jobId,event.event,event.txHash??'');
++}
+ await client.health();
+-const paid=await createPaidAdapter({target,answer,save:async(taskId,state)=>writeFileSync(`.local/${taskId}.json`,JSON.stringify(state),{mode:0o600})});
++const paid=await createPaidAdapter({target,answer,onEvent,save:async(taskId,state)=>writeFileSync(`.local/${taskId}.json`,JSON.stringify(state),{mode:0o600})});
+ console.log('Continuous worker running',process.pid);
+-while(true){
+- try{
+- const tasks=cli(['tasks','list','--coworker-id',id,...target.taskArgs]).tasks;
+- for(const t of tasks.filter(t=>isTaskForTarget(t,target))){
++async function handle(t){
+  try{
+  const journal=`.local/${t.id}.json`,resultFile=`.local/${t.id}.txt`;
+  let state=existsSync(journal)?JSON.parse(readFileSync(journal,'utf8')):{};
+- if(t.status==='READY'&&!state.phase){writeFileSync(journal,JSON.stringify({phase:'starting'}),{mode:0o600});const started=cli(['runtime','start',t.id,...target.runtimeArgs,'--coworker-id',id]);state={phase:'started',input:started.description};writeFileSync(journal,JSON.stringify(state),{mode:0o600});}
+- if(state.paid&&process.env.PAID_TASKS_ENABLED!=='true')continue;
+- if(state.paid||(state.phase==='started'&&process.env.PAID_TASKS_ENABLED==='true'&&isPaidReady())){state=await paid.advance(t,state);if(state.phase==='completed')await reply(t);continue;}
++ if(TERMINAL.includes(state.paid?.stage)||(!state.paid&&existsSync(`.local/${t.id}-withheld.json`)))return;
++ if(SLOW.includes(state.paid?.stage)){if(Date.now()-(observedAt.get(t.id)??0)<OBSERVE_MS)return;observedAt.set(t.id,Date.now());}
++ if(t.status==='READY'&&!state.phase){writeFileSync(journal,JSON.stringify({phase:'starting'}),{mode:0o600});const started=cli(['runtime','start',t.id,...target.runtimeArgs,'--coworker-id',id]);state={phase:'started',input:started.description};writeFileSync(journal,JSON.stringify(state),{mode:0o600});console.log(stamp(),'Started',t.id);}
++ if(state.paid&&process.env.PAID_TASKS_ENABLED!=='true')return;
++ if(state.paid||(state.phase==='started'&&process.env.PAID_TASKS_ENABLED==='true'&&isPaidReady())){
++  // Chain the steps that need no outside wait (request -> purchase event, lock -> engine job -> submit).
++  for(let i=0;i<6;i++){
++   const before=state.paid?.stage;
++   state=await paid.advance(t,state);
++   if(state.paid?.stage!==before)console.log(stamp(),'Stage',t.id,before??'-','->',state.paid?.stage);
++   if(state.phase==='completed'){await reply(t);break;}
++   if(state.paid?.stage===before||SLOW.includes(state.paid?.stage))break;
++  }
++  if(state.paid?.stage==='withheld')await postWithheld(t,WITHHELD_COMMENT);
++  return;
++ }
+  if(state.phase==='started'){
+  writeFileSync(journal,JSON.stringify({...state,phase:'model-pending'}),{mode:0o600});
+  const result=await answer(state.input,`.local/${t.id}-session.json`);
+@@ -35,7 +58,17 @@ while(true){
+  writeFileSync(journal,JSON.stringify({...state,phase:'completed',completion:completed}),{mode:0o600});console.log('Completed',t.id);
+  }
+  if(state.phase==='completed')await reply(t);
+- }catch(e){console.error('Task blocked',t.id,e.message.slice(0,200))}
++ }catch(e){
++ if(e?.name==='WithheldError'){console.log(stamp(),'Withheld',t.id,e.reason);await postWithheld(t,e.comment).catch(c=>console.error('Withheld comment not posted',t.id,c.message.slice(0,200)));return;}
++ console.error(stamp(),'Task blocked',t.id,String(e?.message).slice(0,200))}
++}
++while(true){
++ try{
++ const tasks=cli(['tasks','list','--coworker-id',id,...target.taskArgs]).tasks;
++ for(const t of tasks.filter(t=>isTaskForTarget(t,target))){
++  if(inflight.has(t.id))continue;
++  inflight.add(t.id);
++  void handle(t).finally(()=>inflight.delete(t.id));
+  }
+  }catch(e){console.error('Polling read failed',e.message.slice(0,200))}
+  await new Promise(r=>setTimeout(r,5000));

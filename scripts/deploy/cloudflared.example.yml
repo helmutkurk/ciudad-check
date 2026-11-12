@@ -1,0 +1,14 @@
+# Template. Copy to ~/.config/shelfie/cloudflared.yml and replace TUNNEL_UUID and HOME_DIR.
+# Domain is shelfieapp.fyi (change all four hostnames together if it ever moves). Never commit the real file or the credentials JSON.
+tunnel: TUNNEL_UUID
+credentials-file: HOME_DIR/.cloudflared/TUNNEL_UUID.json   # written by `cloudflared tunnel create`
+
+ingress:
+  # engine of `main` (also serves the built web: https://api.shelfieapp.fyi/w, same-origin, SSE safe)
+  - hostname: api.shelfieapp.fyi
+    service: http://127.0.0.1:4000
+  # engine of `dev`
+  - hostname: api-dev.shelfieapp.fyi
+    service: http://127.0.0.1:4100
+  # Only the two engine ports. NEVER add the verifier (4021/4121), Payment Service, Postgres or SSH.
+  - service: http_status:404

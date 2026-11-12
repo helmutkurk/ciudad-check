@@ -1,0 +1,21 @@
+[Unit]
+Description=Shelfie engine (%i)
+After=network-online.target
+Wants=network-online.target shelfie-verifier@%i.service
+After=shelfie-verifier@%i.service
+
+[Service]
+Type=simple
+# Instance = branch name (main, dev). Secrets live only in this untracked file outside the repo.
+EnvironmentFile=%h/.config/shelfie/%i.env
+Environment=NODE_ENV=production
+Environment=PATH=%h/.local/share/mise/shims:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=%h/shelfie-deploy/%i/current/codigo
+ExecStart=/usr/bin/env npm run start -w @shelfie/engine
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

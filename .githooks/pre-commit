@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Secret scan on every commit (public repo, ADR 0003). Context-ack gate removed by ADR-0007.
+root=$(git rev-parse --show-toplevel)
+# Public repo (ADR 0003): scan staged changes for secrets when gitleaks is installed.
+if command -v gitleaks >/dev/null 2>&1; then
+  # --exit-code 3 separates a finding (3) from a usage or runtime error (1, e.g. an unknown flag).
+  gitleaks protect --staged --redact --no-banner --log-level warn --exit-code 3
+  rc=$?
+  if [[ $rc -eq 3 ]]; then
+    echo "Commit refused: gitleaks found a secret-like string in the staged changes." >&2; exit 1
+  elif [[ $rc -ne 0 ]]; then
+    echo "Commit refused: gitleaks failed to run (exit $rc); check the version with 'gitleaks version' (tested with 8.30.1)." >&2; exit 1
+  fi
+else
+  echo "warning: gitleaks not installed; the repo is public, install it (see docs/public-release.md)." >&2
+fi
+# ADR-0008 retains the unwired context-ack gate from ADR-0007; gitleaks stays.
+exit 0

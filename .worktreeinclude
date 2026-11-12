@@ -1,0 +1,9 @@
+# Git-ignored files copied into each new Claude worktree (claude --worktree <name>).
+# gitignore syntax. Only files that are BOTH listed here AND git-ignored are copied.
+# Local preprod values only; never mainnet, never real money.
+# node_modules is not copied: run `npm ci` in codigo/ in the worktree.
+codigo/.env
+codigo/apps/engine/.env
+codigo/apps/verifier/.env
+codigo/apps/shell/.env
+codigo/apps/web/.env.local

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F5EFE3" />
+<meta name="referrer" content="no-referrer" />
+<meta name="description" content="What Shelfie has built, what comes next, and how a team of four built it in one weekend with AI agents." />
+<title>Roadmap and build log | Shelfie</title>
+<link rel="icon" href="shelfie-logo.webp" />
+<link rel="stylesheet" href="home.css" />
+<link rel="stylesheet" href="doc.css" />
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="index.html" aria-label="Shelfie home">
+    <img src="shelfie-logo.webp" alt="" width="36" height="37" />
+    <span>Shelf<b>ie</b></span>
+  </a>
+  <nav class="topnav" aria-label="Site">
+    <a href="market.html">Market</a>
+    <a href="technology.html">Technology</a>
+    <a href="roadmap.html" aria-current="page">Roadmap</a>
+    <a href="developers.html">Developers</a>
+    <a class="btn btn-small" href="/dashboard">Start a check</a>
+  </nav>
+  <details class="menu">
+    <summary>Menu</summary>
+    <a href="market.html">Market</a><a href="technology.html">Technology</a><a href="roadmap.html" aria-current="page">Roadmap</a><a href="developers.html">Developers</a>
+    <a href="/dashboard">Start a check</a>
+  </details>
+</header>
+<main id="main" class="doc">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="index.html">Home</a></li><li aria-current="page">Roadmap</li></ol></nav>
+    <p class="eyebrow">Roadmap and build</p>
+    <h1 class="doc-title">What is built, and what is only a plan</h1>
+    <p class="lead">Done items are built on Cardano preprod. Everything under Next and Later is a proposal.</p>
+    <div class="doc-grid">
+      <aside class="toc">
+        <details open>
+          <summary>On this page</summary>
+          <ol>
+          <li><a href="#now">Now</a></li>
+          <li><a href="#next">Next</a></li>
+          <li><a href="#later">Later</a></li>
+          <li><a href="#build">How we built it</a></li>
+          </ol>
+        </details>
+      </aside>
+      <article class="prose">
+
+<section id="now">
+  <h2>Now: built at the hackathon</h2>
+  <ul class="road-grid"><li class="road-card"><span class="pill pill-done">Done</span><h3>Verified shelf check</h3><p>One product, one Munich store, one photo per job.</p></li><li class="road-card"><span class="pill pill-done">Done</span><h3>Escrow with refund</h3><p>Masumi escrow through Sokosumi. A refund path was measured on preprod with the engine on fakes and no photo.</p></li><li class="road-card"><span class="pill pill-done">Done</span><h3>x402 pay-per-check verifier</h3><p>The verifier is paid per check. The two receipts carry a stub verdict.</p></li><li class="road-card"><span class="pill pill-done">Done</span><h3>On-chain checker payout</h3><p>Plain transfers in test ADA, through an idempotent payout queue.</p></li><li class="road-card"><span class="pill pill-done">Done</span><h3>Hand sign and out-of-stock path</h3><p>One-time hand sign, live camera only, location precheck, and an out-of-stock report when the product is missing.</p></li><li class="road-card"><span class="pill pill-done">Done</span><h3>Evidence ledger and apps</h3><p>Hash-chained evidence ledger, checker app and brand dashboard with orders.</p></li></ul>
+  <p><a class="back" href="index.html">Back to home</a></p>
+</section>
+<section id="next">
+  <h2>Next: weeks</h2>
+  <p>Proposals, not commitments. Nothing in this list is built yet.</p>
+  <ul class="road-grid"><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>One full job with a real photo</h3><p>Lock, check, payout and settlement on one task with a verified real photo. This is our next milestone.</p></li><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>Backend off a team laptop</h3><p>Move the backend to a cloud VM; the shared deployment still runs on a team machine.</p></li><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>Brands order through Sokosumi</h3><p>Order API with per-order and per-day caps, real credits, many stores.</p></li><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>Store-owned QR codes</h3><p>A stronger location proof. Needs store cooperation.</p></li><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>Multi-store jobs and bundles</h3><p>Jobs that need K of N stores (already a field in the job pack), and bundles of checks.</p></li><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>Pilot in Munich</h3><p>A handful of brands, human review on top of the gates, and legal and store-permission checks.</p></li><li class="road-card"><span class="pill pill-next">Next, a proposal</span><h3>Measure reliability</h3><p>Measure finger-count reliability on a real photo set; sample out-of-stock reports with a second checker.</p></li></ul>
+  <p><a class="back" href="index.html">Back to home</a></p>
+</section>
+<section id="later">
+  <h2>Later: vision</h2>
+  <p>Proposals, not commitments. Nothing in this list is built yet.</p>
+  <ul class="road-grid"><li class="road-card"><span class="pill pill-later">Later, a proposal</span><h3>Checker onboarding without crypto friction</h3><p>Payout address, wallet onboarding or fiat payout.</p></li><li class="road-card"><span class="pill pill-later">Later, a proposal</span><h3>Brand's own account and verifier</h3><p>The brand pays with its own account and chooses an independent verifier; multi-verifier agreement for large jobs.</p></li><li class="road-card"><span class="pill pill-later">Later, a proposal</span><h3>Beyond shelves</h3><p>Deliveries, opening hours, accessibility checks and outages as new domain packs.</p></li><li class="road-card"><span class="pill pill-later">Later, a proposal</span><h3>Pay per passed store</h3><p>Partial results, if Masumi supports it.</p></li><li class="road-card"><span class="pill pill-later">Later, a proposal</span><h3>Mainnet</h3><p>Only after a security audit and legal review. This is a plan, not a commitment; the code refuses mainnet today.</p></li><li class="road-card"><span class="pill pill-later">Later, a proposal</span><h3>Marketplace</h3><p>Third parties post and fulfil tasks.</p></li></ul>
+  <blockquote><p>Agents will need eyes in the physical world. We make those eyes verifiable and paid.</p></blockquote>
+  <p><a class="back" href="index.html">Back to home</a></p>
+</section>
+<section id="build">
+  <h2>How we built it</h2>
+  <p>The window ran from Friday 2026-10-30, 09:00 to Saturday 2026-10-31, 15:00 (the Devfolio deadline). Preparation before Friday 09:00 was documents and configuration only; the code was written during the event, on top of the organisers' starter templates.</p>
+  <h3>Timeline and milestones</h3>
+  <p>Planned times are as we set them. Status is as recorded at the time of writing.</p>
+  <div class="table-scroll" tabindex="0" role="region" aria-label="Milestones M1 to M6"><table><caption>Milestones M1 to M6</caption><thead><tr><th scope="col">Milestone</th><th scope="col">Name</th><th scope="col">Plan</th><th scope="col">Recorded status</th></tr></thead><tbody>
+<tr><th scope="row">M1</th><td>Paid x402 request</td><td>Fri 11:30</td><td>Done on Friday afternoon: two real payments of 1 tADA each. The verdict came from a stub reader.</td></tr>
+<tr><th scope="row">M2</th><td>Agent pays agent, agent pays human</td><td>Fri 15:00</td><td>Payment legs done on real preprod: x402 fee, plain transfer payout, engine payout queue. A full run through the deployed engine with a real store photo is not yet logged.</td></tr>
+<tr><th scope="row">M3</th><td>Hired through the marketplace, unpaid</td><td>Fri 13:00</td><td>Done: unpaid Sokosumi tasks completed through the bridge, engine on fakes.</td></tr>
+<tr><th scope="row">M4</th><td>Paid escrow for a job</td><td>Fri 20:00</td><td>Done as an escrow cycle (lock, result, settle) under the starter registration, and again under the Shelfie registration with the engine on fakes.</td></tr>
+<tr><th scope="row">M5</th><td>Withhold and refund</td><td>Fri night</td><td>Done: no photo, withheld, refund about 30 minutes after the lock (engine on fakes).</td></tr>
+<tr><th scope="row">M6</th><td>Front end and live ledger</td><td>Sat 11:00</td><td>In progress: checker app, dashboard and homepage built; a full real cycle with a store photo through the deployed engine is open.</td></tr>
+</tbody></table></div>
+  <p>Evidence for each milestone is in <a href="technology.html#receipts">the receipts</a>.</p>
+  <h3>Working with AI agents</h3>
+  <p>Each team member worked with a coding agent (Claude Code or Codex) under one shared rule file, <code>AGENTS.md</code>, and a mandatory context check before any change.</p>
+  <ul>
+    <li><strong>Peer review.</strong> Everyone pushed to one development branch, and each person's agent reviewed the commits of the others. <code>main</code> changes only through a release pull request with three approvals.</li>
+    <li><strong>ADRs.</strong> Design and repository decisions are written as architecture decision records.</li>
+    <li><strong>Facts checked against reality</strong> go into a verified-facts file; every session is logged in <code>docs/ai-log.md</code> with what was done, what is open and the handoff.</li>
+    <li><strong>Review of claims.</strong> A technical review in the last hours checked each pitch claim against the code and corrected several.</li>
+  </ul>
+  <p><a class="back" href="index.html">Back to home</a></p>
+</section>
+      </article>
+    </div>
+  </div>
+  <section class="section section-cta">
+    <div class="wrap cta">
+      <p>See a check run end to end on the Cardano test network.</p>
+      <div class="cta-buttons">
+        <a class="btn btn-big" href="/dashboard">Start a shelf check</a>
+        <a class="btn btn-big btn-ghost" href="/w">Take a check (test ADA)</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="index.html"><img src="shelfie-logo.webp" alt="" width="28" height="29" /><span>Shelf<b>ie</b></span></a>
+      <p>Paid only when the photo is true.</p>
+    </div>
+    <nav aria-label="Product"><h2>Product</h2>
+      <a href="index.html#how">How it works</a><a href="market.html">Market</a><a href="roadmap.html">Roadmap</a></nav>
+    <nav aria-label="Technology"><h2>Technology</h2>
+      <a href="technology.html">Overview</a><a href="technology.html#trust">Why trust</a><a href="technology.html#receipts">Receipts</a></nav>
+    <nav aria-label="Developers"><h2>Developers</h2>
+      <a href="developers.html">Developers</a><a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">GitHub</a><a href="roadmap.html#build">Build log</a></nav>
+    <nav aria-label="Legal"><h2>Legal</h2>
+      <a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a>
+      <a href="https://github.com/helmutkurk/shelfie/blob/main/LICENSE" rel="noopener noreferrer">License (BUSL-1.1)</a></nav>
+  </div>
+  <p class="wrap footer-note">Student project at the TUM Blockchain &amp; AI Hackathon 2026, not an official TUM product. Built on Cardano, Masumi and x402.</p>
+</footer>
+</body>
+</html>

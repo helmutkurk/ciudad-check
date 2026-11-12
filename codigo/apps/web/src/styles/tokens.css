@@ -1,0 +1,76 @@
+/* Design tokens from diseno/ui-design.md section 2 and docs/design-implementation-2026-10-30
+   (approved board: forest #0B2E1F, green #2E7D32, light green #6BAF5B, sage #CFE7C1, cream
+   #F5EFE3). Components never use literal colours. The app has one theme: light, on :root
+   (decision 2026-10-30, no dark mode, no theme selector). Contrast ratios are listed in
+   ui-design.md. */
+:root {
+  color-scheme: light;
+  --bg: #f5efe3;
+  --surface: #ffffff;
+  --surface-2: #ede6d4;
+  --text: #0b2e1f;
+  --text-2: #4a5c52;
+  --separator: #dcd3bf;
+  --accent: #256a2b;
+  --accent-fill: #2e7d32;
+  --success-text: #1e6b2a;
+  --success-bg: #e3f1da;
+  --warning-text: #7a4a00;
+  --warning-bg: #fbebc4;
+  --error-text: #b3261e;
+  --error-bg: #fce8e6;
+  --camera-chrome: #000000;
+  --accent-soft: #cfe7c1;
+  --accent-soft-text: #0b2e1f;
+  --frame-bg: #e6dcc8;
+  --card-line: rgba(11, 46, 31, 0.08);
+  --skeleton-a: #e8e0ce;
+  --skeleton-b: #f3eee2;
+  --scrim: rgba(11, 46, 31, 0.4);
+  --logo-tile: #f5efe3;
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.16);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-frame: 0 24px 64px rgba(0, 0, 0, 0.14);
+  --app-width: 430px;
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 16px;
+  --s-4: 24px;
+  --s-5: 32px;
+  --s-6: 48px;
+  --s-7: 64px;
+  --r-control: 12px;
+  --r-group: 16px;
+  --r-sheet: 24px;
+  --r-thumb: 8px;
+
+  --font:
+    -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --base-size: 100%;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Logo on a cream tile so the approved artwork sits cleanly on the light page. */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-1);
+  border-radius: var(--r-control);
+  background: var(--logo-tile);
+  line-height: 0;
+}
+.logo img {
+  display: block;
+  width: auto;
+  height: 36px;
+}
+.logo-sm img {
+  height: 32px;
+}
+.logo-md img {
+  height: 56px;
+}

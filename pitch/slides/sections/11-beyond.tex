@@ -1,0 +1,14 @@
+\begin{frame}{Beyond the hackathon}
+  \centering
+  \begin{tikzpicture}[font=\normalsize,
+     pack/.style={draw=cardano,fill=cardanolight,rounded corners=3pt,minimum width=2.9cm,minimum height=1cm,align=center}]
+    \node[pack,fill=warm!25,draw=warm] (a) at (0,0) {Retail audits\\{\small today}};
+    \node[pack] (b) at (3.9,0) {Deliveries};
+    \node[pack] (c) at (7.3,0) {Outages};
+    \node[pack] (d) at (10.7,0) {Accessibility};
+    \draw[-{Stealth},thick,cardano] (a)--(b);\draw[-{Stealth},thick,cardano] (b)--(c);\draw[-{Stealth},thick,cardano] (c)--(d);
+  \end{tikzpicture}\\[1.5em]
+  {\normalsize AI agents can browse the web, but not see the world.\\[0.2em]
+  One engine: any \alert{proof-of-real-world task} is a domain pack.}\\[0.6em]
+  {\scriptsize Roadmap; only retail checks are built. Next: store QR codes for location.}
+\end{frame}

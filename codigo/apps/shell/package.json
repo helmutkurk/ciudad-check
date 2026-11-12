@@ -1,0 +1,18 @@
+{
+  "name": "@shelfie/shell",
+  "license": "BUSL-1.1",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Our only shell code: the bridge between the Masumi starter's job handler and the Shelfie engine. Stays JavaScript (no typecheck, no zod).",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./bridge/index.js"
+  },
+  "scripts": {
+    "test": "node --test bridge/",
+    "dev": "echo 'The starter fork is not cloned yet: see README.md (Fork steps for role A).'"
+  }
+}

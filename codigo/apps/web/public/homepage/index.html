@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F5EFE3" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      name="description"
+      content="Shelfie: verified shelf checks for brands without a field team. A person nearby photographs the shelf, a verifier service checks the photo, and Cardano escrow releases the fee only if it passes."
+    />
+    <title>Shelfie: paid only when the photo is true</title>
+    <link rel="icon" href="shelfie-logo.webp" />
+    <link rel="stylesheet" href="home.css" />
+    <script src="site.js" defer></script>
+    <script src="cart.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="brand" href="index.html" aria-label="Shelfie home">
+        <img src="shelfie-logo.webp" alt="" width="36" height="37" />
+        <span>Shelf<b>ie</b></span>
+      </a>
+      <nav class="topnav" aria-label="Site">
+        <a href="market.html">Market</a>
+        <a href="technology.html">Technology</a>
+        <a href="roadmap.html">Roadmap</a>
+        <a href="developers.html">Developers</a>
+        <a class="btn btn-small" href="/dashboard">Start a check</a>
+      </nav>
+      <details class="menu">
+        <summary>Menu</summary>
+        <a href="market.html">Market</a><a href="technology.html">Technology</a>
+        <a href="roadmap.html">Roadmap</a><a href="developers.html">Developers</a>
+        <a href="/dashboard">Start a check</a>
+      </details>
+    </header>
+
+    <main id="main">
+      <!-- Room 1: the cart assembles while the story is told (scroll progress -> frame -> canvas). -->
+      <section class="room" id="story" aria-label="How Shelfie started">
+        <div class="stage">
+          <canvas id="cart-canvas" aria-hidden="true"></canvas>
+          <div class="beats">
+            <article class="beat" data-from="0" data-to="0.25">
+              <p class="eyebrow">TUM Blockchain &amp; AI Hackathon 2026 · Cardano track</p>
+              <h1>Paid only when the photo is true.</h1>
+              <p class="lead">
+                Shelfie checks what a product really costs on the shelf, with a photo you can trust.
+              </p>
+              <p class="hint">Scroll</p>
+            </article>
+            <article class="beat" data-from="0.25" data-to="0.5">
+              <p class="eyebrow">It started with a real request</p>
+              <h2>“Can you check the competition in a few shops for me?”</h2>
+              <p>
+                Alex wants to bring a new grocery product to Germany. Before launching, he needs to
+                know what similar products cost and whether they are really on the shelf. He lives
+                abroad, and no AI can walk into a supermarket and look.
+              </p>
+            </article>
+            <article class="beat" data-from="0.5" data-to="0.75">
+              <p class="eyebrow">The idea</p>
+              <h2>An agent that hires a person to look.</h2>
+              <p>
+                People nearby, or a worker in the supermarket, photograph the price tag with a
+                one-time hand sign. A verifier agent checks the photo before anyone is paid.
+              </p>
+            </article>
+            <article class="beat" data-from="0.75" data-to="1.01">
+              <p class="eyebrow">The payment</p>
+              <h2>Nobody pays for a photo that isn't true.</h2>
+              <p>
+                The fee waits in Cardano escrow. Photo passes: the person is paid and the report is
+                delivered. No passing photo: the brand gets its money back.
+              </p>
+            </article>
+          </div>
+          <div class="progress" aria-hidden="true"><span id="story-progress"></span></div>
+        </div>
+      </section>
+
+      <section class="section section-dark" id="demo">
+        <div class="wrap">
+          <p class="eyebrow">See it work</p>
+          <h2 class="title">One shelf check, start to finish.</h2>
+          <p class="lead">
+            A brand orders a check, a person photographs the price tag, the verifier checks it and
+            the escrow settles on Cardano preprod.
+          </p>
+          <a
+            class="video-card reveal"
+            href="https://www.youtube.com/watch?v=jS0IWTJ0A_U"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Watch the Shelfie demo video on YouTube (opens in a new tab)"
+          >
+            <img src="shelfie-logo.webp" alt="" width="72" height="74" />
+            <span class="video-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="34" height="34"><path d="M8 5v14l11-7z" /></svg>
+            </span>
+            <span class="video-label">Watch the demo on YouTube</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="problem">
+        <div class="wrap">
+          <h2 class="title title-wide">Two problems, one missing pair of eyes.</h2>
+          <div class="split split-wide">
+            <article class="card reveal">
+              <h3>A market where you know nobody.</h3>
+              <p>
+                Entering an unfamiliar market means finding someone to visit stores, photograph
+                competitors and read their shelf prices. A brand needs evidence it can assess
+                without knowing the person behind the camera.
+              </p>
+              <p>We start in Munich, where we can walk the stores ourselves.</p>
+              <a class="read-more" href="market.html#remote-market">Read more: a market you don't know</a>
+            </article>
+            <article class="card card-dark reveal">
+              <h3>Field teams to check one shelf.</h3>
+              <p>
+                Brands pay agencies or their own reps to confirm that the product is there, what
+                the shelf tag says, and that a paid promotion is visible. A narrow shelf check
+                can be enough when a full field visit would cover more than the brand needs.
+              </p>
+              <p>Shelfie checks; we do not set prices.</p>
+              <a class="read-more" href="market.html#field-checks">Read more: field checks</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="how">
+        <div class="wrap">
+          <p class="eyebrow">How it works</p>
+          <h2 class="title">Proof first, payment second.</h2>
+          <ol class="steps">
+            <li class="step reveal">
+              <span class="step-num">1</span>
+              <h3>Order</h3>
+              <p>
+                A brand picks one product and a Munich store from our catalog. The fee is locked in
+                Masumi escrow on Cardano.
+              </p>
+            </li>
+            <li class="step reveal">
+              <span class="step-num">2</span>
+              <h3>Claim</h3>
+              <p>
+                The task appears for people in the city. The first one to claim it walks to the
+                store.
+              </p>
+            </li>
+            <li class="step reveal">
+              <span class="step-num">3</span>
+              <h3>Photograph</h3>
+              <p>
+                Live camera only. A hand sign next to the price tag, shown only when the camera
+                opens, challenges the checker to take a fresh photo.
+              </p>
+            </li>
+            <li class="step reveal">
+              <span class="step-num">4</span>
+              <h3>Verify</h3>
+              <p>
+                A separate verifier agent, paid per check over x402, reads product and price; fixed
+                rules decide pass or fail.
+              </p>
+            </li>
+            <li class="step reveal">
+              <span class="step-num">5</span>
+              <h3>Settle</h3>
+              <p>
+                Pass: the person is paid on-chain and the report is delivered. No passing photo in
+                time: the brand is refunded.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section section-dark" id="proof">
+        <div class="wrap">
+          <p class="eyebrow">Already running</p>
+          <h2 class="title">Real transactions on Cardano preprod.</h2>
+          <p class="lead">
+            Preprod is Cardano's public test network: real transactions, test money. Earlier test
+            runs, each step on its own; a full job with a verified real photo is next.
+          </p>
+          <ul class="receipts">
+            <li class="reveal">
+              <span>Fee locked in Masumi escrow</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/8415ae7d015d981ac14605f796b46ac58da61cf9150f3e710bfa0fd728cdd081"
+                rel="noopener noreferrer"
+                target="_blank"
+                >8415ae7d…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>Verifier paid per check over x402</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/cbc9cb5d4d70bbfbc4a43e8817570db610b61cace150696107eab4734d78474d"
+                rel="noopener noreferrer"
+                target="_blank"
+                >cbc9cb5d…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>Person paid on-chain</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/1abef82575d1bfa75e64d9f0d9e40e733fe964e9bc6c9cee333e23a994e510d8"
+                rel="noopener noreferrer"
+                target="_blank"
+                >1abef825…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>Escrow settled, result delivered (test photo)</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/0614b337065b50701df9589d47e5c205a43b409c057eeb109d043042b0b752d0"
+                rel="noopener noreferrer"
+                target="_blank"
+                >0614b337…</a
+              >
+            </li>
+            <li class="reveal">
+              <span>No photo: brand refunded from escrow</span
+              ><a
+                href="https://preprod.cardanoscan.io/transaction/ca8f5de9d66a6aa4657d9f8dbf64670f7bbd7e9b66c61355a816ad8ae47fa1d6"
+                rel="noopener noreferrer"
+                target="_blank"
+                >ca8f5de9…</a
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section section-tint" id="trust">
+        <div class="wrap">
+          <p class="eyebrow">Why trust: the blockchain</p>
+          <h2 class="title title-wide">Proof first, payment second.</h2>
+          <p class="sub">
+            Escrow movements follow contract rules on Cardano. Verifier fees and checker payouts
+            also leave public receipts; the photo verdict still comes from Shelfie's verifier.
+          </p>
+          <ul class="cards">
+            <li class="card reveal">
+              <h3>Locked before work starts.</h3>
+              <p>
+                The brand's fee sits in a Masumi escrow contract on Cardano. It is released by the
+                contract's rules: a result is submitted, or the buyer reclaims funds after the unlock time.
+                Both buyer and seller accounts belong to Shelfie in this demo.
+              </p>
+            </li>
+            <li class="card reveal">
+              <h3>Released on a passing result.</h3>
+              <p>
+                A passing photo means Shelfie submits the result and the escrow can settle. No
+                passing photo before the window ends: nothing is submitted and the buyer can reclaim
+                the fee after the unlock time (about 30 minutes after the lock in our test run).
+              </p>
+            </li>
+            <li class="card reveal">
+              <h3>Every check is a receipt.</h3>
+              <p>
+                The verifier is sold per check over x402. Each check is a visible on-chain payment,
+                pass or fail.
+              </p>
+            </li>
+            <li class="card reveal">
+              <h3>Checkable beyond our database.</h3>
+              <p>
+                Fund movements can be checked on the public ledger. The verdict itself still rests
+                on the verifier, and the photo stays off-chain.
+              </p>
+            </li>
+          </ul>
+          <p class="limits">
+            Limits: prototype on a test network. The demo runs both sides of the verifier payment.
+            The hand sign challenges freshness; it cannot prove location or stop every fake.
+            One accepted photo records observed presence and price, not placement.
+          </p>
+          <a class="read-more" href="technology.html#trust">Read more: what is on-chain and what is not</a>
+        </div>
+      </section>
+
+      <section class="section" id="price">
+        <div class="wrap">
+          <p class="eyebrow">What one shelf check costs today</p>
+          <h2 class="title">Knowing the price on a shelf is expensive.</h2>
+          <div class="bars reveal" role="list">
+            <div class="bar-row" role="listitem">
+              <span class="bar-label">In-store mystery visit, Germany</span>
+              <span class="bar"><span class="bar-fill" data-width="100"></span></span>
+              <span class="bar-value">€500</span>
+            </div>
+            <div class="bar-row" role="listitem">
+              <span class="bar-label">Shelf audit visit, US</span>
+              <span class="bar"><span class="bar-fill" data-width="30"></span></span>
+              <span class="bar-value">$50–150</span>
+            </div>
+            <div class="bar-row bar-row-us" role="listitem">
+              <span class="bar-label"
+                >Shelfie check <small>illustrative, charged only when the photo passes</small></span
+              >
+              <span class="bar"><span class="bar-fill" data-width="4"></span></span>
+              <span class="bar-value">≈€12</span>
+            </div>
+          </div>
+          <div class="compare reveal">
+            <div class="compare-card">
+              <p class="compare-head">10 stores through an agency</p>
+              <p class="compare-num">≈€6,700</p>
+              <p>setup and reporting included, paid per visit</p>
+            </div>
+            <div class="compare-card compare-card-us">
+              <p class="compare-head">10 stores with Shelfie</p>
+              <p class="compare-num">€120</p>
+              <p>failed checks are free; the brand pays only for photos that pass</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-tint" id="market">
+        <div class="wrap">
+          <p class="eyebrow">Why it matters</p>
+          <h2 class="title">Market research is a $150 billion business, built for big budgets.</h2>
+          <p class="lead">
+            Today, checking a few shelves means hiring a research agency. Even for ten stores, you
+            pay fixed fees to set up the project and write the report, on top of every visit.
+            With Shelfie, you pay per verified photo, nothing else.
+          </p>
+          <div class="stats">
+            <figure class="stat reveal">
+              <p class="stat-num">
+                <span data-count="150" data-prefix="$" data-suffix="B+">$150B+</span>
+              </p>
+              <figcaption>spent worldwide in 2024 on understanding customers and markets</figcaption>
+            </figure>
+            <figure class="stat reveal">
+              <p class="stat-num">
+                <span data-count="56" data-prefix="$" data-suffix="B">$56B</span>
+              </p>
+              <figcaption>of that is market research, mostly people collecting data in person</figcaption>
+            </figure>
+            <figure class="stat reveal">
+              <p class="stat-num">
+                <span data-count="300" data-prefix="$" data-suffix="K+">$300K+</span>
+              </p>
+              <figcaption>per year to have an agency check 200–500 stores, up to $1M</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="technology">
+        <div class="wrap">
+          <p class="eyebrow">Technology</p>
+          <h2 class="title title-wide">What it runs on.</h2>
+          <ul class="tech-grid">
+            <li><a class="tech" href="technology.html#cardano"><b>Cardano</b><span>eUTxO ledger, preprod test network</span></a></li>
+            <li><a class="tech" href="technology.html#masumi"><b>Masumi</b><span>Agent registry and escrow</span></a></li>
+            <li><a class="tech" href="technology.html#x402"><b>x402</b><span>Pay per request over HTTP</span></a></li>
+            <li><a class="tech" href="technology.html#sokosumi"><b>Sokosumi</b><span>Where a brand hires the agent</span></a></li>
+            <li><a class="tech" href="technology.html#verifier-gates"><b>Verifier gates</b><span>Plain code decides pass or fail</span></a></li>
+            <li><a class="tech" href="technology.html#hand-sign"><b>Hand sign</b><span>A one-time freshness challenge</span></a></li>
+            <li><a class="tech" href="technology.html#location"><b>Location check</b><span>A deterrent, not proof</span></a></li>
+            <li><a class="tech" href="technology.html#vision"><b>Vision model</b><span>A model reads, rules decide</span></a></li>
+            <li><a class="tech" href="technology.html#architecture"><b>Architecture</b><span>How the services connect</span></a></li>
+          </ul>
+          <a class="read-more" href="technology.html">Read more: the technology</a>
+        </div>
+      </section>
+
+      <section class="section" id="team">
+        <div class="wrap">
+          <p class="eyebrow">Who we are</p>
+          <h2 class="title">Four TUM students, one shelf at a time.</h2>
+          <ul class="team">
+            <li class="person reveal">
+              <img
+                src="team/helmut.webp"
+                alt="Portrait of Helmut Kurk"
+                width="240"
+                height="240"
+                loading="lazy"
+              />
+              <h3>Helmut Kurk</h3>
+              <p class="person-study">TUM Information Systems</p>
+              <p class="person-role">Web app and evidence</p>
+            </li>
+            <li class="person reveal">
+              <img
+                src="team/isabel.webp"
+                alt="Portrait of Isabel Sagastume"
+                width="240"
+                height="240"
+                loading="lazy"
+              />
+              <h3>Isabel Sagastume</h3>
+              <p class="person-study">TUM Computer Science</p>
+              <p class="person-role">Agent and engine</p>
+            </li>
+            <li class="person reveal">
+              <img
+                src="team/lorenz.webp"
+                alt="Portrait of Lorenz Hermannstädter"
+                width="240"
+                height="240"
+                loading="lazy"
+              />
+              <h3>Lorenz Hermannstädter</h3>
+              <p class="person-study">TUM Computer Science</p>
+              <p class="person-role">Verifier</p>
+            </li>
+            <li class="person reveal">
+              <img
+                src="team/fernando.webp"
+                alt="Portrait of Fernando Mayo"
+                width="240"
+                height="240"
+                loading="lazy"
+              />
+              <h3>Fernando Mayo</h3>
+              <p class="person-study">TUM Information Systems</p>
+              <p class="person-role">Payments</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section section-tint" id="faq">
+        <div class="wrap">
+          <p class="eyebrow">Questions</p>
+          <h2 class="title title-wide">Straight answers.</h2>
+          <div class="faq">
+            <details>
+              <summary>Is this real money?</summary>
+              <p>No. Shelfie runs on Cardano preprod, a public test network. All amounts are test ADA with no monetary value, and the EUR figures on this page are illustrative.</p>
+            </details>
+            <details>
+              <summary>Why a blockchain?</summary>
+              <p>Masumi escrow locks funds under contract rules: the seller submits a result, or the buyer can reclaim the fee after the unlock time if no result arrives. Payments are publicly checkable. Shelfie still operates the verifier and decides whether to submit the result. Whether brands want to deal in ADA is still open.</p>
+            </details>
+            <details>
+              <summary>What if the photo fails?</summary>
+              <p>Nothing is paid to the checker, who can retry with a new hand sign while attempts and time remain. If no photo passes before the window ends, the result is withheld and the buyer can reclaim the fee after the unlock time. Our refund test took about 30 minutes from the lock, with the engine on fakes and no photo.</p>
+            </details>
+            <details>
+              <summary>Who sees my photo?</summary>
+              <p>The server stores it, and the verifier and its vision model read it. The brand receives the result. See the <a href="privacy.html">privacy notice</a> for details and retention.</p>
+            </details>
+            <details>
+              <summary>Can it be faked?</summary>
+              <p>Not easily, but it is possible. The live-camera flow, one-time hand sign and duplicate checks deter reuse, but a printout with the right hand sign could pass. A screen photo fails only if the model flags it; browser location can be spoofed. <a href="technology.html#hand-sign">Limits in detail</a>.</p>
+            </details>
+            <details>
+              <summary>Who is it for?</summary>
+              <p>Brands that need eyes in a market where they know nobody, and people nearby who can photograph a shelf. Today: one Munich store per job, on a test network.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-cta" id="start">
+        <div class="wrap cta">
+          <h2 class="title">Ready when you are.</h2>
+          <p class="lead">Two sides of one check: order one, or take one.</p>
+          <div class="split">
+            <article class="card reveal">
+              <h3>For brands</h3>
+              <ul class="ticks">
+                <li>See the product and shelf price.</li>
+                <li>Pay the fee only for a photo that passes.</li>
+                <li>Each paid verifier check leaves a public receipt on Cardano.</li>
+              </ul>
+              <a class="btn btn-big" href="/dashboard">Start a shelf check</a>
+            </article>
+            <article class="card card-dark reveal">
+              <h3>For checkers</h3>
+              <ul class="ticks">
+                <li>Claim a task in your city and photograph the shelf with the live camera.</li>
+                <li>Receive test ADA.</li>
+              </ul>
+              <a class="btn btn-big" href="/w">Take a check (test ADA)</a>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-grid">
+        <div class="footer-brand">
+          <a class="brand" href="index.html"><img src="shelfie-logo.webp" alt="" width="28" height="29" /><span>Shelf<b>ie</b></span></a>
+          <p>Paid only when the photo is true.</p>
+        </div>
+        <nav aria-label="Product"><h2>Product</h2>
+          <a href="index.html#how">How it works</a><a href="market.html">Market</a><a href="roadmap.html">Roadmap</a></nav>
+        <nav aria-label="Technology"><h2>Technology</h2>
+          <a href="technology.html">Overview</a><a href="technology.html#trust">Why trust</a><a href="technology.html#receipts">Receipts</a></nav>
+        <nav aria-label="Developers"><h2>Developers</h2>
+          <a href="developers.html">Developers</a><a href="https://github.com/helmutkurk/shelfie" rel="noopener noreferrer">GitHub</a><a href="roadmap.html#build">Build log</a></nav>
+        <nav aria-label="Legal"><h2>Legal</h2>
+          <a href="imprint.html">Imprint</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a>
+          <a href="https://github.com/helmutkurk/shelfie/blob/main/LICENSE" rel="noopener noreferrer">License (BUSL-1.1)</a></nav>
+      </div>
+      <p class="wrap footer-note">Student project at the TUM Blockchain &amp; AI Hackathon 2026, not an official TUM product. Built on Cardano, Masumi and x402.</p>
+    </footer>
+  </body>
+</html>

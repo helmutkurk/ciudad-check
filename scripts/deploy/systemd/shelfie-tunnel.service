@@ -1,0 +1,17 @@
+[Unit]
+Description=Shelfie named Cloudflare Tunnel (outbound only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=PATH=%h/.local/share/mise/shims:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Config and credentials stay outside the repo (see docs/deploy.md).
+ExecStart=/usr/bin/env cloudflared --no-autoupdate tunnel --config %h/.config/shelfie/cloudflared.yml run
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=default.target

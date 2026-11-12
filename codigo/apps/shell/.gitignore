@@ -1,0 +1,3 @@
+# The starter is a separate checkout (its own .git, pinned commit in codigo/docs/verified.md).
+# Only bridge/ and README.md are ours.
+starter/

@@ -1,0 +1,15 @@
+\begin{frame}{\TeamName: \Tagline}
+  \centering\vspace{1.5em}
+  \begin{tikzpicture}[font=\normalsize,
+      flowbox/.style={draw=cardano,fill=cardanolight,rounded corners=3pt,thick,minimum height=13mm,text width=24mm,align=center},
+      arr/.style={-{Stealth},thick,cardano}]
+    \node[flowbox] (a) at (0,0) {Brand\\locks fee};
+    \node[flowbox] (b) at (3.4,0) {Person\\shoots photo};
+    \node[flowbox] (c) at (6.8,0) {Verifier\\checks};
+    \node[flowbox,draw=okgreen,fill=okgreen!15] (d) at (10.2,0) {True photo\\pays};
+    \node[flowbox,draw=nogo,fill=nogo!12] (e) at (6.8,-2.2) {Else\\refund};
+    \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
+    \draw[arr,nogo] (c)--(e);
+  \end{tikzpicture}\\[1.2em]
+  {\large For brands entering a market without a field team.}
+\end{frame}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Check origin/%i for a new commit every 60 s
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=60
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

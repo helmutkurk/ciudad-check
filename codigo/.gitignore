@@ -1,0 +1,26 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+
+# Secrets: only .env.example (names, no values) is tracked
+.env
+.env.*
+!.env.example
+
+# Runtime files (event log, ledger, idempotency cache) and evidence images
+*.jsonl
+engine-data/
+evidence/images/
+docs/evidence/images/
+eval/photos/
+eval/results/*.tmp
+# Eval reports: keep the chosen one in docs/evidence/, not here
+eval/results/*.md
+*.jpg
+*.jpeg
+*.heic
+
+# vitest cache/reports
+.vitest/
