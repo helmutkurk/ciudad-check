@@ -24,6 +24,8 @@ export type JsonSchema = Record<string, unknown>;
 
 export interface VisionRequest {
   image: { mimeType: ImageMimeType; base64: string };
+  /** Further images sent after `image` (street repair_check: the before photo). */
+  extraImages?: { mimeType: ImageMimeType; base64: string }[];
   /** Pack prompt. Never contains the expected code or price. */
   prompt: string;
   /** Enforced via structured output / tool schema where the provider supports it. */

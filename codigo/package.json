@@ -15,14 +15,16 @@
   ],
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p scripts/tsconfig.json",
-    "lint": "eslint .",
+    "lint": "node --max-old-space-size=4096 node_modules/eslint/bin/eslint.js .",
     "test": "vitest run && node --test apps/shell/bridge/*.test.js",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "npm run typecheck && npm run lint && npm run test",
     "smoke": "tsx scripts/smoke.ts",
-    "hub-up": "bash scripts/hub-up.sh"
+    "hub-up": "bash scripts/hub-up.sh",
+    "smoke:street": "tsx scripts/street-smoke.ts",
+    "seed:street": "tsx scripts/street-seed.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

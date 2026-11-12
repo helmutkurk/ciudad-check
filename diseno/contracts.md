@@ -1,5 +1,7 @@
 # Contracts
 
+CiudadCheck street flow: see [street-contract.md](street-contract.md). This file describes the legacy Shelfie contract.
+
 Interfaces between components. JSON examples are illustrative; the zod schemas in `packages/core` are the source of truth once written, and must match this file (change this file first, then the schema, in the same commit).
 
 ## 0. Common conventions (read first)

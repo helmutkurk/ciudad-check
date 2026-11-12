@@ -22,7 +22,8 @@
     "@shelfie/vision": "*",
     "@shelfie/verifier": "*",
     "zod": "4.6.7",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "@shelfie/domain-street": "*"
   },
   "devDependencies": {
     "tsx": "4.23.15"

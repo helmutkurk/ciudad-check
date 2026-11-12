@@ -11,6 +11,12 @@ export const ID_PREFIXES = {
   payout: "pay",
   settlement: "stl",
   worker: "wrk",
+  // CiudadCheck street flow (packages/core/src/street.ts)
+  report: "rep",
+  mission: "mis",
+  photo: "pho",
+  cluster: "clu",
+  streetPayout: "spy",
 } as const;
 
 export type IdKind = keyof typeof ID_PREFIXES;

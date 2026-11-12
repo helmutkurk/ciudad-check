@@ -439,6 +439,7 @@ describe("env loader", () => {
     expect(loadEnv(WebEnvSchema, { VITE_DEMO_BADGES: "true" })).toEqual({
       VITE_API_BASE: "",
       VITE_DEMO_BADGES: true,
+      VITE_MOCK_API: false,
     });
   });
 });
@@ -620,5 +621,42 @@ describe("brand access codes (ADR-21)", () => {
     };
     expect(BrandProfileSchema.parse(profile)).toEqual(profile);
     expect(() => BrandProfileSchema.parse({ ...profile, token: tokenA })).toThrow();
+  });
+});
+
+describe("street contract", () => {
+  it("formats GTQ and COP in integer minor units", async () => {
+    const { formatMoney, formatGtq } = await import("./street.js");
+    expect(formatGtq({ amountMinor: 1250, currency: "GTQ" })).toBe("Q 12.50");
+    expect(formatMoney({ amountMinor: 123_456_7, currency: "GTQ" })).toBe("Q 12,345.67");
+    expect(formatMoney({ amountMinor: 500_000, currency: "COP" })).toBe("$ 5.000");
+  });
+
+  it("maps points to Guatemala and Colombia and labels per country", async () => {
+    const { streetCountryForPoint, streetCategoryLabels } = await import("./street.js");
+    expect(streetCountryForPoint(14.6349, -90.5069)).toBe("GT");
+    expect(streetCountryForPoint(4.711, -74.0721)).toBe("CO");
+    expect(streetCountryForPoint(48.137, 11.575)).toBeNull();
+    expect(streetCategoryLabels("CO").sidewalk).toBe("Andén");
+    expect(streetCategoryLabels("GT").sidewalk).toBe("Banqueta / acera");
+  });
+
+  it("requires a before report for repair checks and rejects extra keys", async () => {
+    const { CreateStreetMissionBodySchema } = await import("./street.js");
+    const base = {
+      kind: "repair_check",
+      category: "pothole",
+      lat: 14.63,
+      lng: -90.5,
+      radiusM: 30,
+      payout: { amountMinor: 1250, currency: "GTQ" },
+    };
+    expect(CreateStreetMissionBodySchema.safeParse(base).success).toBe(false);
+    expect(
+      CreateStreetMissionBodySchema.safeParse({ ...base, beforeReportId: "rep_01" }).success,
+    ).toBe(true);
+    expect(
+      CreateStreetMissionBodySchema.safeParse({ ...base, beforeReportId: "rep_01", x: 1 }).success,
+    ).toBe(false);
   });
 });

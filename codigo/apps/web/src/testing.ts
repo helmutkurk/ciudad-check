@@ -338,7 +338,7 @@ export function makeDeps(o: DepsOverrides = {}): { deps: Deps; calls: RecordedCa
   let n = 0;
   const deps: Deps = {
     api: new ApiClient({ base: "", fetchFn }),
-    env: { VITE_API_BASE: "", VITE_DEMO_BADGES: false },
+    env: { VITE_API_BASE: "", VITE_DEMO_BADGES: false, VITE_MOCK_API: false },
     createEventSource: (url) => new FakeEventSource(url),
     now: () => NOW,
     newId: (prefix) => `${prefix}_${(++n).toString().padStart(2, "0")}`,

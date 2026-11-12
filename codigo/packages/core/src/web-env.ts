@@ -4,5 +4,7 @@ import { z } from "zod";
 export const WebEnvSchema = z.object({
   VITE_API_BASE: z.string().trim().default(""),
   VITE_DEMO_BADGES: z.stringbool().default(false),
+  /** CiudadCheck: run the street app against the in-memory mock API. */
+  VITE_MOCK_API: z.stringbool().default(false),
 });
 export type WebEnv = z.output<typeof WebEnvSchema>;
