@@ -1,8 +1,10 @@
+import { STREET_INSTRUCTIONS_GT } from "./instructions.js";
 import { STREET_PACK_ID, StreetPackConfigSchema, type StreetPackConfig } from "@shelfie/core";
 
 /**
  * Street-check pack. Every threshold the verifier and engine use lives here, never inline in gates.
- * Worker instructions are Spanish (shown to workers); feat/street-core refines the wording.
+ * Worker instructions are Spanish (shown to workers): the pack carries the Guatemalan wording,
+ * `streetInstructions("CO")` gives the Colombian one.
  */
 export const streetPack: StreetPackConfig = StreetPackConfigSchema.parse({
   id: STREET_PACK_ID,
@@ -11,14 +13,7 @@ export const streetPack: StreetPackConfig = StreetPackConfigSchema.parse({
     capture: "photo",
     maxAttempts: 3,
     claimTtlSec: 900,
-    instructions: {
-      ramp: ["Toma la rampa completa, desde la banqueta, con el inicio y el final visibles."],
-      sidewalk: ["Toma el tramo dañado de la banqueta con algo de contexto de la calle."],
-      pothole: ["Toma el bache desde la orilla, con un objeto de referencia al lado si puedes."],
-      graffiti: ["Toma la pared o el mobiliario completo, sin personas en la foto."],
-      drain_cover: ["Toma la alcantarilla desde una distancia segura, nunca te acerques al borde."],
-      street_light: ["Toma el poste completo con la luminaria visible."],
-    },
+    instructions: STREET_INSTRUCTIONS_GT,
   },
   extraction: {
     promptRef: "prompts.ts#buildStreetPrompt",
@@ -27,12 +22,12 @@ export const streetPack: StreetPackConfig = StreetPackConfigSchema.parse({
   },
   rules: [
     { name: "image_ok", params: { minShortSidePx: 600, maxBytes: 2_000_000, minVariance: 25 } },
-    { name: "location_in_radius", params: { accuracyCapM: 50 } },
+    { name: "location_in_radius", params: { accuracyCapM: 50, maxAccuracyM: 100 } },
     { name: "fix_fresh", params: { maxFixAgeMs: 120_000 } },
     { name: "duplicate_photo", params: { maxHamming: 4 } },
     { name: "live_capture", params: {} },
     { name: "category_match", params: { minConfidence: 0.6 } },
-    { name: "reference_object", params: { kinds: ["measure"] } },
+    { name: "reference_object", params: { kinds: ["measure"], minSizeCm: 5, maxSizeCm: 200 } },
     { name: "repaired", params: { kinds: ["repair_check"] } },
     { name: "before_after_same_place", params: { minConfidence: 0.6, kinds: ["repair_check"] } },
   ],
@@ -56,5 +51,13 @@ export const streetPack: StreetPackConfig = StreetPackConfigSchema.parse({
     maxMinor: { GTQ: 50_000, COP: 20_000_000 },
   },
   report: { templateRef: "report.ts#renderStreetReport" },
-  ui: { title: "CiudadCheck", payoutLabel: "Pago (simulado)" },
+  ui: {
+    title: "CiudadCheck",
+    payoutLabel: "Pago (simulado)",
+    verifierLabel: "Verificación de prueba",
+    dataLabel: "Datos de ejemplo",
+    safetyBanner:
+      "Toma la foto desde la banqueta, nunca en medio del tráfico. No fotografíes a personas.",
+    blurNotice: "Las caras y placas se difuminan antes de publicar (en desarrollo)",
+  },
 });
