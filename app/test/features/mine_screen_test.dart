@@ -41,7 +41,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(S.waitingNetwork), findsOneWidget);
-      expect(find.byIcon(Icons.cloud_off), findsOneWidget);
+      expect(find.byIcon(Icons.wifi_off), findsOneWidget);
       await tester.tap(find.text(S.retryNow));
       expect(outbox.retries, 1);
 
@@ -88,17 +88,34 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final draftY = tester.getTopLeft(find.text(S.savedDrafts)).dy;
-    final sentY = tester.getTopLeft(find.text(S.sentReports)).dy;
+    final draftY = tester.getTopLeft(find.text(S.draftMissingPhoto)).dy;
+    final sentY = tester.getTopLeft(find.text(S.sentReports.toUpperCase())).dy;
     expect(draftY, lessThan(sentY));
     expect(find.textContaining('Resuelto'), findsWidgets);
 
-    await tester.tap(find.text(S.deleteDraft));
+    expect(find.text('${S.unsent.toUpperCase()}  (1)'), findsOneWidget);
+    expect(find.text(S.continueShort), findsOneWidget);
+    await tester.tap(find.text(S.delete));
     await tester.pumpAndSettle();
     expect(find.text(S.deleteDraftQuestion), findsOneWidget);
     expect(drafts.records, isNotEmpty);
     await tester.tap(find.text(S.delete).last);
     await tester.pumpAndSettle();
     expect(drafts.records, isEmpty);
+  });
+  testWidgets('sent cards show no coordinates and mark verified photos', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      harness(
+        home: const MyReportsScreen(),
+        repository: repositoryWith(byId: {detailId: stateJson('en_proceso')}),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Punto:'), findsNothing);
+    expect(find.textContaining('14.'), findsNothing);
+    expect(find.textContaining('Enviado hace'), findsOneWidget);
+    expect(find.byTooltip(S.followReport), findsOneWidget);
   });
 }

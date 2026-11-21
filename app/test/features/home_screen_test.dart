@@ -5,6 +5,7 @@ import 'package:aldia_app/features/drafts/draft_record.dart';
 import 'package:aldia_app/features/home/home_screen.dart';
 import 'package:aldia_app/features/home/report_map_view.dart';
 import 'package:aldia_app/widgets/neutral_map_pin.dart';
+import 'package:aldia_app/widgets/report_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
@@ -53,6 +54,63 @@ void main() {
     expect(clusters.calls, greaterThan(0));
     expect(find.text('7'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('7 reportes')), findsOneWidget);
+  });
+
+  testWidgets('a one-report cluster shows the report state pin', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      harness(
+        home: const HomeScreen(),
+        repository: repositoryWith(list: [stateJson('resuelto')]),
+        clusters: FakeClusters([
+          _cluster,
+          const ReportCluster(
+            position: LatLng(14.62, -90.52),
+            count: 1,
+            ids: [detailId],
+          ),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Explorar mi ciudad'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StatusMapPin), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+  });
+
+  testWidgets('tapping a cluster lists the reports of its area', (
+    tester,
+  ) async {
+    final requests = <Uri>[];
+    await tester.pumpWidget(
+      harness(
+        home: const HomeScreen(),
+        repository: repositoryWith(
+          // One report: a second card would load its photo off screen.
+          list: [stateJson('nuevo')],
+          requests: requests,
+        ),
+        clusters: FakeClusters([_cluster]),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Explorar mi ciudad'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('7'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(S.clusterSheetTitle(1)), findsOneWidget);
+    expect(find.byType(ReportTile), findsOneWidget);
+    expect(
+      requests.where(
+        (u) => u.path.endsWith('/reports') && u.queryParameters['bbox'] != null,
+      ),
+      isNotEmpty,
+    );
   });
 
   testWidgets(
@@ -145,6 +203,80 @@ void main() {
     // The filter button shows how many filters are active.
     expect(find.text('2'), findsOneWidget);
     expect(find.text('Resuelto'), findsWidgets);
+  });
+
+  testWidgets('search filters the map pins, not only the list', (tester) async {
+    await tester.pumpWidget(
+      harness(
+        home: const HomeScreen(),
+        repository: repositoryWith(
+          list: [
+            stateJson('nuevo'),
+            stateJson(
+              'nuevo',
+              id: mainId,
+              extra: {'category': 'graffiti', 'longitude': -90.45},
+            ),
+          ],
+        ),
+        clusters: FakeClusters([_cluster]),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Explorar mi ciudad'));
+    await tester.pumpAndSettle();
+    expect(find.byType(StatusMapPin), findsNothing, reason: 'clusters first');
+
+    await tester.tap(find.byTooltip(S.filtersLabel));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'grafiti');
+    await tester.ensureVisible(find.text(S.applyFilters));
+    await tester.tap(find.text(S.applyFilters));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StatusMapPin), findsOneWidget);
+    expect(find.text('1'), findsOneWidget, reason: 'filter badge');
+  });
+
+  testWidgets('more than 100 reports: map banner, search scope and Ver más', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      harness(
+        home: const HomeScreen(),
+        repository: repositoryWith(
+          list: [
+            for (var i = 0; i < 130; i++)
+              stateJson(
+                'nuevo',
+                id: '00000000-0000-4000-8000-${i.toString().padLeft(12, '0')}',
+              ),
+          ],
+        ),
+        clusters: FakeClusters(const [], fail: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Explorar mi ciudad'));
+    await tester.pumpAndSettle();
+    expect(find.text(S.mapCapped(100)), findsOneWidget);
+
+    // Search only sees loaded pages, so Lista says so and offers the next.
+    await tester.tap(find.byTooltip(S.filtersLabel));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'farola');
+    await tester.ensureVisible(find.text(S.applyFilters));
+    await tester.tap(find.text(S.applyFilters));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lista'));
+    await tester.pumpAndSettle();
+    expect(find.text(S.searchEmpty), findsOneWidget);
+    expect(find.text(S.searchScope(100, 130)), findsOneWidget);
+
+    await tester.tap(find.text(S.loadMore));
+    await tester.pumpAndSettle();
+    expect(find.text(S.loadMore), findsNothing);
+    expect(find.text(S.searchEmptyHelp), findsOneWidget);
   });
 
   testWidgets('full-screen map: no app bar, legend, and an empty message', (

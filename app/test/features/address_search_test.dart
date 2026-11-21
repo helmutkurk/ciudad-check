@@ -12,6 +12,9 @@ class _PendingGeocoder implements GeocoderService {
   @override
   Future<List<AddressResult>> search(String query) =>
       (calls[query] = Completer<List<AddressResult>>()).future;
+
+  @override
+  Future<String?> reverse(LatLng position) async => null;
 }
 
 const _address = AddressResult(

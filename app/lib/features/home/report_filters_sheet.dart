@@ -4,9 +4,9 @@ import '../../core/categories.dart';
 import '../../core/citizen_states.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import 'explore_query.dart';
 
-/// What the citizen chose in [FiltersSheet]. A null field means "all".
-typedef ReportFilters = ({String? group, String? category, String query});
+export 'explore_query.dart' show ReportFilters;
 
 /// Bottom sheet over Explorar: search, category chips and state chips
 /// (wireframe A3b). Returns the new filters, or null when dismissed.

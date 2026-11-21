@@ -86,6 +86,15 @@ class FakeGeocoder implements GeocoderService {
     queries.add(query);
     return results;
   }
+
+  final reversed = <LatLng>[];
+  String? address = '6a. Avenida, Zona 1, Guatemala';
+
+  @override
+  Future<String?> reverse(LatLng position) async {
+    reversed.add(position);
+    return address;
+  }
 }
 
 List<Map<String, String>> categoryJson() => [

@@ -13,16 +13,24 @@ No reference assets, copy or code are included.
   it does not claim to be an all-time total.
 - **Explorar mi ciudad** opens a full-screen map with floating controls: back, a **Mapa | Lista** switch and a
   filter button with the number of active filters. The map adds zoom, my location, layers, a state legend and
-  loading/empty/error messages; pins show the category icon on the state color with the state word below. Clusters
-  fall back to individual reports. **Filtros** opens a sheet with search plus category and state-group chips
-  (`state_group`); the list uses the same header.
+  loading/empty/error messages; pins show the category icon on the state color with the state word below. One
+  `ExploreQuery` (`features/home/explore_query.dart`, see `app/GLOSSARY.md`) decides what both modes show: Mapa and
+  Lista always show the same reports for the visible area. Without filters the map shows clusters (requested 3 zoom
+  levels out, so they sit about 128 px apart); tapping one lists every report in its grid cell, and a one-report
+  cluster is drawn as its state pin when its report is among the newest 100 of the area. Clusters fall back to
+  individual reports. **Filtros** opens a sheet with search plus category and state-group chips (`state_group`);
+  any filter or search switches the map to pins, and search is matched in the app on the loaded reports. Results
+  come 100 at a time: the map says when more exist, and Lista has **Ver más**.
 - Wizard: **Ubicación → Categoría → Foto → Detalles → Revisar y enviar** (the nearby-duplicates step was removed). Every step has a summary of
-  the chosen place/category. Location supports explicit address search, GPS, map pin and accessible coordinate inputs;
+  the chosen place/category. Location supports explicit address search, GPS and the map pin; the app never
+  shows or asks for coordinates;
   **CONFIRMAR UBICACIÓN** remains at the bottom. Categories and groups come from `GET /api/categories`, with offline
   contract defaults. A report rejected by the verifier as a duplicate still shows the existing report.
   A live photo is mandatory. Retake and verifier feedback remain available.
-- Cards show a large photo (icon fallback), status dot **and word**, category, coordinates, note, date and reference.
-  The API has no address field, so public cards display coordinates without inventing street addresses.
+- Cards show a large photo (with **Foto verificada** when verified), status dot **and word** beside follow and share,
+  category, street address, note and **Enviado hace…**. The API has no address field, so the app looks the address
+  up with `GeocoderService.reverse` (see below); until it answers, or when there is none, it says **Punto marcado en
+  el mapa**. Mis reportes groups queued reports and drafts under **Sin enviar (n)**.
   Hearts are device-local follows; followed reports appear in Mis reportes and feed the local inbox.
 - Sharing uses Android/iOS system sheets (WhatsApp when installed), Linux's WhatsApp web handler, and a copied public
   link as fallback. Configure `PUBLIC_PORTAL_URL` before sharing outside the development laptop.
@@ -59,7 +67,7 @@ include `X-Device-ID` with the bearer, including outbox retries. Offline logout 
 explains that server revocation could not be confirmed; verify again online to rotate the server token.
 It defaults to memory in tests. Inbox storage failures do not trigger another upload of an accepted report.
 
-Aldia's shared palette remains in `lib/core/theme.dart` and `../documentation/design-tokens.md`. Screens preserve semantics, 48 dp targets, light/dark schemes,
+Aldia's shared palette remains in `lib/core/theme.dart` and `../documentation/design-tokens.md`. Screens preserve semantics, 48 dp targets, the light scheme (the app is light only, as in Figma; the dark scheme is kept unused),
 scrollable layouts at 200% text and reduced-motion routes, sheets and tabs. Tests inject offline map tiles, GPS, camera
 and geocoder; they never query Nominatim.
 
@@ -68,6 +76,9 @@ and geocoder; they never query Nominatim.
 The demo injects `GeocoderService` with a shared `NominatimGeocoder`. Searches require **Buscar** or Enter, debounce
 450 ms, serialize requests at most once per second, cache up to 50 queries, identify Aldia and restrict countries to
 `gt,co,mx`. Typing does not issue autocomplete requests. Results and maps display OpenStreetMap attribution.
+`reverse()` turns a report's point into a short address ("road number, area, city") through the same 1/s queue,
+cached per point (about 10 m) for the session, up to 200 points. A long Explorar list therefore fills addresses
+in about one card per second; an `address` field in the API would remove these requests.
 
 The [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/) prohibits autocomplete and caps
 traffic at one request/second **across the whole app**, not per user. This implementation is for a single-device demo;

@@ -108,8 +108,8 @@ void main() {
     expect(find.text(S.continueDraft), findsOneWidget);
 
     await _openMine(tester);
-    expect(find.text(S.savedDrafts), findsOneWidget);
-    expect(find.text(S.continueDraft), findsOneWidget);
+    expect(find.text('${S.unsent.toUpperCase()}  (1)'), findsOneWidget);
+    expect(find.text(S.continueShort), findsOneWidget);
   });
 
   testWidgets('an offline send is queued, then sent once with its key online', (
@@ -132,7 +132,7 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     await _openMine(tester);
-    expect(find.text(S.outbox), findsOneWidget);
+    expect(find.text('${S.unsent.toUpperCase()}  (1)'), findsOneWidget);
     expect(find.text(S.waitingNetwork), findsOneWidget);
 
     wired.connectivity.setOnline(true);

@@ -80,7 +80,10 @@ class S {
   static const mapFallback =
       'No se pudo cargar la agrupación del mapa; se muestran reportes sueltos.';
   static const pinReport = 'Reporte';
-  static const zoomToCluster = 'Acercar para ver los reportes';
+  static const openCluster = 'Ver la lista de reportes';
+  static String clusterSheetTitle(int count) => count == 1
+      ? '1 reporte en esta zona'
+      : '${clusterCount(count)} en esta zona';
   static const filtersLabel = 'Filtros de reportes';
   static const duplicateOfTitle = 'Ya está reportado';
   static const viewMainReport = 'Ver el reporte principal';
@@ -113,13 +116,20 @@ class S {
   static const manualReview = 'Enviar para revisión manual';
   static const manualSaved =
       'Reporte guardado en este dispositivo. La revisión manual aún no está disponible.';
-  static const waitingNetwork = 'Esperando red';
+  static const waitingNetwork = 'Esperando conexión';
   static const waitingNetworkHelp =
       'Reporte guardado. Se enviará automáticamente cuando vuelva la conexión. Si se retrasa, el servidor comprobará la fecha original de la foto.';
   static const draft = 'Borrador';
   static const continueDraft = 'Continuar borrador';
-  static const savedDrafts = 'Borradores';
-  static const outbox = 'Por enviar';
+  static const draftMissingPhoto = 'Borrador · falta la foto';
+  static const continueShort = 'Continuar';
+  static const unsent = 'Sin enviar';
+  static const verifiedPhoto = 'Foto verificada';
+
+  /// Replaces raw coordinates wherever no address is known.
+  static const pointOnMap = 'Punto marcado en el mapa';
+  static String sentAgo(DateTime created, DateTime now) =>
+      'Enviado ${age(created, now).replaceFirst('Hace', 'hace')}';
   static const missingPhoto =
       'La foto guardada ya no está. Toma otra foto; los demás datos se conservan.';
   static const photoError =
@@ -155,18 +165,21 @@ class S {
       'No hay reportes en esta zona. Aleja el mapa o quita filtros.';
   static const mapError =
       'No se pudieron cargar los reportes. Toca para reintentar.';
+  static String mapCapped(int shown) =>
+      'Mostrando los $shown más recientes. Acerca el mapa para ver más.';
+  static const loadMore = 'Ver más';
+  static String listShowing(int loaded, int total) =>
+      'Mostrando $loaded de $total reportes';
+  static String searchScope(int loaded, int total) =>
+      'Buscando en $loaded de $total reportes';
+  static const searchEmpty = 'Sin resultados para tu búsqueda';
+  static const searchEmptyHelp = 'Prueba con otra palabra o quita la búsqueda.';
   static const viewDetail = 'Ver detalle';
   static const photoAlternative = 'Foto del problema reportado';
   static const mapAlternative =
       'Mapa de reportes. Usa Lista para consultar sin el mapa.';
   static const pinAlternative =
       'Punto del problema. Toca el mapa para ajustarlo.';
-  static const confirmPinHint =
-      'También puedes ajustar latitud y longitud sin usar el mapa.';
-  static const latitude = 'Latitud';
-  static const longitude = 'Longitud';
-  static const coordinatesInvalid = 'Introduce coordenadas válidas.';
-  static const applyCoordinates = 'Usar estas coordenadas';
   static const pendingHelp =
       'Guardado, verificación pendiente. Puedes consultar las novedades en Mis reportes.';
   static const publicPhotoNotice =

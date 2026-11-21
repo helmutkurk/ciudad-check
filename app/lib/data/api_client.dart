@@ -65,16 +65,18 @@ class ApiClient {
         .toList();
   }
 
-  Future<List<Report>> listReports({
+  Future<ReportPage> listReports({
     LatLng? southWest,
     LatLng? northEast,
     int limit = 100,
+    int offset = 0,
     String? state,
     String? stateGroup,
     String? category,
   }) async {
     final query = <String, String>{
       'limit': '$limit',
+      if (offset > 0) 'offset': '$offset',
       'state': ?state,
       'state_group': ?stateGroup,
       'category': ?category,
@@ -85,11 +87,15 @@ class ApiClient {
     }
     final uri = Uri.parse('$_baseUrl/reports').replace(queryParameters: query);
     final body = await _send(() => _client.get(uri));
-    final items =
-        (jsonDecode(body) as Map<String, Object?>)['items'] as List<Object?>;
-    return items
-        .map((e) => Report.fromJson(e as Map<String, Object?>))
-        .toList();
+    final json = jsonDecode(body) as Map<String, Object?>;
+    final items = [
+      for (final e in json['items'] as List<Object?>)
+        Report.fromJson(e as Map<String, Object?>),
+    ];
+    return ReportPage(
+      items: items,
+      total: (json['total'] as num?)?.toInt() ?? offset + items.length,
+    );
   }
 
   Future<List<Report>> nearbyReports({

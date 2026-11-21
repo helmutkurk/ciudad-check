@@ -131,9 +131,7 @@ void main() {
     }
   });
 
-  testWidgets('dark mode uses the inverted neutral ColorScheme', (
-    tester,
-  ) async {
+  testWidgets('the app stays light when the system is dark', (tester) async {
     expect(buildTheme().colorScheme.brightness, Brightness.light);
     final dark = buildDarkTheme();
     expect(dark.colorScheme.brightness, Brightness.dark);
@@ -144,7 +142,7 @@ void main() {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
     final context = tester.element(find.byType(HomeScreen));
-    expect(Theme.of(context).brightness, Brightness.dark);
+    expect(Theme.of(context).brightness, Brightness.light);
   });
 
   testWidgets('with reduced motion the navigation bar does not animate', (

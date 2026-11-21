@@ -41,12 +41,14 @@ void main() {
       );
     });
     final api = ApiClient(client: client, baseUrl: 'http://api.test/api/');
-    final reports = await api.listReports(
+    final page = await api.listReports(
       southWest: const LatLng(14.5, -90.6),
       northEast: const LatLng(14.7, -90.4),
       limit: 50,
     );
-    expect(reports, hasLength(1));
+    expect(page.items, hasLength(1));
+    expect(page.total, 1);
+    expect(seen.queryParameters.containsKey('offset'), isFalse);
     expect(seen.path, '/api/reports');
     expect(seen.queryParameters['bbox'], '-90.6,14.5,-90.4,14.7');
     expect(seen.queryParameters['limit'], '50');

@@ -121,9 +121,10 @@ class _AldiaAppState extends State<AldiaApp> with WidgetsBindingObserver {
       ],
       child: MaterialApp(
         title: S.appName,
+        // Light only, as in the Figma designs. buildDarkTheme() stays for
+        // a later opt-in.
         theme: buildTheme(),
-        darkTheme: buildDarkTheme(),
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.light,
         scrollBehavior: const AlwaysScrollbarBehavior(),
         debugShowCheckedModeBanner: false,
         locale: const Locale('es', 'GT'),

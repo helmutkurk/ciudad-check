@@ -188,3 +188,13 @@ class ReportCluster {
   final int count;
   final List<String> ids;
 }
+
+/// One page of `GET /api/reports`: the reports and how many match in total.
+class ReportPage {
+  const ReportPage({required this.items, required this.total});
+
+  final List<Report> items;
+
+  /// All matching reports on the server, across pages.
+  final int total;
+}

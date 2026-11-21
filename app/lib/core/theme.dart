@@ -63,6 +63,19 @@ class AldiaColors {
   /// Warning banners (amber icon, normal text color).
   static const Color warningContainer = Color(0xFFFFF1D6);
 
+  /// Amber as text (drafts' status line), 6.3:1 on white. [open] is for
+  /// dots only.
+  static const Color draftText = Color(0xFF8A5300);
+
+  /// Neutral icon tile on white cards (drafts).
+  static const Color neutralTile = Color(0xFFF1F3F5);
+
+  /// Dashed outline of unfinished drafts (decorative).
+  static const Color dashed = Color(0xFFB8C0C8);
+
+  /// Scrim behind text laid over photos (white text 9:1 or more).
+  static const Color photoScrim = Color(0xCC1F2933);
+
   // Dark mode keeps the hues, lighter, on dark surfaces.
   static const Color darkBar = Color(0xFF0B2A40);
   static const Color darkBackground = Color(0xFF12181D);

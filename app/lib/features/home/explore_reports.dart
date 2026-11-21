@@ -3,114 +3,101 @@ import 'package:flutter/material.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../data/report.dart';
+import '../../widgets/adaptive_sheet_route.dart';
+import 'explore_query.dart';
 import 'nearby_report_list.dart';
+import 'report_filters_sheet.dart';
 import 'report_map_view.dart';
 
 /// Explorar: a full-screen map with floating controls, or the same reports as
 /// a list under the same controls (wireframes A3–A7).
-class ExploreReports extends StatefulWidget {
+///
+/// [query] decides what both modes show; this widget only lays them out.
+class ExploreReports extends StatelessWidget {
   const ExploreReports({
     super.key,
-    required this.mapKey,
-    required this.group,
-    required this.category,
-    required this.onOpen,
-    required this.reports,
-    required this.filterCount,
     required this.query,
-    required this.onRetry,
-    required this.onClear,
+    required this.onOpen,
     required this.onBack,
-    required this.onFilters,
   });
-  final GlobalKey<MapViewState> mapKey;
 
-  /// Contract `state_group` filter, or null for all.
-  final String? group;
-  final String? category;
+  final ExploreQuery query;
   final void Function(Report) onOpen;
-  final Future<List<Report>> reports;
-  final int filterCount;
-  final String query;
-  final VoidCallback onRetry;
-  final VoidCallback onClear;
   final VoidCallback onBack;
-  final VoidCallback onFilters;
 
-  @override
-  State<ExploreReports> createState() => _ExploreReportsState();
-}
+  Future<void> _editFilters(BuildContext context) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final result = await Navigator.of(context).push<ReportFilters>(
+      FiltersSheet(initial: query.filters).asAdaptiveSheetRoute<ReportFilters>(
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
+      ),
+    );
+    if (result != null) query.setFilters(result);
+  }
 
-class _ExploreReportsState extends State<ExploreReports> {
-  var _list = false;
-
-  Widget _controls({required bool floating}) => _ExploreControls(
-    list: _list,
-    floating: floating,
-    filterCount: widget.filterCount,
-    onBack: widget.onBack,
-    onFilters: widget.onFilters,
-    onMode: (list) => setState(() => _list = list),
-  );
+  Widget _controls(BuildContext context, {required bool floating}) =>
+      _ExploreControls(
+        list: query.mode == ExploreMode.list,
+        floating: floating,
+        filterCount: query.filterCount,
+        onBack: onBack,
+        onFilters: () => _editFilters(context),
+        onMode: (list) =>
+            query.setMode(list ? ExploreMode.list : ExploreMode.map),
+      );
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.paddingOf(context).top + AldiaSpace.m;
     final scheme = Theme.of(context).colorScheme;
-    return IndexedStack(
-      index: _list ? 1 : 0,
-      children: [
-        Stack(
-          children: [
-            Positioned.fill(
-              child: MapView(
-                key: widget.mapKey,
-                state: widget.group,
-                category: widget.category,
-                onOpen: widget.onOpen,
-                overlayTop: top + 52 + AldiaSpace.m,
-              ),
-            ),
-            Positioned(
-              top: top,
-              left: AldiaSpace.l,
-              right: AldiaSpace.l,
-              child: _controls(floating: true),
-            ),
-          ],
-        ),
-        Column(
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.surface,
-                border: Border(
-                  bottom: BorderSide(color: scheme.outlineVariant),
+    return ListenableBuilder(
+      listenable: query,
+      builder: (context, _) => IndexedStack(
+        index: query.mode == ExploreMode.list ? 1 : 0,
+        children: [
+          Stack(
+            children: [
+              Positioned.fill(
+                child: MapView(
+                  query: query,
+                  onOpen: onOpen,
+                  overlayTop: top + 52 + AldiaSpace.m,
                 ),
               ),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  AldiaSpace.l,
-                  top,
-                  AldiaSpace.l,
-                  AldiaSpace.m,
+              Positioned(
+                top: top,
+                left: AldiaSpace.l,
+                right: AldiaSpace.l,
+                child: _controls(context, floating: true),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  border: Border(
+                    bottom: BorderSide(color: scheme.outlineVariant),
+                  ),
                 ),
-                child: _controls(floating: false),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AldiaSpace.l,
+                    top,
+                    AldiaSpace.l,
+                    AldiaSpace.m,
+                  ),
+                  child: _controls(context, floating: false),
+                ),
               ),
-            ),
-            Expanded(
-              child: ReportList(
-                future: widget.reports,
-                filtered: widget.filterCount > 0,
-                query: widget.query,
-                onOpen: widget.onOpen,
-                onRetry: widget.onRetry,
-                onClear: widget.onClear,
+              Expanded(
+                child: ReportList(query: query, onOpen: onOpen),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -165,11 +165,13 @@ class _FlowViewState extends State<_FlowView> with WidgetsBindingObserver {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (c.step.index > 0)
+                    if (c.step.index > 0) ...[
                       OutlinedButton(
                         onPressed: c.back,
                         child: const Text(S.back),
                       ),
+                      const SizedBox(height: AldiaSpace.m),
+                    ],
                     FilledButton(
                       onPressed: c.canAdvance
                           ? (c.isLastStep ? c.submit : c.next)

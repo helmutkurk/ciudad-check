@@ -133,53 +133,54 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
                   AldiaSpace.fabClearance,
                 ),
                 children: [
-                  if (queued.isNotEmpty) ...[
-                    const _SectionHeader(S.outbox),
-                    for (final entry in queued)
-                      _LocalCard(
-                        categoryId: entry.draft.categoryId,
-                        status: S.waitingNetwork,
-                        statusIcon: Icons.cloud_off,
-                        help: entry.missingPhoto
-                            ? S.missingPhoto
-                            : S.outboxWillRetry,
-                        actions: [
-                          if (!entry.missingPhoto)
-                            _CardAction(
-                              icon: Icons.refresh,
-                              label: S.retryNow,
-                              onPressed: () => unawaited(outbox!.retry()),
-                            ),
+                  if (queued.isNotEmpty || _drafts.isNotEmpty)
+                    _SectionHeader(
+                      S.unsent,
+                      count: queued.length + _drafts.length,
+                    ),
+                  for (final entry in queued)
+                    _LocalCard(
+                      kind: _LocalKind.queued,
+                      categoryId: entry.draft.categoryId,
+                      status: S.waitingNetwork,
+                      statusIcon: Icons.wifi_off,
+                      help: entry.missingPhoto
+                          ? S.missingPhoto
+                          : S.outboxWillRetry,
+                      actions: [
+                        if (!entry.missingPhoto)
                           _CardAction(
-                            icon: Icons.delete_outline,
-                            label: S.delete,
-                            onPressed: () => _deleteQueued(outbox!, entry),
+                            label: S.retryNow,
+                            onPressed: () => unawaited(outbox!.retry()),
                           ),
-                        ],
-                      ),
-                  ],
-                  if (_drafts.isNotEmpty) ...[
-                    const _SectionHeader(S.savedDrafts),
-                    for (final draft in _drafts)
-                      _LocalCard(
-                        categoryId: draft.categoryId,
-                        status: S.draft,
-                        statusIcon: Icons.edit_note,
-                        help: S.age(draft.createdAt, DateTime.now()),
-                        actions: [
-                          _CardAction(
-                            icon: Icons.edit,
-                            label: S.continueDraft,
-                            onPressed: () => _openFlow(draft),
-                          ),
-                          _CardAction(
-                            icon: Icons.delete_outline,
-                            label: S.deleteDraft,
-                            onPressed: () => _deleteDraft(draft),
-                          ),
-                        ],
-                      ),
-                  ],
+                        _CardAction(
+                          label: S.delete,
+                          destructive: true,
+                          onPressed: () => _deleteQueued(outbox!, entry),
+                        ),
+                      ],
+                    ),
+                  for (final draft in _drafts)
+                    _LocalCard(
+                      kind: _LocalKind.draft,
+                      categoryId: draft.categoryId,
+                      status: draft.photoPath == null
+                          ? S.draftMissingPhoto
+                          : S.draft,
+                      statusIcon: Icons.photo_camera_outlined,
+                      help: S.age(draft.createdAt, DateTime.now()),
+                      actions: [
+                        _CardAction(
+                          label: S.continueShort,
+                          onPressed: () => _openFlow(draft),
+                        ),
+                        _CardAction(
+                          label: S.delete,
+                          destructive: true,
+                          onPressed: () => _deleteDraft(draft),
+                        ),
+                      ],
+                    ),
                   if (queued.isNotEmpty || _drafts.isNotEmpty)
                     const _SectionHeader(S.sentReports),
                   if (loading)
@@ -221,33 +222,61 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.title);
+  const _SectionHeader(this.title, {this.count});
   final String title;
+  final int? count;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    header: true,
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(0, AldiaSpace.l, 0, AldiaSpace.s),
-      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.labelLarge?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 1,
+    );
+    return Semantics(
+      header: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, AldiaSpace.xl, 0, AldiaSpace.m),
+        child: Text.rich(
+          TextSpan(
+            text: title.toUpperCase(),
+            children: [
+              if (count != null)
+                TextSpan(
+                  text: '  ($count)',
+                  style: style?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0,
+                  ),
+                ),
+            ],
+          ),
+          style: style,
+        ),
+      ),
+    );
+  }
 }
 
 class _CardAction {
   const _CardAction({
-    required this.icon,
     required this.label,
     required this.onPressed,
+    this.destructive = false,
   });
-  final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  final bool destructive;
 }
 
-/// A draft or a queued report: status as icon plus text, actions as text buttons.
+enum _LocalKind { queued, draft }
+
+/// A queued report (light blue card) or a draft (dashed outline): icon tile,
+/// status as icon plus text, title, help and text actions.
 class _LocalCard extends StatelessWidget {
   const _LocalCard({
+    required this.kind,
     required this.categoryId,
     required this.status,
     required this.statusIcon,
@@ -255,6 +284,7 @@ class _LocalCard extends StatelessWidget {
     required this.actions,
   });
 
+  final _LocalKind kind;
   final String? categoryId;
   final String status;
   final IconData statusIcon;
@@ -263,49 +293,162 @@ class _LocalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final queued = kind == _LocalKind.queued;
     final category = categoryId == null ? null : categoryById(categoryId!);
-    return Card(
-      margin: const EdgeInsets.only(bottom: AldiaSpace.s),
-      child: Padding(
-        padding: const EdgeInsets.all(AldiaSpace.m),
-        child: Semantics(
-          container: true,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                category?.label ?? S.draft,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(statusIcon, size: 18),
-                  const SizedBox(width: 6),
-                  Expanded(child: Text(status)),
-                ],
-              ),
-              Text(help),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final action in actions)
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(48, 48),
-                      ),
-                      onPressed: action.onPressed,
-                      icon: Icon(action.icon),
-                      label: Text(action.label),
+    final statusColor = queued
+        ? AldiaColors.primaryDark
+        : AldiaColors.draftText;
+    final content = Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AldiaSpace.l,
+        AldiaSpace.l,
+        AldiaSpace.l,
+        AldiaSpace.xs,
+      ),
+      child: Semantics(
+        container: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ExcludeSemantics(
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: queued
+                          ? AldiaColors.primaryContainer
+                          : AldiaColors.neutralTile,
+                      borderRadius: BorderRadius.circular(AldiaRadius.input),
                     ),
-                ],
-              ),
-            ],
-          ),
+                    child: Icon(
+                      queued ? Icons.refresh : Icons.edit_outlined,
+                      size: 30,
+                      color: queued
+                          ? AldiaColors.primaryDark
+                          : AldiaColors.textMuted,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AldiaSpace.l),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(statusIcon, size: 18, color: statusColor),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              status,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        category?.label ?? S.draft,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        help,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Wrap(
+              spacing: AldiaSpace.s,
+              children: [
+                for (final action in actions)
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: action.destructive
+                          ? AldiaColors.danger
+                          : AldiaColors.primaryDark,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AldiaSpace.s,
+                      ),
+                      textStyle: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onPressed: action.onPressed,
+                    child: Text(action.label),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AldiaSpace.m),
+      child: queued
+          ? DecoratedBox(
+              decoration: BoxDecoration(
+                color: AldiaColors.card,
+                borderRadius: BorderRadius.circular(AldiaRadius.card),
+              ),
+              child: content,
+            )
+          : CustomPaint(
+              foregroundPainter: const _DashedBorderPainter(
+                color: AldiaColors.dashed,
+                radius: AldiaRadius.card,
+              ),
+              child: content,
+            ),
+    );
   }
+}
+
+/// Dashed rounded outline: marks a draft as unfinished.
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter({required this.color, required this.radius});
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          (Offset.zero & size).deflate(0.75),
+          Radius.circular(radius),
+        ),
+      );
+    const dash = 5.0;
+    const gap = 4.0;
+    for (final metric in path.computeMetrics()) {
+      for (var d = 0.0; d < metric.length; d += dash + gap) {
+        canvas.drawPath(metric.extractPath(d, d + dash), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) =>
+      old.color != color || old.radius != radius;
 }
 
 class _EmptyState extends StatelessWidget {

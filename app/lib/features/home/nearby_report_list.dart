@@ -1,66 +1,50 @@
 import 'package:flutter/material.dart';
 
-import '../../core/categories.dart';
-import '../../core/citizen_states.dart';
 import '../../core/strings.dart';
 import '../../core/theme.dart';
 import '../../data/report.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/report_tile.dart';
 import 'bottom_navigation_reselect.dart';
+import 'explore_query.dart';
 
+/// Lista: the same reports as the map, for the same area and filters.
 class ReportList extends StatelessWidget {
-  const ReportList({
-    super.key,
-    required this.future,
-    required this.filtered,
-    required this.query,
-    required this.onOpen,
-    required this.onRetry,
-    required this.onClear,
-  });
+  const ReportList({super.key, required this.query, required this.onOpen});
 
-  final Future<List<Report>> future;
-  final bool filtered;
-  final String query;
+  final ExploreQuery query;
   final void Function(Report) onOpen;
-  final VoidCallback onRetry;
-  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Report>>(
-      future: future,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
+    return ListenableBuilder(
+      listenable: query,
+      builder: (context, _) {
+        final state = query.state;
+        if (state.loading) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
+        if (state.failed) {
           return EmptyState(
             icon: Icons.cloud_off,
             title: S.loadError,
             actionLabel: S.retry,
-            onAction: onRetry,
+            onAction: query.retry,
           );
         }
-        final all = snapshot.data!;
-        final needle = query.toLowerCase();
-        final reports = needle.isEmpty
-            ? all
-            : [
-                for (final r in all)
-                  if ([
-                    categoryById(r.category).label,
-                    citizenStateFor(r.citizenState).label,
-                    r.note ?? '',
-                  ].any((t) => t.toLowerCase().contains(needle)))
-                    r,
-              ];
-        if (reports.isEmpty && needle.isNotEmpty) {
-          return const EmptyState(
+        final reports = state.reports;
+        final searching = query.filters.query.isNotEmpty;
+        final filtered = query.filterCount > 0;
+        if (reports.isEmpty && searching) {
+          // Search only sees loaded pages; offer the next one.
+          return EmptyState(
             icon: Icons.search_off,
-            title: 'Sin resultados para tu búsqueda',
-            help: 'Prueba con otra palabra o quita la búsqueda.',
+            title: S.searchEmpty,
+            help: state.hasMore
+                ? S.searchScope(state.loaded, state.total)
+                : S.searchEmptyHelp,
+            actionLabel: state.hasMore ? S.loadMore : null,
+            onAction: state.hasMore ? query.loadMore : null,
           );
         }
         if (reports.isEmpty) {
@@ -69,7 +53,7 @@ class ReportList extends StatelessWidget {
                   icon: Icons.filter_list_off,
                   title: S.emptyFiltered,
                   actionLabel: S.clearFilters,
-                  onAction: onClear,
+                  onAction: () => query.setFilters(noFilters),
                 )
               : const EmptyState(
                   icon: Icons.map_outlined,
@@ -78,7 +62,7 @@ class ReportList extends StatelessWidget {
                 );
         }
         return RefreshIndicator(
-          onRefresh: () async => onRetry(),
+          onRefresh: query.retry,
           child: ListView.separated(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             controller: BottomNavigationReselect.exploreListScrollController,
@@ -88,13 +72,61 @@ class ReportList extends StatelessWidget {
               AldiaSpace.l,
               AldiaSpace.fabClearance,
             ),
-            itemCount: reports.length,
+            itemCount: reports.length + (state.hasMore ? 1 : 0),
             separatorBuilder: (_, _) => const SizedBox(height: AldiaSpace.s),
-            itemBuilder: (context, i) =>
-                ReportTile(report: reports[i], onTap: () => onOpen(reports[i])),
+            itemBuilder: (context, i) => i == reports.length
+                ? _LoadMore(query: query, searching: searching)
+                : ReportTile(
+                    report: reports[i],
+                    onTap: () => onOpen(reports[i]),
+                  ),
           ),
         );
       },
+    );
+  }
+}
+
+/// Footer when the server has more reports than are loaded: how many are
+/// shown (or searched) and "Ver más" for the next page.
+class _LoadMore extends StatelessWidget {
+  const _LoadMore({required this.query, required this.searching});
+
+  final ExploreQuery query;
+  final bool searching;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = query.state;
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AldiaSpace.m),
+      child: Column(
+        children: [
+          Text(
+            searching
+                ? S.searchScope(state.loaded, state.total)
+                : S.listShowing(state.loaded, state.total),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AldiaSpace.s),
+          state.loadingMore
+              ? const SizedBox.square(
+                  dimension: 40,
+                  child: Padding(
+                    padding: EdgeInsets.all(AldiaSpace.s),
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  ),
+                )
+              : OutlinedButton(
+                  onPressed: query.loadMore,
+                  child: const Text(S.loadMore),
+                ),
+        ],
+      ),
     );
   }
 }

@@ -5,10 +5,10 @@ import 'package:provider/provider.dart';
 
 import '../../core/strings.dart';
 import '../../core/theme.dart';
+import '../../data/clusters_api.dart';
 import '../../data/report.dart';
 import '../../data/report_repository.dart';
 import '../../services/haptics.dart';
-import '../../widgets/adaptive_sheet_route.dart';
 import '../../widgets/routes.dart';
 import '../changelog/changelog.dart';
 import '../citizen/citizen_screens.dart';
@@ -18,11 +18,10 @@ import '../drafts/draft_store.dart';
 import '../mine/my_reports_screen.dart';
 import '../report/report_flow_screen.dart';
 import 'bottom_navigation_reselect.dart';
+import 'explore_query.dart';
 import 'explore_reports.dart';
 import 'home_landing.dart';
 import 'home_navigation.dart';
-import 'report_filters_sheet.dart';
-import 'report_map_view.dart';
 
 /// Nearby reports as a map or a list, with filters and the report button.
 class HomeScreen extends StatefulWidget {
@@ -38,34 +37,34 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   HomeTab _tab = HomeTab.home;
   bool _exploring = false;
-  String _query = '';
-  final _mapKey = GlobalKey<MapViewState>();
+  late final ExploreQuery _explore;
   late Future<int?> _resolved;
   // Tabs are built on first visit and then kept (map camera, scroll position).
   final _visited = <HomeTab>{HomeTab.home};
   int _mineToken = 0;
 
-  /// Contract `state_group` filter.
-  String? _group;
-  String? _category;
   DraftRecord? _draft;
-  late Future<List<Report>> _list;
-
-  int get _filterCount =>
-      (_group != null ? 1 : 0) +
-      (_category != null ? 1 : 0) +
-      (_query.isNotEmpty ? 1 : 0);
 
   @override
   void initState() {
     super.initState();
-    _list = _loadList();
+    // Lives as long as Inicio, so filters survive closing Explorar.
+    _explore = ExploreQuery(
+      repository: context.read<ReportRepository>(),
+      clusters: context.read<ClustersApi?>(),
+    );
     _resolved = _loadResolved();
     unawaited(_loadDraft());
     unawaited(_observeMine());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(showChangelogIfNeeded(context, widget.changelog));
     });
+  }
+
+  @override
+  void dispose() {
+    _explore.dispose();
+    super.dispose();
   }
 
   Future<int?> _loadResolved() async {
@@ -84,17 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<List<Report>> _loadList() {
-    final future = context.read<ReportRepository>().nearby(
-      stateGroup: _group,
-      category: _category,
-    );
-    // Explore is lazy. Observe failures now; FutureBuilder still receives the
-    // original error when the citizen opens Lista and offers Retry.
-    future.ignore();
-    return future;
-  }
-
   Future<void> _loadDraft() async {
     final drafts = await context.read<DraftStore?>()?.loadAll();
     if (mounted) setState(() => _draft = drafts?.firstOrNull);
@@ -102,9 +90,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _reload() {
     setState(() {
-      _list = _loadList();
       _resolved = _loadResolved();
     });
+    unawaited(_explore.retry());
     unawaited(_observeMine());
   }
 
@@ -119,49 +107,15 @@ class _HomeScreenState extends State<HomeScreen> {
     unawaited(_loadDraft());
   }
 
-  void _clearFilters() {
-    setState(() {
-      _group = null;
-      _category = null;
-      _query = '';
-      _list = _loadList();
-    });
-  }
-
-  Future<void> _editFilters() async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final result = await Navigator.of(context).push<ReportFilters>(
-      FiltersSheet(initial: (group: _group, category: _category, query: _query))
-          .asAdaptiveSheetRoute<ReportFilters>(
-            reduceMotion: MediaQuery.disableAnimationsOf(context),
-          ),
-    );
-    if (result == null) return;
-    setState(() {
-      _group = result.group;
-      _category = result.category;
-      _query = result.query;
-      _list = _loadList();
-    });
-  }
-
   Widget _body(HomeTab tab) {
     if (!_visited.contains(tab)) return const SizedBox.shrink();
     return switch (tab) {
       HomeTab.home =>
         _exploring
             ? ExploreReports(
-                mapKey: _mapKey,
-                group: _group,
-                category: _category,
+                query: _explore,
                 onOpen: _open,
-                reports: _list,
-                filterCount: _filterCount,
-                query: _query,
-                onRetry: _reload,
-                onClear: _clearFilters,
                 onBack: () => setState(() => _exploring = false),
-                onFilters: _editFilters,
               )
             : Landing(
                 resolved: _resolved,
@@ -188,17 +142,25 @@ class _HomeScreenState extends State<HomeScreen> {
       // Explorar draws its own floating controls over a full-screen map.
       appBar: exploring
           ? null
-          : AppBar(
+          : _tab == HomeTab.home
+          // Inicio's blue hero continues the blue bar.
+          ? AppBar(
               backgroundColor: AldiaColors.barOf(context),
               foregroundColor: AldiaColors.onBar,
               iconTheme: const IconThemeData(color: AldiaColors.onBar),
               shape: null,
+              title: const Text(
+                S.appName,
+                style: TextStyle(color: AldiaColors.onBar),
+              ),
+            )
+          // Other tabs: light header from the theme (decision 15, Figma).
+          : AppBar(
               title: Text(switch (_tab) {
                 HomeTab.notices => 'Avisos',
                 HomeTab.mine => S.myReports,
-                HomeTab.profile => 'Perfil',
-                _ => S.appName,
-              }, style: const TextStyle(color: AldiaColors.onBar)),
+                _ => 'Perfil',
+              }),
             ),
       body: Column(
         children: [

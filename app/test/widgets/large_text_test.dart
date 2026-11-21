@@ -134,8 +134,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text(S.waitingNetwork), findsOneWidget);
-    await tester.scrollUntilVisible(find.text(S.sentReports), 200);
-    expect(find.text(S.sentReports), findsOneWidget);
+    final sent = find.text(S.sentReports.toUpperCase());
+    await tester.scrollUntilVisible(sent, 200);
+    expect(sent, findsOneWidget);
   });
 
   testWidgets('my reports empty state at 200 % text', (tester) async {

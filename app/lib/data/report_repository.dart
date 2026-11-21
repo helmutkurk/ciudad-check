@@ -47,26 +47,25 @@ class ReportRepository {
 
   String photoUrl(Report report) => _api.photoUrl(report.photoUrl);
 
-  Future<List<Report>> nearby({
+  /// One page of public reports, newest first. [offset] pages through
+  /// [ReportPage.total] in steps of the API limit (100).
+  Future<ReportPage> nearby({
     LatLng? southWest,
     LatLng? northEast,
+    int offset = 0,
     String? state,
     String? stateGroup,
     String? category,
   }) => _api.listReports(
     southWest: southWest,
     northEast: northEast,
+    offset: offset,
     state: state,
     stateGroup: stateGroup,
     category: category,
   );
   Future<List<Report>> duplicates(LatLng position, String category) =>
       _api.nearbyReports(position: position, category: category);
-  Future<List<ReportCluster>> clusters(
-    LatLng southWest,
-    LatLng northEast,
-    double zoom,
-  ) => _api.clusters(southWest: southWest, northEast: northEast, zoom: zoom);
   Future<Report> get(String id) async {
     final report = await _api.getReport(id);
     if ((await _store.ids()).contains(id) || local.follows(id)) {

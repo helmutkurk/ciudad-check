@@ -76,8 +76,15 @@ ReportRepository repositoryWith({
       return http.Response(jsonEncode({'items': nearby}), 200);
     }
     if (path.endsWith('/reports')) {
+      final offset =
+          int.tryParse(request.url.queryParameters['offset'] ?? '') ?? 0;
+      final limit =
+          int.tryParse(request.url.queryParameters['limit'] ?? '') ?? 100;
       return http.Response(
-        jsonEncode({'items': list, 'total': list.length}),
+        jsonEncode({
+          'items': list.skip(offset).take(limit).toList(),
+          'total': list.length,
+        }),
         200,
       );
     }
@@ -104,6 +111,7 @@ class FakeClusters implements ClustersApi {
   final List<ReportCluster> result;
   final bool fail;
   int calls = 0;
+  double? lastZoom;
 
   @override
   Future<List<ReportCluster>> clusters({
@@ -112,6 +120,7 @@ class FakeClusters implements ClustersApi {
     required double zoom,
   }) async {
     calls++;
+    lastZoom = zoom;
     if (fail) throw http.ClientException('offline');
     return result;
   }

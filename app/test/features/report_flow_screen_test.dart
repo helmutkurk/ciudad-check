@@ -214,4 +214,18 @@ void main() {
       expect(find.text(S.pendingHelp), findsOneWidget);
     },
   );
+
+  testWidgets('the location step shows the address, never coordinates', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(host(fakeRepository()));
+    await tester.pumpAndSettle();
+    await tapText(tester, S.useMyLocation);
+    expect(find.text('6a. Avenida, Zona 1, Guatemala'), findsWidgets);
+    expect(find.byType(TextField), findsOneWidget); // address search only
+    expect(find.textContaining(RegExp(r'-?\d+\.\d{3,}')), findsNothing);
+  });
 }
